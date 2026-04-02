@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { Venue, VenueStage, STAGES } from "@/types";
 import KanbanColumn from "./KanbanColumn";
@@ -11,6 +12,12 @@ interface Props {
 }
 
 export default function KanbanBoard({ venues, setVenues }: Props) {
+  // Force a repaint after mount — browser skips painting cards without a scroll event
+  useEffect(() => {
+    window.scrollBy(0, 1);
+    window.scrollBy(0, -1);
+  }, []);
+
   function getVenuesByStage(stage: VenueStage) {
     return venues.filter((v) => v.stage === stage);
   }
