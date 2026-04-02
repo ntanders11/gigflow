@@ -29,6 +29,7 @@ export default function VenueCard({ venue, index }: Props) {
           {...provided.dragHandleProps}
           className="rounded-lg p-3 cursor-pointer select-none transition-shadow"
           style={{
+            ...provided.draggableProps.style,
             backgroundColor: "#16181c",
             border: snapshot.isDragging
               ? "1px solid rgba(255,255,255,0.12)"
