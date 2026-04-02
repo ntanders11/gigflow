@@ -12,6 +12,7 @@ const STAGE_STYLE: Record<
   responded:  { color: "#9b7fe8", bg: "rgba(155,127,232,0.15)", label: "Responded"  },
   negotiating:{ color: "#e09b50", bg: "rgba(224,155,80,0.15)",  label: "Negotiating"},
   booked:     { color: "#4caf7d", bg: "rgba(76,175,125,0.15)",  label: "Booked"     },
+  dormant:    { color: "#5e5c58", bg: "rgba(94,92,88,0.15)",   label: "Dormant"    },
 };
 
 // Icon box color per venue type (first letter shown)

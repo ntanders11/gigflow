@@ -3,7 +3,8 @@ export type VenueStage =
   | "contacted"
   | "responded"
   | "negotiating"
-  | "booked";
+  | "booked"
+  | "dormant";
 
 export type ConfidenceLevel = "HIGH" | "MEDIUM" | "LOW";
 
@@ -60,6 +61,7 @@ export const STAGES: { key: VenueStage; label: string }[] = [
   { key: "responded", label: "Responded" },
   { key: "negotiating", label: "Negotiating" },
   { key: "booked", label: "Booked" },
+  { key: "dormant", label: "Dormant" },
 ];
 
 export const STAGE_COLORS: Record<VenueStage, string> = {
@@ -68,6 +70,7 @@ export const STAGE_COLORS: Record<VenueStage, string> = {
   responded: "bg-yellow-100 text-yellow-700",
   negotiating: "bg-orange-100 text-orange-700",
   booked: "bg-green-100 text-green-700",
+  dormant: "bg-slate-100 text-slate-400",
 };
 
 export const CONFIDENCE_COLORS: Record<ConfidenceLevel, string> = {
