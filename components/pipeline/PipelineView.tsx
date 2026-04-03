@@ -62,11 +62,11 @@ export default function PipelineView({ initialVenues }: Props) {
             }}
           />
         </div>
-        <div className="flex gap-5">
+        <div className="flex gap-3">
           {STAGES.map(({ key, label }) => (
             <div
               key={key}
-              className="w-60 shrink-0 flex items-center justify-between pb-3"
+              className="flex-1 min-w-36 flex items-center justify-between pb-3"
             >
               <h2 className="text-sm font-semibold" style={{ color: "#f0ede8" }}>
                 {label}

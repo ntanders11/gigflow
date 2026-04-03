@@ -11,7 +11,7 @@ interface Props {
 
 export default function KanbanColumn({ stage, venues }: Props) {
   return (
-    <div className="flex flex-col w-60 shrink-0">
+    <div className="flex flex-col flex-1 min-w-36">
       <Droppable droppableId={stage}>
         {(provided, snapshot) => (
           <div
