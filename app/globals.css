@@ -1,8 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap');
+
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0e0f11;
+  --foreground: #f0ede8;
+  --surface: #16181c;
+  --surface2: #1e2128;
+  --surface3: #262b33;
+  --border: rgba(255, 255, 255, 0.07);
+  --border2: rgba(255, 255, 255, 0.12);
+  --text-primary: #f0ede8;
+  --text-secondary: #9a9591;
+  --text-muted: #5e5c58;
+  --accent: #d4a853;
+  --green: #4caf7d;
+  --red: #e25c5c;
+  --blue: #5b9bd5;
 }
 
 @theme inline {
@@ -12,15 +26,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0e0f11;
+  color: #f0ede8;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }
