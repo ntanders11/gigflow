@@ -12,10 +12,19 @@ interface Props {
 
 export default function PipelineView({ initialVenues }: Props) {
   const [venues, setVenues] = useState<Venue[]>(initialVenues);
+  const [query, setQuery] = useState("");
+
+  const filtered = query.trim()
+    ? venues.filter((v) =>
+        [v.name, v.city, v.type, v.contact_name]
+          .filter(Boolean)
+          .some((field) => field!.toLowerCase().includes(query.toLowerCase()))
+      )
+    : venues;
 
   const stageCounts = STAGES.reduce(
     (acc, { key }) => {
-      acc[key] = venues.filter((v) => v.stage === key).length;
+      acc[key] = filtered.filter((v) => v.stage === key).length;
       return acc;
     },
     {} as Record<VenueStage, number>
@@ -37,9 +46,21 @@ export default function PipelineView({ initialVenues }: Props) {
               Pipeline
             </h1>
             <p className="text-sm mt-1" style={{ color: "#9a9591" }}>
-              {venues.length} venues · drag cards to update stage
+              {filtered.length} venues · drag cards to update stage
             </p>
           </div>
+          <input
+            type="text"
+            placeholder="Search venues…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="text-sm px-3 py-1.5 rounded-lg w-52 focus:outline-none"
+            style={{
+              background: "#262b33",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "#f0ede8",
+            }}
+          />
         </div>
         <div className="flex gap-5">
           {STAGES.map(({ key, label }) => (
@@ -66,7 +87,7 @@ export default function PipelineView({ initialVenues }: Props) {
 
       {/* Board */}
       <div className="px-8 pt-4 pb-8">
-        <KanbanBoard venues={venues} setVenues={setVenues} />
+        <KanbanBoard venues={filtered} setVenues={setVenues} />
       </div>
     </div>
   );
