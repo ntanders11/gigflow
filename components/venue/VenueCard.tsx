@@ -89,7 +89,7 @@ export default function VenueCard({ venue, index, onReply }: Props) {
                   border: "1px solid rgba(155,127,232,0.3)",
                 }}
               >
-                They replied ↩
+                Got a reply? →
               </button>
             )}
           </div>
