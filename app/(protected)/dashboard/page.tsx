@@ -42,7 +42,7 @@ export default async function DashboardPage() {
 
   const { data: venues } = await supabase
     .from("venues")
-    .select("id, name, type, city, stage, updated_at, follow_up_date, last_contacted_at")
+    .select("id, name, type, city, stage, updated_at, follow_up_date, gig_time, gig_end_time, last_contacted_at")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
 
@@ -54,8 +54,15 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .in("status", ["sent", "draft"]);
 
+  const { data: paidInvoices } = await supabase
+    .from("invoices")
+    .select("amount_cents")
+    .eq("user_id", user.id)
+    .eq("status", "paid");
+
   const unpaidCount = unpaidInvoices?.length ?? 0;
   const unpaidTotal = (unpaidInvoices ?? []).reduce((sum, inv) => sum + inv.amount_cents, 0);
+  const revenueTotal = (paidInvoices ?? []).reduce((sum, inv) => sum + inv.amount_cents, 0);
 
   // Aggregate stats
   const totalVenues = allVenues.length;
@@ -79,8 +86,31 @@ export default async function DashboardPage() {
         new Date(b.last_contacted_at!).getTime()
     );
 
+  // This week's gigs
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sevenDaysOut = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const thisWeekGigs = allVenues
+    .filter((v) => {
+      if (v.stage !== "booked" || !v.follow_up_date) return false;
+      const d = new Date(v.follow_up_date + "T12:00:00");
+      return d >= today && d <= sevenDaysOut;
+    })
+    .sort((a, b) =>
+      new Date(a.follow_up_date + "T12:00:00").getTime() -
+      new Date(b.follow_up_date + "T12:00:00").getTime()
+    );
+
   // Derived lists
-  const bookedVenues = allVenues.filter((v) => v.stage === "booked");
+  const bookedVenues = allVenues
+    .filter((v) => v.stage === "booked")
+    .sort((a, b) => {
+      if (!a.follow_up_date && !b.follow_up_date) return 0;
+      if (!a.follow_up_date) return 1;
+      if (!b.follow_up_date) return -1;
+      return new Date(a.follow_up_date).getTime() - new Date(b.follow_up_date).getTime();
+    });
 
   const statCards = [
     {
@@ -112,10 +142,10 @@ export default async function DashboardPage() {
       href: "/pipeline?stage=contacted",
     },
     {
-      label: "Unpaid Invoices",
-      value: unpaidCount,
-      trend: `$${(unpaidTotal / 100).toFixed(0)} outstanding`,
-      color: "#e09b50",
+      label: "Revenue",
+      value: `$${(revenueTotal / 100).toLocaleString("en-US", { minimumFractionDigits: 0 })}`,
+      trend: unpaidCount > 0 ? `$${(unpaidTotal / 100).toFixed(0)} outstanding` : "all invoices paid",
+      color: "#4caf7d",
       href: "/invoices",
     },
   ];
@@ -186,6 +216,62 @@ export default async function DashboardPage() {
           </Link>
         ))}
       </div>
+
+      {/* This Week */}
+      {thisWeekGigs.length > 0 && (
+        <div className="mb-8 max-w-6xl">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#9a9591" }}>
+              This Week
+            </h2>
+            <Link href="/calendar" className="text-xs transition-all hover:brightness-125" style={{ color: "#d4a853" }}>
+              View calendar →
+            </Link>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {thisWeekGigs.map((venue) => {
+              const d = new Date(venue.follow_up_date + "T12:00:00");
+              const dayLabel = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+              const timeLabel = venue.gig_time
+                ? new Date(`2000-01-01T${venue.gig_time}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+                : null;
+              const endLabel = venue.gig_end_time
+                ? new Date(`2000-01-01T${venue.gig_end_time}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+                : null;
+              const isToday = d.toDateString() === new Date().toDateString();
+
+              return (
+                <Link
+                  key={venue.id}
+                  href={`/venues/${venue.id}`}
+                  className="rounded-xl px-5 py-4 transition-all hover:brightness-125"
+                  style={{
+                    backgroundColor: "#16181c",
+                    border: isToday ? "1px solid rgba(212,168,83,0.4)" : "1px solid rgba(255,255,255,0.07)",
+                    borderLeft: "3px solid #4caf7d",
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-semibold truncate" style={{ color: "#f0ede8" }}>{venue.name}</p>
+                    {isToday && (
+                      <span className="text-xs font-bold ml-2 shrink-0" style={{ color: "#d4a853" }}>TODAY</span>
+                    )}
+                  </div>
+                  <p className="text-xs" style={{ color: "#9a9591" }}>{dayLabel}</p>
+                  {timeLabel && (
+                    <p className="text-xs mt-0.5" style={{ color: "#4caf7d" }}>
+                      {timeLabel}{endLabel ? ` – ${endLabel}` : ""}
+                    </p>
+                  )}
+                  {venue.city && (
+                    <p className="text-xs mt-0.5" style={{ color: "#5e5c58" }}>{venue.city}</p>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Two-column section */}
       <div className="flex gap-6 max-w-6xl">
@@ -316,17 +402,14 @@ export default async function DashboardPage() {
                     }}
                   >
                     <div className="flex-1 min-w-0">
-                      <p
-                        className="text-sm font-medium truncate"
-                        style={{ color: "#f0ede8" }}
-                      >
+                      <p className="text-sm font-medium truncate" style={{ color: "#f0ede8" }}>
                         {venue.name}
                       </p>
-                      {venue.city && (
-                        <p className="text-xs truncate" style={{ color: "#9a9591" }}>
-                          {venue.city}
-                        </p>
-                      )}
+                      <p className="text-xs truncate" style={{ color: "#9a9591" }}>
+                        {venue.follow_up_date
+                          ? new Date(venue.follow_up_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                          : venue.city ?? "No date set"}
+                      </p>
                     </div>
                   </Link>
                 );
