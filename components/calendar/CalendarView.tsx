@@ -23,16 +23,49 @@ type Venue = {
   notes: string | null;
 };
 
+function downloadICS(venue: Venue) {
+  const d = venue.follow_up_date!;
+  const [y, m, day] = d.split("-");
+  const pad = (n: string) => n.padStart(2, "0");
+  const dtStart = `${y}${pad(m)}${pad(day)}T190000`;
+  const dtEnd   = `${y}${pad(m)}${pad(day)}T220000`;
+  const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z/, "Z");
+  const escape = (s: string) => s.replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
+
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//GigFlow//GigFlow//EN",
+    "BEGIN:VEVENT",
+    `UID:gigflow-${venue.id}@gigflow.app`,
+    `DTSTAMP:${now}`,
+    `DTSTART;TZID=America/Los_Angeles:${dtStart}`,
+    `DTEND;TZID=America/Los_Angeles:${dtEnd}`,
+    `SUMMARY:${escape(`Gig at ${venue.name}`)}`,
+    `LOCATION:${escape(venue.city ?? venue.name)}`,
+    `DESCRIPTION:${escape(venue.notes ?? `Booked gig at ${venue.name}`)}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const blob = new Blob([ics], { type: "text/calendar" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${venue.name.replace(/[^a-z0-9]/gi, "_")}.ics`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function CalendarView({
   bookedVenues,
-  isOutlookConnected,
+  subscriptionUrl,
 }: {
   bookedVenues: Venue[];
-  isOutlookConnected: boolean;
+  subscriptionUrl: string;
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [syncing, setSyncing] = useState<string | null>(null);
-  const [synced, setSynced] = useState<Set<string>>(new Set());
+  const [copied, setCopied] = useState(false);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -49,25 +82,11 @@ export default function CalendarView({
     );
   }
 
-  async function syncToOutlook(venue: Venue) {
-    setSyncing(venue.id);
-    try {
-      const res = await fetch("/api/calendar/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          venueName: venue.name,
-          city: venue.city,
-          gigDate: venue.follow_up_date,
-          notes: venue.notes,
-        }),
-      });
-      if (res.ok) {
-        setSynced((prev) => new Set([...prev, venue.id]));
-      }
-    } finally {
-      setSyncing(null);
-    }
+  function copyUrl() {
+    navigator.clipboard.writeText(subscriptionUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   }
 
   return (
@@ -167,13 +186,12 @@ export default function CalendarView({
           {bookedVenues.length === 0 ? (
             <div className="px-5 py-8 text-center">
               <p className="text-sm" style={{ color: "#5e5c58" }}>
-                No booked gigs yet. Move a venue to "Booked" in your pipeline.
+                No booked gigs yet. Move a venue to &quot;Booked&quot; in your pipeline.
               </p>
             </div>
           ) : (
             bookedVenues.map((venue, idx) => {
               const isLast = idx === bookedVenues.length - 1;
-              const isSyncedAlready = synced.has(venue.id);
               return (
                 <div
                   key={venue.id}
@@ -197,23 +215,17 @@ export default function CalendarView({
                       {venue.city ? ` · ${venue.city}` : ""}
                     </p>
                   </div>
-                  {isOutlookConnected && venue.follow_up_date && (
+                  {venue.follow_up_date && (
                     <button
-                      onClick={() => syncToOutlook(venue)}
-                      disabled={!!syncing || isSyncedAlready}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      onClick={() => downloadICS(venue)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0"
                       style={{
-                        backgroundColor: isSyncedAlready ? "rgba(76,175,125,0.15)" : "rgba(255,255,255,0.07)",
-                        color: isSyncedAlready ? "#4caf7d" : "#9a9591",
-                        border: `1px solid ${isSyncedAlready ? "#4caf7d" : "rgba(255,255,255,0.1)"}`,
-                        cursor: isSyncedAlready ? "default" : "pointer",
+                        backgroundColor: "rgba(255,255,255,0.05)",
+                        color: "#9a9591",
+                        border: "1px solid rgba(255,255,255,0.1)",
                       }}
                     >
-                      {syncing === venue.id
-                        ? "Syncing..."
-                        : isSyncedAlready
-                        ? "✓ Added to Outlook"
-                        : "Add to Outlook"}
+                      Add to Calendar
                     </button>
                   )}
                 </div>
@@ -226,6 +238,35 @@ export default function CalendarView({
             {venuesWithoutDate.length} booked venue{venuesWithoutDate.length > 1 ? "s" : ""} without a date — open the venue and set a Gig Date to show it on the calendar.
           </p>
         )}
+      </div>
+
+      {/* Subscription URL copy box */}
+      <div className="mt-8 rounded-xl px-5 py-4" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>
+          Calendar Subscription URL
+        </p>
+        <p className="text-xs mb-3" style={{ color: "#9a9591" }}>
+          On iPhone: Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar → paste this URL.
+        </p>
+        <div className="flex items-center gap-2">
+          <code
+            className="flex-1 text-xs px-3 py-2 rounded-lg truncate"
+            style={{ backgroundColor: "#0e0f11", color: "#9b7fe8", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            {subscriptionUrl}
+          </code>
+          <button
+            onClick={copyUrl}
+            className="px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0"
+            style={{
+              backgroundColor: copied ? "rgba(76,175,125,0.15)" : "rgba(255,255,255,0.07)",
+              color: copied ? "#4caf7d" : "#9a9591",
+              border: `1px solid ${copied ? "#4caf7d" : "rgba(255,255,255,0.1)"}`,
+            }}
+          >
+            {copied ? "✓ Copied" : "Copy"}
+          </button>
+        </div>
       </div>
     </div>
   );
