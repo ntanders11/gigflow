@@ -62,6 +62,27 @@ export default function KanbanBoard({ venues, setVenues }: Props) {
     );
   }
 
+  async function onReply(venueId: string) {
+    const venue = venues.find((v) => v.id === venueId);
+    if (!venue) return;
+
+    setVenues((prev) =>
+      prev.map((v) => (v.id === venueId ? { ...v, stage: "responded" } : v))
+    );
+
+    const res = await fetch(`/api/venues/${venueId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage: "responded" }),
+    });
+
+    if (!res.ok) {
+      setVenues((prev) =>
+        prev.map((v) => (v.id === venueId ? { ...v, stage: venue.stage } : v))
+      );
+    }
+  }
+
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex gap-3 pb-4">
@@ -70,6 +91,7 @@ export default function KanbanBoard({ venues, setVenues }: Props) {
             key={key}
             stage={key}
             venues={getVenuesByStage(key)}
+            onReply={onReply}
           />
         ))}
       </div>

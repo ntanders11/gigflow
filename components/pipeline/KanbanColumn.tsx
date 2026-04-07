@@ -7,9 +7,10 @@ import VenueCard from "@/components/venue/VenueCard";
 interface Props {
   stage: VenueStage;
   venues: Venue[];
+  onReply: (venueId: string) => void;
 }
 
-export default function KanbanColumn({ stage, venues }: Props) {
+export default function KanbanColumn({ stage, venues, onReply }: Props) {
   return (
     <div className="flex flex-col flex-1 min-w-36">
       <Droppable droppableId={stage}>
@@ -25,7 +26,7 @@ export default function KanbanColumn({ stage, venues }: Props) {
             }}
           >
             {venues.map((venue, index) => (
-              <VenueCard key={venue.id} venue={venue} index={index} />
+              <VenueCard key={venue.id} venue={venue} index={index} onReply={onReply} />
             ))}
             {provided.placeholder}
           </div>

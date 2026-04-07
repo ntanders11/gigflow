@@ -15,9 +15,10 @@ const CONFIDENCE_DARK: Record<string, { bg: string; color: string; border: strin
 interface Props {
   venue: Venue;
   index: number;
+  onReply: (venueId: string) => void;
 }
 
-export default function VenueCard({ venue, index }: Props) {
+export default function VenueCard({ venue, index, onReply }: Props) {
   const conf = CONFIDENCE_DARK[venue.confidence] ?? CONFIDENCE_DARK.LOW;
 
   return (
@@ -58,7 +59,7 @@ export default function VenueCard({ venue, index }: Props) {
             </p>
           )}
 
-          <div className="mt-2 flex items-center gap-1.5">
+          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
             <span
               className="text-xs px-1.5 py-0.5 rounded border font-medium"
               style={{
@@ -73,6 +74,23 @@ export default function VenueCard({ venue, index }: Props) {
               <span className="text-xs" style={{ color: "#5e5c58" }}>
                 has email
               </span>
+            )}
+            {venue.stage === "contacted" && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onReply(venue.id);
+                }}
+                className="text-xs px-1.5 py-0.5 rounded font-medium transition-all hover:brightness-125 ml-auto"
+                style={{
+                  backgroundColor: "rgba(155,127,232,0.15)",
+                  color: "#9b7fe8",
+                  border: "1px solid rgba(155,127,232,0.3)",
+                }}
+              >
+                They replied ↩
+              </button>
             )}
           </div>
         </div>
