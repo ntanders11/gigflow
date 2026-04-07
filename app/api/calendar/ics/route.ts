@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
 
   const { data: venues, error } = await supabase
     .from("venues")
-    .select("id, name, city, address, follow_up_date, gig_time, notes")
+    .select("id, name, city, address, follow_up_date, gig_time, gig_end_time, notes")
     .eq("user_id", userId)
     .eq("stage", "booked")
     .not("follow_up_date", "is", null);
@@ -58,10 +58,11 @@ export async function GET(req: NextRequest) {
   const events = (venues ?? []).map((v) => {
     const startHour = v.gig_time ? parseInt(v.gig_time.split(":")[0]) : 19;
     const startMin  = v.gig_time ? parseInt(v.gig_time.split(":")[1]) : 0;
-    const endHour   = startHour + 3; // default 3-hour set
+    const endHour   = v.gig_end_time ? parseInt(v.gig_end_time.split(":")[0]) : startHour + 3;
+    const endMin    = v.gig_end_time ? parseInt(v.gig_end_time.split(":")[1]) : startMin;
 
     const dtStart = toICSDate(v.follow_up_date!, startHour, startMin);
-    const dtEnd   = toICSDate(v.follow_up_date!, endHour,   startMin);
+    const dtEnd   = toICSDate(v.follow_up_date!, endHour,   endMin);
     const summary  = escapeICS(`Gig at ${v.name}`);
     const location = escapeICS(v.address ?? v.city ?? v.name);
     const description = v.notes

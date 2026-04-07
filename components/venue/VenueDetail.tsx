@@ -46,8 +46,10 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
   // Gig date, time, address
   const [gigDate, setGigDate] = useState(initialVenue.follow_up_date ?? "");
   const [gigTime, setGigTime] = useState(initialVenue.gig_time ?? "");
+  const [gigEndTime, setGigEndTime] = useState(initialVenue.gig_end_time ?? "");
   const [address, setAddress] = useState(initialVenue.address ?? "");
   const [savingGigDate, setSavingGigDate] = useState(false);
+  const [lookingUpAddress, setLookingUpAddress] = useState(false);
 
   useEffect(() => {
     fetch(`/api/invoices?venue_id=${venue.id}`)
@@ -95,12 +97,33 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
     });
   }
 
+  async function saveGigEndTime(value: string) {
+    await fetch(`/api/venues/${venue.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gig_end_time: value || null }),
+    });
+  }
+
   async function saveAddress(value: string) {
     await fetch(`/api/venues/${venue.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ address: value || null }),
     });
+  }
+
+  async function lookUpAddress() {
+    setLookingUpAddress(true);
+    const params = new URLSearchParams({ name: venue.name });
+    if (venue.city) params.append("city", venue.city);
+    const res = await fetch(`/api/venues/lookup-address?${params}`);
+    const data = await res.json();
+    if (data.address) {
+      setAddress(data.address);
+      await saveAddress(data.address);
+    }
+    setLookingUpAddress(false);
   }
 
   async function saveContact() {
@@ -304,18 +327,34 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
                 className="text-sm rounded-lg px-2 py-1.5 focus:outline-none flex-1"
                 style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigDate ? "#f0ede8" : "#5e5c58" }}
               />
-              <input
-                type="time"
-                value={gigTime}
-                onChange={(e) => setGigTime(e.target.value)}
-                onBlur={(e) => saveGigTime(e.target.value)}
-                className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-28"
-                style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigTime ? "#f0ede8" : "#5e5c58" }}
-              />
+            </div>
+            <div className="flex gap-2 items-center">
+              <div className="flex-1">
+                <label className="text-xs mb-1 block" style={{ color: "#5e5c58" }}>Start</label>
+                <input
+                  type="time"
+                  value={gigTime}
+                  onChange={(e) => setGigTime(e.target.value)}
+                  onBlur={(e) => saveGigTime(e.target.value)}
+                  className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-full"
+                  style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigTime ? "#f0ede8" : "#5e5c58" }}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs mb-1 block" style={{ color: "#5e5c58" }}>End</label>
+                <input
+                  type="time"
+                  value={gigEndTime}
+                  onChange={(e) => setGigEndTime(e.target.value)}
+                  onBlur={(e) => saveGigEndTime(e.target.value)}
+                  className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-full"
+                  style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigEndTime ? "#f0ede8" : "#5e5c58" }}
+                />
+              </div>
             </div>
             {gigDate && (
               <button
-                onClick={() => { setGigDate(""); setGigTime(""); saveGigDate(""); saveGigTime(""); }}
+                onClick={() => { setGigDate(""); setGigTime(""); setGigEndTime(""); saveGigDate(""); saveGigTime(""); saveGigEndTime(""); }}
                 className="text-xs mt-1"
                 style={{ color: "#5e5c58" }}
               >
@@ -325,7 +364,17 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
           </div>
 
           <div>
-            <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Venue Address</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs" style={{ color: "#9a9591" }}>Venue Address</label>
+              <button
+                onClick={lookUpAddress}
+                disabled={lookingUpAddress}
+                className="text-xs transition-all hover:brightness-125"
+                style={{ color: "#d4a853", opacity: lookingUpAddress ? 0.5 : 1 }}
+              >
+                {lookingUpAddress ? "Looking up…" : "Look up ↗"}
+              </button>
+            </div>
             <input
               type="text"
               value={address}

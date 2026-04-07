@@ -39,6 +39,7 @@ export interface Venue {
   follow_up_date: string | null;
   address: string | null;
   gig_time: string | null;
+  gig_end_time: string | null;
   created_at: string;
   updated_at: string;
 }
