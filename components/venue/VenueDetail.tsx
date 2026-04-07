@@ -33,6 +33,8 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Editable contact fields
   const [contactName, setContactName] = useState(initialVenue.contact_name ?? "");
@@ -121,8 +123,55 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
     setLoggingInteraction(false);
   }
 
+  async function archiveVenue() {
+    await fetch(`/api/venues/${venue.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage: "dormant" }),
+    });
+    setVenue((v) => ({ ...v, stage: "dormant" }));
+  }
+
+  async function deleteVenue() {
+    setDeleting(true);
+    const res = await fetch(`/api/venues/${venue.id}`, { method: "DELETE" });
+    if (res.ok) {
+      window.location.href = "/pipeline";
+    } else {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  }
+
   return (
     <>
+    {showDeleteConfirm && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+        <div className="rounded-xl p-6 w-80" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <p className="font-semibold mb-1" style={{ color: "#f0ede8" }}>Delete {venue.name}?</p>
+          <p className="text-sm mb-5" style={{ color: "#9a9591" }}>
+            This permanently removes the venue and all its interactions. This cannot be undone.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              className="flex-1 text-sm py-2 rounded-lg"
+              style={{ backgroundColor: "#1e2128", color: "#9a9591", border: "1px solid rgba(255,255,255,0.1)" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={deleteVenue}
+              disabled={deleting}
+              className="flex-1 text-sm py-2 rounded-lg font-semibold"
+              style={{ backgroundColor: "#e25c5c", color: "#fff", opacity: deleting ? 0.6 : 1 }}
+            >
+              {deleting ? "Deleting…" : "Yes, Delete"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     {showInvoiceModal && (
       <InvoiceModal
         venue={venue}
@@ -156,9 +205,27 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
             {[venue.type, venue.city].filter(Boolean).join(" · ")}
           </p>
         </div>
-        <span className={cn("text-xs px-2 py-1 rounded-full font-medium shrink-0", STAGE_COLORS[venue.stage])}>
-          {STAGES.find((s) => s.key === venue.stage)?.label}
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={cn("text-xs px-2 py-1 rounded-full font-medium", STAGE_COLORS[venue.stage])}>
+            {STAGES.find((s) => s.key === venue.stage)?.label}
+          </span>
+          {venue.stage !== "dormant" && (
+            <button
+              onClick={archiveVenue}
+              className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+              style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "#9a9591", border: "1px solid rgba(255,255,255,0.1)" }}
+            >
+              Archive
+            </button>
+          )}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+            style={{ backgroundColor: "rgba(226,92,92,0.1)", color: "#e25c5c", border: "1px solid rgba(226,92,92,0.2)" }}
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-6 mb-8">
