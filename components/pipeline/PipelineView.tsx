@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Venue, VenueStage, STAGES } from "@/types";
+import AddVenueModal from "@/components/venue/AddVenueModal";
 
 const KanbanBoard = dynamic(() => import("./KanbanBoard"), { ssr: false });
 
@@ -15,6 +16,7 @@ interface Props {
 export default function PipelineView({ initialVenues, initialStageFilter }: Props) {
   const [venues, setVenues] = useState<Venue[]>(initialVenues);
   const [query, setQuery] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
   const router = useRouter();
 
   const filtered = venues.filter((v) => {
@@ -37,6 +39,15 @@ export default function PipelineView({ initialVenues, initialStageFilter }: Prop
 
   return (
     <div>
+      {showAddModal && (
+        <AddVenueModal
+          onClose={() => setShowAddModal(false)}
+          onAdded={(venue) => {
+            setVenues((prev) => [venue, ...prev]);
+            setShowAddModal(false);
+          }}
+        />
+      )}
       {/* Sticky header */}
       <div
         className="sticky top-0 z-10 shadow-sm px-8 pt-8 pb-0"
@@ -54,18 +65,27 @@ export default function PipelineView({ initialVenues, initialStageFilter }: Prop
               {filtered.length} venues · drag cards to update stage
             </p>
           </div>
-          <input
-            type="text"
-            placeholder="Search venues…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="text-sm px-3 py-1.5 rounded-lg w-52 focus:outline-none"
-            style={{
-              background: "#262b33",
-              border: "1px solid rgba(255,255,255,0.1)",
-              color: "#f0ede8",
-            }}
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Search venues…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="text-sm px-3 py-1.5 rounded-lg w-52 focus:outline-none"
+              style={{
+                background: "#262b33",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#f0ede8",
+              }}
+            />
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="text-sm px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all hover:brightness-110"
+              style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
+            >
+              + Add Venue
+            </button>
+          </div>
         </div>
         <div className="flex gap-3">
           {STAGES.map(({ key, label }) => (
