@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Venue, VenueStage, STAGES } from "@/types";
 
@@ -8,19 +9,23 @@ const KanbanBoard = dynamic(() => import("./KanbanBoard"), { ssr: false });
 
 interface Props {
   initialVenues: Venue[];
+  initialStageFilter: VenueStage | null;
 }
 
-export default function PipelineView({ initialVenues }: Props) {
+export default function PipelineView({ initialVenues, initialStageFilter }: Props) {
   const [venues, setVenues] = useState<Venue[]>(initialVenues);
   const [query, setQuery] = useState("");
+  const router = useRouter();
 
-  const filtered = query.trim()
-    ? venues.filter((v) =>
-        [v.name, v.city, v.type, v.contact_name]
+  const filtered = venues.filter((v) => {
+    const matchesStage = initialStageFilter ? v.stage === initialStageFilter : true;
+    const matchesQuery = query.trim()
+      ? [v.name, v.city, v.type, v.contact_name]
           .filter(Boolean)
           .some((field) => field!.toLowerCase().includes(query.toLowerCase()))
-      )
-    : venues;
+      : true;
+    return matchesStage && matchesQuery;
+  });
 
   const stageCounts = STAGES.reduce(
     (acc, { key }) => {
@@ -84,6 +89,27 @@ export default function PipelineView({ initialVenues }: Props) {
           ))}
         </div>
       </div>
+
+      {/* Stage filter banner */}
+      {initialStageFilter && (
+        <div className="px-8 pt-4">
+          <div
+            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm"
+            style={{ backgroundColor: "rgba(155,127,232,0.1)", border: "1px solid rgba(155,127,232,0.3)" }}
+          >
+            <span style={{ color: "#9b7fe8" }}>
+              Showing <strong>{STAGES.find(s => s.key === initialStageFilter)?.label}</strong> venues only
+            </span>
+            <button
+              onClick={() => router.push("/pipeline")}
+              className="text-xs underline"
+              style={{ color: "#9b7fe8" }}
+            >
+              Clear filter
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Board */}
       <div className="px-8 pt-4 pb-8">

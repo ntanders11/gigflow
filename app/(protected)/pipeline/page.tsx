@@ -1,8 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import PipelineView from "@/components/pipeline/PipelineView";
-import { Venue } from "@/types";
+import { Venue, VenueStage } from "@/types";
 
-export default async function PipelinePage() {
+export default async function PipelinePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ stage?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -14,5 +18,12 @@ export default async function PipelinePage() {
     .eq("user_id", user!.id)
     .order("created_at", { ascending: true });
 
-  return <PipelineView initialVenues={(venues as Venue[]) ?? []} />;
+  const { stage } = await searchParams;
+
+  return (
+    <PipelineView
+      initialVenues={(venues as Venue[]) ?? []}
+      initialStageFilter={(stage as VenueStage) ?? null}
+    />
+  );
 }

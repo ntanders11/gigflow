@@ -88,30 +88,35 @@ export default async function DashboardPage() {
       value: totalVenues,
       trend: "in your pipeline",
       color: "#f0ede8",
+      href: "/pipeline",
     },
     {
       label: "Booked",
       value: bookedCount,
       trend: "confirmed gigs",
       color: "#4caf7d",
+      href: "/pipeline?stage=booked",
     },
     {
       label: "Awaiting Reply",
       value: respondedCount,
       trend: "venues responded",
       color: "#9b7fe8",
+      href: "/pipeline?stage=responded",
     },
     {
       label: "Needs Attention",
       value: needsAttention.length,
       trend: "no reply in 5+ days",
       color: needsAttention.length > 0 ? "#e25c5c" : "#9a9591",
+      href: "/pipeline?stage=contacted",
     },
     {
       label: "Unpaid Invoices",
       value: unpaidCount,
       trend: `$${(unpaidTotal / 100).toFixed(0)} outstanding`,
       color: "#e09b50",
+      href: "/pipeline",
     },
   ];
 
@@ -153,9 +158,10 @@ export default async function DashboardPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-5 gap-4 mb-8 max-w-6xl">
         {statCards.map((stat) => (
-          <div
+          <Link
             key={stat.label}
-            className="rounded-xl p-5"
+            href={stat.href}
+            className="rounded-xl p-5 block transition-all hover:brightness-125"
             style={{
               backgroundColor: "#16181c",
               border: "1px solid rgba(255,255,255,0.07)",
@@ -177,7 +183,7 @@ export default async function DashboardPage() {
               <span style={{ color: "#4caf7d" }}>↑</span>{" "}
               {stat.trend.replace(/^↑\s*/, "")}
             </p>
-          </div>
+          </Link>
         ))}
       </div>
 
