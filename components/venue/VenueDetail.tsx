@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Venue, Interaction, VenueStage, STAGES, STAGE_COLORS, CONFIDENCE_COLORS, InteractionType } from "@/types";
 import { cn } from "@/lib/utils";
 import PitchEmailModal from "@/components/venue/PitchEmailModal";
-import TimePicker from "@/components/ui/TimePicker";
 import InvoiceModal from "@/components/invoice/InvoiceModal";
 import InvoiceStatusBadge from "@/components/invoice/InvoiceStatusBadge";
 import { Invoice } from "@/types";
@@ -329,21 +328,27 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
                 style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigDate ? "#f0ede8" : "#5e5c58" }}
               />
             </div>
-            <div className="flex gap-3 items-start">
-              <div>
-                <label className="text-xs mb-2 block" style={{ color: "#5e5c58" }}>Start</label>
-                <TimePicker
+            <div className="flex gap-2 items-center">
+              <div className="flex-1">
+                <label className="text-xs mb-1 block" style={{ color: "#5e5c58" }}>Start</label>
+                <input
+                  type="time"
                   value={gigTime}
-                  onChange={(v) => setGigTime(v)}
-                  onBlur={() => saveGigTime(gigTime)}
+                  onChange={(e) => setGigTime(e.target.value)}
+                  onBlur={(e) => saveGigTime(e.target.value)}
+                  className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-full"
+                  style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigTime ? "#f0ede8" : "#5e5c58" }}
                 />
               </div>
-              <div>
-                <label className="text-xs mb-2 block" style={{ color: "#5e5c58" }}>End</label>
-                <TimePicker
+              <div className="flex-1">
+                <label className="text-xs mb-1 block" style={{ color: "#5e5c58" }}>End</label>
+                <input
+                  type="time"
                   value={gigEndTime}
-                  onChange={(v) => setGigEndTime(v)}
-                  onBlur={() => saveGigEndTime(gigEndTime)}
+                  onChange={(e) => setGigEndTime(e.target.value)}
+                  onBlur={(e) => saveGigEndTime(e.target.value)}
+                  className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-full"
+                  style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigEndTime ? "#f0ede8" : "#5e5c58" }}
                 />
               </div>
             </div>
