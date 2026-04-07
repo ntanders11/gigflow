@@ -12,7 +12,7 @@ export default async function CalendarPage() {
 
   const { data: venues } = await supabase
     .from("venues")
-    .select("id, name, city, follow_up_date, notes")
+    .select("id, name, city, address, follow_up_date, gig_time, notes")
     .eq("user_id", user.id)
     .eq("stage", "booked")
     .order("follow_up_date", { ascending: true });

@@ -43,8 +43,10 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
   const [website, setWebsite] = useState(initialVenue.website ?? "");
   const [savingContact, setSavingContact] = useState(false);
 
-  // Gig date
+  // Gig date, time, address
   const [gigDate, setGigDate] = useState(initialVenue.follow_up_date ?? "");
+  const [gigTime, setGigTime] = useState(initialVenue.gig_time ?? "");
+  const [address, setAddress] = useState(initialVenue.address ?? "");
   const [savingGigDate, setSavingGigDate] = useState(false);
 
   useEffect(() => {
@@ -83,6 +85,22 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
       body: JSON.stringify({ follow_up_date: value || null }),
     });
     setSavingGigDate(false);
+  }
+
+  async function saveGigTime(value: string) {
+    await fetch(`/api/venues/${venue.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gig_time: value || null }),
+    });
+  }
+
+  async function saveAddress(value: string) {
+    await fetch(`/api/venues/${venue.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address: value || null }),
+    });
   }
 
   async function saveContact() {
@@ -274,26 +292,49 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
           </div>
           <div>
             <label className="text-xs mb-1 flex items-center justify-between" style={{ color: "#9a9591" }}>
-              <span>Gig Date</span>
+              <span>Gig Date &amp; Time</span>
               {savingGigDate && <span style={{ color: "#5e5c58" }}>Saving…</span>}
             </label>
-            <input
-              type="date"
-              value={gigDate}
-              onChange={(e) => setGigDate(e.target.value)}
-              onBlur={(e) => saveGigDate(e.target.value)}
-              className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-full"
-              style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigDate ? "#f0ede8" : "#5e5c58" }}
-            />
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={gigDate}
+                onChange={(e) => setGigDate(e.target.value)}
+                onBlur={(e) => saveGigDate(e.target.value)}
+                className="text-sm rounded-lg px-2 py-1.5 focus:outline-none flex-1"
+                style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigDate ? "#f0ede8" : "#5e5c58" }}
+              />
+              <input
+                type="time"
+                value={gigTime}
+                onChange={(e) => setGigTime(e.target.value)}
+                onBlur={(e) => saveGigTime(e.target.value)}
+                className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-28"
+                style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigTime ? "#f0ede8" : "#5e5c58" }}
+              />
+            </div>
             {gigDate && (
               <button
-                onClick={() => { setGigDate(""); saveGigDate(""); }}
+                onClick={() => { setGigDate(""); setGigTime(""); saveGigDate(""); saveGigTime(""); }}
                 className="text-xs mt-1"
                 style={{ color: "#5e5c58" }}
               >
-                Clear date
+                Clear
               </button>
             )}
+          </div>
+
+          <div>
+            <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Venue Address</label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              onBlur={(e) => saveAddress(e.target.value)}
+              placeholder="123 Main St, McMinnville, OR"
+              className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-full"
+              style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#f0ede8" }}
+            />
           </div>
 
           <div className="flex items-center gap-2">

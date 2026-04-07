@@ -6,9 +6,9 @@ function pad(n: string) {
   return n.padStart(2, "0");
 }
 
-function toICSDate(dateStr: string, hour: number) {
+function toICSDate(dateStr: string, hour: number, minute: number = 0) {
   const [y, m, d] = dateStr.split("-");
-  return `${y}${pad(m)}${pad(d)}T${String(hour).padStart(2, "0")}0000`;
+  return `${y}${pad(m)}${pad(d)}T${String(hour).padStart(2, "0")}${String(minute).padStart(2, "0")}00`;
 }
 
 function escapeICS(str: string) {
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
 
   const { data: venues, error } = await supabase
     .from("venues")
-    .select("id, name, city, follow_up_date, notes")
+    .select("id, name, city, address, follow_up_date, gig_time, notes")
     .eq("user_id", userId)
     .eq("stage", "booked")
     .not("follow_up_date", "is", null);
@@ -56,10 +56,14 @@ export async function GET(req: NextRequest) {
   }
 
   const events = (venues ?? []).map((v) => {
-    const dtStart = toICSDate(v.follow_up_date!, 19); // 7 PM
-    const dtEnd = toICSDate(v.follow_up_date!, 22);   // 10 PM
-    const summary = escapeICS(`Gig at ${v.name}`);
-    const location = escapeICS(v.city ?? v.name);
+    const startHour = v.gig_time ? parseInt(v.gig_time.split(":")[0]) : 19;
+    const startMin  = v.gig_time ? parseInt(v.gig_time.split(":")[1]) : 0;
+    const endHour   = startHour + 3; // default 3-hour set
+
+    const dtStart = toICSDate(v.follow_up_date!, startHour, startMin);
+    const dtEnd   = toICSDate(v.follow_up_date!, endHour,   startMin);
+    const summary  = escapeICS(`Gig at ${v.name}`);
+    const location = escapeICS(v.address ?? v.city ?? v.name);
     const description = v.notes
       ? escapeICS(v.notes)
       : escapeICS(`Booked gig at ${v.name}`);

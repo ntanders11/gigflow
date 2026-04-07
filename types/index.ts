@@ -37,6 +37,8 @@ export interface Venue {
   notes: string | null;
   last_contacted_at: string | null;
   follow_up_date: string | null;
+  address: string | null;
+  gig_time: string | null;
   created_at: string;
   updated_at: string;
 }

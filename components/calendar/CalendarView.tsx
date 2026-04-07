@@ -19,7 +19,9 @@ type Venue = {
   id: string;
   name: string;
   city: string | null;
+  address: string | null;
   follow_up_date: string | null;
+  gig_time: string | null;
   notes: string | null;
 };
 
@@ -27,8 +29,11 @@ function downloadICS(venue: Venue) {
   const d = venue.follow_up_date!;
   const [y, m, day] = d.split("-");
   const pad = (n: string) => n.padStart(2, "0");
-  const dtStart = `${y}${pad(m)}${pad(day)}T190000`;
-  const dtEnd   = `${y}${pad(m)}${pad(day)}T220000`;
+  const startH = venue.gig_time ? parseInt(venue.gig_time.split(":")[0]) : 19;
+  const startM = venue.gig_time ? parseInt(venue.gig_time.split(":")[1]) : 0;
+  const endH = startH + 3;
+  const dtStart = `${y}${pad(m)}${pad(day)}T${String(startH).padStart(2,"0")}${String(startM).padStart(2,"0")}00`;
+  const dtEnd   = `${y}${pad(m)}${pad(day)}T${String(endH).padStart(2,"0")}${String(startM).padStart(2,"0")}00`;
   const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z/, "Z");
   const escape = (s: string) => s.replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
 
@@ -42,7 +47,7 @@ function downloadICS(venue: Venue) {
     `DTSTART;TZID=America/Los_Angeles:${dtStart}`,
     `DTEND;TZID=America/Los_Angeles:${dtEnd}`,
     `SUMMARY:${escape(`Gig at ${venue.name}`)}`,
-    `LOCATION:${escape(venue.city ?? venue.name)}`,
+    `LOCATION:${escape(venue.address ?? venue.city ?? venue.name)}`,
     `DESCRIPTION:${escape(venue.notes ?? `Booked gig at ${venue.name}`)}`,
     "END:VEVENT",
     "END:VCALENDAR",
