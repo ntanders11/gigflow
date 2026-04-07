@@ -34,6 +34,13 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
+  // Editable contact fields
+  const [contactName, setContactName] = useState(initialVenue.contact_name ?? "");
+  const [contactEmail, setContactEmail] = useState(initialVenue.contact_email ?? "");
+  const [contactPhone, setContactPhone] = useState(initialVenue.contact_phone ?? "");
+  const [website, setWebsite] = useState(initialVenue.website ?? "");
+  const [savingContact, setSavingContact] = useState(false);
+
   useEffect(() => {
     fetch(`/api/invoices?venue_id=${venue.id}`)
       .then(r => r.json())
@@ -60,6 +67,21 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
       body: JSON.stringify({ notes }),
     });
     setSavingNotes(false);
+  }
+
+  async function saveContact() {
+    setSavingContact(true);
+    await fetch(`/api/venues/${venue.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contact_name: contactName || null,
+        contact_email: contactEmail || null,
+        contact_phone: contactPhone || null,
+        website: website || null,
+      }),
+    });
+    setSavingContact(false);
   }
 
   async function logInteraction() {
@@ -128,25 +150,29 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
       <div className="grid grid-cols-2 gap-6 mb-8">
         {/* Contact info */}
         <div className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#5e5c58" }}>Contact</h2>
-          {venue.contact_email && (
-            <a href={`mailto:${venue.contact_email}`} className="block text-sm hover:underline" style={{ color: "#f0ede8" }}>
-              {venue.contact_email}
-            </a>
-          )}
-          {venue.contact_phone && (
-            <a href={`tel:${venue.contact_phone}`} className="block text-sm hover:underline" style={{ color: "#f0ede8" }}>
-              {venue.contact_phone}
-            </a>
-          )}
-          {venue.website && (
-            <a href={venue.website} target="_blank" rel="noopener noreferrer" className="block text-sm hover:underline truncate" style={{ color: "#5b9bd5" }}>
-              {venue.website}
-            </a>
-          )}
-          {!venue.contact_email && !venue.contact_phone && !venue.website && (
-            <p className="text-sm" style={{ color: "#5e5c58" }}>No contact info yet</p>
-          )}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#5e5c58" }}>Contact</h2>
+            {savingContact && <span className="text-xs" style={{ color: "#5e5c58" }}>Saving...</span>}
+          </div>
+          {[
+            { label: "Name", value: contactName, set: setContactName, type: "text", placeholder: "Contact name" },
+            { label: "Email", value: contactEmail, set: setContactEmail, type: "email", placeholder: "booking@venue.com" },
+            { label: "Phone", value: contactPhone, set: setContactPhone, type: "tel", placeholder: "(503) 555-0000" },
+            { label: "Website", value: website, set: setWebsite, type: "url", placeholder: "https://venue.com" },
+          ].map(({ label, value, set, type, placeholder }) => (
+            <div key={label}>
+              <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>{label}</label>
+              <input
+                type={type}
+                value={value}
+                onChange={(e) => set(e.target.value)}
+                onBlur={saveContact}
+                placeholder={placeholder}
+                className="w-full text-sm rounded-lg px-2 py-1.5 focus:outline-none"
+                style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#f0ede8" }}
+              />
+            </div>
+          ))}
         </div>
 
         {/* Stage + confidence */}
