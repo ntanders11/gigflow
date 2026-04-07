@@ -42,7 +42,7 @@ export default async function DashboardPage() {
 
   const { data: venues } = await supabase
     .from("venues")
-    .select("id, name, type, city, stage, updated_at, follow_up_date")
+    .select("id, name, type, city, stage, updated_at, follow_up_date, last_contacted_at")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
 
@@ -60,47 +60,52 @@ export default async function DashboardPage() {
   // Aggregate stats
   const totalVenues = allVenues.length;
   const bookedCount = allVenues.filter((v) => v.stage === "booked").length;
+  const respondedCount = allVenues.filter((v) => v.stage === "responded").length;
   const contactedCount = allVenues.filter((v) => v.stage === "contacted").length;
 
-  const today = new Date().toISOString().split("T")[0];
-  const twoWeeksOut = new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
-  const followUpsDue = allVenues.filter(
-    (v) =>
-      v.follow_up_date &&
-      v.follow_up_date >= today &&
-      v.follow_up_date <= twoWeeksOut
-  ).length;
+  const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+
+  // Venues that need attention: contacted 5+ days ago, no reply yet
+  const needsAttention = allVenues
+    .filter(
+      (v) =>
+        v.stage === "contacted" &&
+        v.last_contacted_at &&
+        new Date(v.last_contacted_at) < fiveDaysAgo
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.last_contacted_at!).getTime() -
+        new Date(b.last_contacted_at!).getTime()
+    );
 
   // Derived lists
-  const recentVenues = allVenues.slice(0, 5);
   const bookedVenues = allVenues.filter((v) => v.stage === "booked");
 
   const statCards = [
     {
       label: "Total Venues",
       value: totalVenues,
-      trend: `↑ ${bookedCount} booked`,
+      trend: "in your pipeline",
       color: "#f0ede8",
     },
     {
       label: "Booked",
       value: bookedCount,
-      trend: "↑ confirmed gigs",
+      trend: "confirmed gigs",
       color: "#4caf7d",
     },
     {
-      label: "Outreach Sent",
-      value: contactedCount,
-      trend: `↑ ${allVenues.filter((v) => v.stage === "responded").length} awaiting reply`,
-      color: "#d4a853",
+      label: "Awaiting Reply",
+      value: respondedCount,
+      trend: "venues responded",
+      color: "#9b7fe8",
     },
     {
-      label: "Follow-ups Due",
-      value: followUpsDue,
-      trend: "↑ in next 14 days",
-      color: "#9b7fe8",
+      label: "Needs Attention",
+      value: needsAttention.length,
+      trend: "no reply in 5+ days",
+      color: needsAttention.length > 0 ? "#e25c5c" : "#9a9591",
     },
     {
       label: "Unpaid Invoices",
@@ -178,18 +183,18 @@ export default async function DashboardPage() {
 
       {/* Two-column section */}
       <div className="flex gap-6 max-w-6xl">
-        {/* Left: Recent Venue Activity (~60%) */}
+        {/* Left: Needs Attention (~60%) */}
         <div className="flex-[3]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#9a9591" }}>
-              Recent Venue Activity
+              Needs Attention
             </h2>
             <Link
               href="/pipeline"
               className="text-xs transition-all hover:brightness-125"
               style={{ color: "#d4a853" }}
             >
-              View all →
+              View pipeline →
             </Link>
           </div>
 
@@ -200,17 +205,24 @@ export default async function DashboardPage() {
               border: "1px solid rgba(255,255,255,0.07)",
             }}
           >
-            {recentVenues.length === 0 ? (
-              <p className="px-5 py-6 text-sm" style={{ color: "#5e5c58" }}>
-                No venues yet. Add your first venue to get started.
-              </p>
+            {needsAttention.length === 0 ? (
+              <div className="px-5 py-8 text-center">
+                <p className="text-sm font-medium mb-1" style={{ color: "#4caf7d" }}>
+                  You&apos;re all caught up!
+                </p>
+                <p className="text-xs" style={{ color: "#5e5c58" }}>
+                  No contacted venues have been waiting more than 5 days.
+                </p>
+              </div>
             ) : (
-              recentVenues.map((venue, idx) => {
-                const stage = venue.stage as VenueStage;
-                const stageStyle = STAGE_STYLE[stage] ?? STAGE_STYLE.discovered;
+              needsAttention.map((venue, idx) => {
                 const iconColor = typeColor(venue.type);
                 const firstLetter = (venue.type ?? "V")[0].toUpperCase();
-                const isLast = idx === recentVenues.length - 1;
+                const isLast = idx === needsAttention.length - 1;
+                const daysSince = Math.floor(
+                  (Date.now() - new Date(venue.last_contacted_at!).getTime()) /
+                    (1000 * 60 * 60 * 24)
+                );
 
                 return (
                   <Link
@@ -218,28 +230,22 @@ export default async function DashboardPage() {
                     href={`/venues/${venue.id}`}
                     className="flex items-center gap-4 px-5 py-4 transition-all hover:brightness-125"
                     style={{
-                      borderBottom: isLast
-                        ? "none"
-                        : "1px solid rgba(255,255,255,0.05)",
+                      borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.05)",
+                      borderLeft: "3px solid #e25c5c",
                     }}
                   >
-                    {/* Icon box */}
                     <div
                       className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-sm"
                       style={{
-                        backgroundColor: `${iconColor}54`,
+                        backgroundColor: `${iconColor}22`,
                         color: iconColor,
                       }}
                     >
                       <span style={{ fontWeight: 800 }}>{firstLetter}</span>
                     </div>
 
-                    {/* Venue info */}
                     <div className="flex-1 min-w-0">
-                      <p
-                        className="text-sm font-medium truncate"
-                        style={{ color: "#f0ede8" }}
-                      >
+                      <p className="text-sm font-medium truncate" style={{ color: "#f0ede8" }}>
                         {venue.name}
                       </p>
                       <p className="text-xs truncate" style={{ color: "#9a9591" }}>
@@ -247,15 +253,8 @@ export default async function DashboardPage() {
                       </p>
                     </div>
 
-                    {/* Status badge */}
-                    <span
-                      className="text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0"
-                      style={{
-                        backgroundColor: stageStyle.bg,
-                        color: stageStyle.color,
-                      }}
-                    >
-                      {stageStyle.label}
+                    <span className="text-xs font-medium flex-shrink-0" style={{ color: "#e25c5c" }}>
+                      {daysSince}d ago
                     </span>
                   </Link>
                 );
