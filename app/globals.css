@@ -31,3 +31,7 @@ body {
   color: #f0ede8;
   font-family: 'DM Sans', system-ui, sans-serif;
 }
+
+.time-scroll-col::-webkit-scrollbar {
+  display: none;
+}
