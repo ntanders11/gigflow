@@ -32,7 +32,9 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isLoginPage = pathname === "/login";
   // Public routes that don't require authentication
-  const isPublicRoute = pathname.startsWith("/profile/");
+  const isPublicRoute =
+    pathname.startsWith("/profile/") ||
+    pathname === "/api/calendar/ics";
 
   if (!user && !isLoginPage && !isPublicRoute) {
     const url = request.nextUrl.clone();
