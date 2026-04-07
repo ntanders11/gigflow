@@ -116,7 +116,7 @@ export default async function DashboardPage() {
       value: unpaidCount,
       trend: `$${(unpaidTotal / 100).toFixed(0)} outstanding`,
       color: "#e09b50",
-      href: "/pipeline",
+      href: "/invoices",
     },
   ];
 

@@ -9,6 +9,7 @@ const mainLinks = [
   { href: "/pipeline", label: "Pipeline", icon: "◎", badge: "94", comingSoon: false },
   { href: "/venues/import", label: "Outreach", icon: "✉", badge: "3", comingSoon: false },
   { href: "/calendar", label: "Booking Calendar", icon: "☐", badge: null, comingSoon: false },
+  { href: "/invoices", label: "Invoices", icon: "$", badge: null, comingSoon: false },
 ];
 
 const profileLinks = [
