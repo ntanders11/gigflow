@@ -41,6 +41,10 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
   const [website, setWebsite] = useState(initialVenue.website ?? "");
   const [savingContact, setSavingContact] = useState(false);
 
+  // Gig date
+  const [gigDate, setGigDate] = useState(initialVenue.follow_up_date ?? "");
+  const [savingGigDate, setSavingGigDate] = useState(false);
+
   useEffect(() => {
     fetch(`/api/invoices?venue_id=${venue.id}`)
       .then(r => r.json())
@@ -67,6 +71,16 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
       body: JSON.stringify({ notes }),
     });
     setSavingNotes(false);
+  }
+
+  async function saveGigDate(value: string) {
+    setSavingGigDate(true);
+    await fetch(`/api/venues/${venue.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ follow_up_date: value || null }),
+    });
+    setSavingGigDate(false);
   }
 
   async function saveContact() {
@@ -191,6 +205,30 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
               ))}
             </select>
           </div>
+          <div>
+            <label className="text-xs mb-1 flex items-center justify-between" style={{ color: "#9a9591" }}>
+              <span>Gig Date</span>
+              {savingGigDate && <span style={{ color: "#5e5c58" }}>Saving…</span>}
+            </label>
+            <input
+              type="date"
+              value={gigDate}
+              onChange={(e) => setGigDate(e.target.value)}
+              onBlur={(e) => saveGigDate(e.target.value)}
+              className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-full"
+              style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: gigDate ? "#f0ede8" : "#5e5c58" }}
+            />
+            {gigDate && (
+              <button
+                onClick={() => { setGigDate(""); saveGigDate(""); }}
+                className="text-xs mt-1"
+                style={{ color: "#5e5c58" }}
+              >
+                Clear date
+              </button>
+            )}
+          </div>
+
           <div className="flex items-center gap-2">
             <span className="text-xs" style={{ color: "#9a9591" }}>Confidence:</span>
             <span className={cn("text-xs px-1.5 py-0.5 rounded border font-medium", CONFIDENCE_COLORS[venue.confidence])}>
