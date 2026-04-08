@@ -1,23 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// Lean query — only the tags that definitively mean live music
-const LIVE_MUSIC_CLAUSES = [
-  'node["live_music"="yes"]',
-  'way["live_music"="yes"]',
-  'node["amenity"="music_venue"]',
-  'way["amenity"="music_venue"]',
-  'node["amenity"="nightclub"]',
-  'way["amenity"="nightclub"]',
-  'node["amenity"="concert_hall"]',
-  'way["amenity"="concert_hall"]',
-];
+// Yelp categories that are specifically live music / performance venues
+const YELP_CATEGORIES = [
+  "musicvenues",
+  "jazzandblues",
+  "piano_bars",
+  "countrydancehalls",
+  "danceclubs",
+  "comedyclubs",
+  "concerthalls",
+].join(",");
 
-const OSM_TO_GIGFLOW_TYPE: Record<string, string> = {
-  bar: "bar", pub: "bar", restaurant: "restaurant", cafe: "cafe",
-  brewery: "brewery", winery: "winery", nightclub: "club",
-  hotel: "hotel", events_venue: "venue", arts_centre: "venue",
+const YELP_CATEGORY_TO_TYPE: Record<string, string> = {
+  musicvenues: "venue",
+  jazzandblues: "bar",
+  piano_bars: "bar",
+  countrydancehalls: "venue",
+  danceclubs: "club",
+  comedyclubs: "venue",
+  concerthalls: "venue",
+  bars: "bar",
+  breweries: "brewery",
+  wineries: "winery",
+  wine_bars: "winery",
+  brewpubs: "brewery",
 };
+
+function inferType(categories: { alias: string }[]): string {
+  for (const cat of categories) {
+    const t = YELP_CATEGORY_TO_TYPE[cat.alias];
+    if (t) return t;
+  }
+  return "venue";
+}
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -25,101 +41,69 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = req.nextUrl;
-  const city    = searchParams.get("city")?.trim();
-  const radius  = parseInt(searchParams.get("radius") ?? "10") * 1609; // miles → meters
+  const city   = searchParams.get("city")?.trim();
+  const miles  = parseInt(searchParams.get("radius") ?? "25");
+  const radius = Math.min(miles * 1609, 40000); // Yelp max is 40,000m
 
   if (!city) return NextResponse.json({ error: "city is required" }, { status: 400 });
 
-  // 1. Geocode city → lat/lon
-  const geoRes = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
-    { headers: { "User-Agent": "GigFlow/1.0 (taylorandersonmusic.com)" } }
-  );
-  const geoData = await geoRes.json();
-  if (!geoData.length) return NextResponse.json({ error: "Location not found" }, { status: 404 });
+  const apiKey = process.env.YELP_API_KEY;
+  if (!apiKey) return NextResponse.json({ error: "Yelp API key not configured" }, { status: 500 });
 
-  const lat = parseFloat(geoData[0].lat);
-  const lon = parseFloat(geoData[0].lon);
+  // Search Yelp for live music venue categories
+  const params = new URLSearchParams({
+    location: city,
+    categories: YELP_CATEGORIES,
+    radius: String(radius),
+    limit: "50",
+    sort_by: "rating",
+  });
 
-  // 2. Build Overpass query — only confirmed live music venues
-  const lines = LIVE_MUSIC_CLAUSES.map((c) => `${c}(around:${radius},${lat},${lon});`);
-  const query = `[out:json][timeout:25];\n(\n${lines.join("\n")}\n);\nout body center;`;
-  const encoded = `data=${encodeURIComponent(query)}`;
-  const MIRRORS = [
-    "https://overpass.kumi.systems/api/interpreter",
-    "https://overpass-api.de/api/interpreter",
-  ];
-
-  let opRes: Response | null = null;
-  for (const mirror of MIRRORS) {
-    try {
-      const r = await fetch(mirror, {
-        method: "POST",
-        body: encoded,
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        signal: AbortSignal.timeout(8000),
-      });
-      if (r.ok) { opRes = r; break; }
-    } catch {
-      // try next mirror
+  const yelpRes = await fetch(
+    `https://api.yelp.com/v3/businesses/search?${params}`,
+    {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(8000),
     }
+  );
+
+  if (!yelpRes.ok) {
+    const err = await yelpRes.text();
+    console.error("Yelp error:", yelpRes.status, err.slice(0, 200));
+    return NextResponse.json({ error: "Venue search failed — please try again." }, { status: 502 });
   }
 
-  if (!opRes) {
-    return NextResponse.json({ error: "Could not reach the venue search service — please try again in a moment." }, { status: 502 });
-  }
+  const yelpData = await yelpRes.json();
 
-  const opData = await opRes.json();
-
-  // 3. Get user's existing venue names for dedup
+  // Get existing venue names to flag duplicates
   const { data: existingVenues } = await supabase
     .from("venues")
     .select("name")
     .eq("user_id", user.id);
   const existingNames = new Set((existingVenues ?? []).map((v) => v.name.toLowerCase().trim()));
 
-  // 4. Map results
-  const seen = new Set<string>();
-  const results = (opData.elements ?? [])
-    .filter((el: any) => {
-      const name = el.tags?.name;
-      if (!name) return false;
-      const key = name.toLowerCase().trim();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .map((el: any) => {
-      const tags = el.tags ?? {};
-      const amenity = tags.amenity || tags.craft || tags.tourism || "";
-      const type = OSM_TO_GIGFLOW_TYPE[amenity] ?? "venue";
-      const lat2 = el.lat ?? el.center?.lat;
-      const lon2 = el.lon ?? el.center?.lon;
-      const city2 = tags["addr:city"] || tags["addr:town"] || tags["addr:village"] || null;
-      const address = tags["addr:street"]
-        ? `${tags["addr:housenumber"] ? tags["addr:housenumber"] + " " : ""}${tags["addr:street"]}${city2 ? ", " + city2 : ""}`
-        : null;
-
-      const hasLiveMusicTag =
-        tags.live_music === "yes" ||
-        tags.entertainment === "live_music" ||
-        tags.amenity === "music_venue";
+  const results = (yelpData.businesses ?? [])
+    .filter((b: any) => !b.is_closed)
+    .map((b: any) => {
+      const loc = b.location ?? {};
+      const city2 = loc.city ?? null;
+      const address = [loc.address1, loc.address2].filter(Boolean).join(", ") || null;
+      const fullAddress = address ? `${address}${city2 ? ", " + city2 : ""}` : null;
 
       return {
-        osm_id: String(el.id),
-        name: tags.name,
-        type,
+        osm_id: b.id, // reusing field name for compat with UI
+        name: b.name,
+        type: inferType(b.categories ?? []),
         city: city2,
-        address,
-        website: tags.website || tags["contact:website"] || null,
-        phone: tags.phone || tags["contact:phone"] || null,
-        lat: lat2,
-        lon: lon2,
-        live_music_tagged: hasLiveMusicTag,
-        already_in_pipeline: existingNames.has(tags.name.toLowerCase().trim()),
+        address: fullAddress,
+        website: b.url ?? null, // Yelp page URL
+        phone: b.display_phone ?? null,
+        rating: b.rating ?? null,
+        review_count: b.review_count ?? 0,
+        live_music_tagged: true, // all Yelp results here are music-specific categories
+        already_in_pipeline: existingNames.has(b.name.toLowerCase().trim()),
       };
-    })
-    .slice(0, 80); // cap at 80 results
+    });
 
-  return NextResponse.json({ results, geocoded: { lat, lon, label: geoData[0].display_name } });
+  return NextResponse.json({ results });
 }

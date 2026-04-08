@@ -20,6 +20,8 @@ type DiscoverResult = {
   address: string | null;
   website: string | null;
   phone: string | null;
+  rating: number | null;
+  review_count: number;
   live_music_tagged: boolean;
   already_in_pipeline: boolean;
 };
@@ -145,8 +147,8 @@ export default function DiscoverView() {
         <>
           {newVenues.length === 0 && inPipeline.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>No confirmed live music venues found</p>
-              <p className="text-xs" style={{ color: "#5e5c58" }}>Try a larger radius — or many venues simply haven&apos;t listed themselves online yet, so manual search may be needed for smaller markets.</p>
+              <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>No live music venues found</p>
+              <p className="text-xs" style={{ color: "#5e5c58" }}>Try a larger radius or a nearby bigger city.</p>
             </div>
           ) : (
             <>
@@ -170,23 +172,19 @@ export default function DiscoverView() {
                             <p className="text-sm font-semibold leading-snug" style={{ color: "#f0ede8" }}>
                               {venue.name}
                             </p>
-                            <div className="flex flex-col items-end gap-1 shrink-0">
-                              {venue.live_music_tagged && (
-                                <span
-                                  className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                                  style={{ backgroundColor: "rgba(76,175,125,0.2)", color: "#4caf7d", border: "1px solid rgba(76,175,125,0.4)" }}
-                                >
-                                  🎵 Live Music
-                                </span>
-                              )}
-                              <span
-                                className="text-xs px-2 py-0.5 rounded-full"
-                                style={{ backgroundColor: `${color}22`, color, border: `1px solid ${color}44` }}
-                              >
-                                {typeLabel(venue.type)}
-                              </span>
-                            </div>
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full shrink-0"
+                              style={{ backgroundColor: `${color}22`, color, border: `1px solid ${color}44` }}
+                            >
+                              {typeLabel(venue.type)}
+                            </span>
                           </div>
+
+                          {venue.rating && (
+                            <p className="text-xs" style={{ color: "#d4a853" }}>
+                              {"★".repeat(Math.round(venue.rating))}{"☆".repeat(5 - Math.round(venue.rating))} {venue.rating} · {venue.review_count} reviews
+                            </p>
+                          )}
 
                           {(venue.city || venue.address) && (
                             <p className="text-xs truncate" style={{ color: "#5e5c58" }}>
