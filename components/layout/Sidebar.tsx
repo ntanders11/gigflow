@@ -5,11 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const mainLinks = [
-  { href: "/dashboard", label: "Overview", icon: "◆", badge: null, comingSoon: false },
-  { href: "/pipeline", label: "Pipeline", icon: "◎", badge: "94", comingSoon: false },
-  { href: "/venues/import", label: "Outreach", icon: "✉", badge: "3", comingSoon: false },
-  { href: "/calendar", label: "Booking Calendar", icon: "☐", badge: null, comingSoon: false },
-  { href: "/invoices", label: "Invoices", icon: "$", badge: null, comingSoon: false },
+  { href: "/dashboard",  label: "Overview",         icon: "◆", badge: null, comingSoon: false },
+  { href: "/pipeline",   label: "Pipeline",          icon: "◎", badge: null, comingSoon: false },
+  { href: "/discover",   label: "Discover Venues",   icon: "⊕", badge: null, comingSoon: false },
+  { href: "/venues/import", label: "Outreach",       icon: "✉", badge: null, comingSoon: false },
+  { href: "/calendar",   label: "Booking Calendar",  icon: "☐", badge: null, comingSoon: false },
+  { href: "/invoices",   label: "Invoices",          icon: "$", badge: null, comingSoon: false },
 ];
 
 const profileLinks = [
