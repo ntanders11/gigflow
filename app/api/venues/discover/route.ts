@@ -7,24 +7,13 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = req.nextUrl;
-  const city  = searchParams.get("city")?.trim();
+  const lat  = parseFloat(searchParams.get("lat") ?? "");
+  const lon  = parseFloat(searchParams.get("lon") ?? "");
   const miles = parseInt(searchParams.get("radius") ?? "25");
   const radiusMeters = Math.min(miles * 1609, 50000);
 
-  if (!city) return NextResponse.json({ error: "city is required" }, { status: 400 });
+  if (isNaN(lat) || isNaN(lon)) return NextResponse.json({ error: "lat and lon are required" }, { status: 400 });
 
-  // 1. Geocode city
-  const geoRes = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
-    { headers: { "User-Agent": "GigFlow/1.0 (taylorandersonmusic.com)" }, signal: AbortSignal.timeout(6000) }
-  );
-  const geoData = await geoRes.json();
-  if (!geoData.length) return NextResponse.json({ error: "Location not found" }, { status: 404 });
-
-  const lat = parseFloat(geoData[0].lat);
-  const lon = parseFloat(geoData[0].lon);
-
-  // 2. Only venues explicitly tagged as live music in OSM
   const clauses = [
     `node["live_music"="yes"]`,
     `way["live_music"="yes"]`,
@@ -36,7 +25,7 @@ export async function GET(req: NextRequest) {
     `way["amenity"="concert_hall"]`,
   ].map((c) => `${c}(around:${radiusMeters},${lat},${lon});`);
 
-  const query = `[out:json][timeout:20];\n(\n${clauses.join("\n")}\n);\nout body center;`;
+  const query = `[out:json][timeout:8];\n(\n${clauses.join("\n")}\n);\nout body center;`;
   const encoded = `data=${encodeURIComponent(query)}`;
 
   const MIRRORS = [
@@ -44,26 +33,23 @@ export async function GET(req: NextRequest) {
     "https://overpass-api.de/api/interpreter",
   ];
 
-  let opRes: Response | null = null;
+  let opData: any = null;
   for (const mirror of MIRRORS) {
     try {
       const r = await fetch(mirror, {
         method: "POST",
         body: encoded,
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(7000),
       });
-      if (r.ok) { opRes = r; break; }
+      if (r.ok) { opData = await r.json(); break; }
     } catch { /* try next */ }
   }
 
-  if (!opRes) {
-    return NextResponse.json({ error: "Search service unavailable — please try again in a moment." }, { status: 502 });
+  if (!opData) {
+    return NextResponse.json({ error: "Search unavailable — please try again." }, { status: 502 });
   }
 
-  const opData = await opRes.json();
-
-  // 3. Dedup against existing pipeline
   const { data: existingVenues } = await supabase
     .from("venues")
     .select("name")

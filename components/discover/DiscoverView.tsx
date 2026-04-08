@@ -42,8 +42,26 @@ export default function DiscoverView() {
     setError("");
     setSearched(false);
 
+    // Geocode in the browser so our API only needs to call Overpass
+    let lat: number, lon: number;
+    try {
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city.trim())}&format=json&limit=1`,
+        { headers: { "User-Agent": "GigFlow/1.0" } }
+      );
+      const geoData = await geoRes.json();
+      if (!geoData.length) { setError("Location not found — try a different city or zip."); setLoading(false); return; }
+      lat = parseFloat(geoData[0].lat);
+      lon = parseFloat(geoData[0].lon);
+    } catch {
+      setError("Could not find that location — check your connection and try again.");
+      setLoading(false);
+      return;
+    }
+
     const params = new URLSearchParams({
-      city: city.trim(),
+      lat: String(lat),
+      lon: String(lon),
       radius: String(radius),
     });
 
