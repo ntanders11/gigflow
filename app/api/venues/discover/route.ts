@@ -33,8 +33,8 @@ export async function GET(req: NextRequest) {
 
   if (!city) return NextResponse.json({ error: "city is required" }, { status: 400 });
 
-  const apiKey = process.env.FOURSQUARE_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "Foursquare API key not configured" }, { status: 500 });
+  const apiKey = process.env.FOURSQUARE_API_KEY?.trim();
+  if (!apiKey) return NextResponse.json({ error: `Foursquare API key not configured (saw: ${JSON.stringify(process.env.FOURSQUARE_API_KEY)})` }, { status: 500 });
 
   const params = new URLSearchParams({
     near: city,
