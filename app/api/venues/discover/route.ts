@@ -28,21 +28,21 @@ export async function GET(req: NextRequest) {
   const [lon, lat] = geoData.features[0].geometry.coordinates;
 
   // 2. Search for live music / entertainment venues
+  // Geoapify category reference: https://apidocs.geoapify.com/docs/places/
   const categories = [
-    "entertainment.music",
     "entertainment.nightclub",
-    "entertainment.culture",
+    "catering.bar",
+    "catering.pub",
+    "entertainment",
   ].join(",");
 
-  const placesRes = await fetch(
-    `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},${radiusMeters}&limit=50&apiKey=${apiKey}`,
-    { signal: AbortSignal.timeout(8000) }
-  );
+  const placesUrl = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},${radiusMeters}&limit=50&apiKey=${apiKey}`;
+  const placesRes = await fetch(placesUrl, { signal: AbortSignal.timeout(8000) });
 
   if (!placesRes.ok) {
     const err = await placesRes.text();
-    console.error("Geoapify error:", placesRes.status, err.slice(0, 200));
-    return NextResponse.json({ error: "Venue search failed — please try again." }, { status: 502 });
+    console.error("Geoapify places error:", placesRes.status, err.slice(0, 400));
+    return NextResponse.json({ error: `Venue search failed (${placesRes.status}) — please try again.` }, { status: 502 });
   }
 
   const placesData = await placesRes.json();
