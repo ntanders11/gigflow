@@ -48,9 +48,9 @@ export default function PipelineView({ initialVenues, initialStageFilter }: Prop
           }}
         />
       )}
-      {/* Sticky header */}
+      {/* Header — sticky on desktop, static on mobile */}
       <div
-        className="sticky top-0 z-10 shadow-sm px-8 pt-8 pb-0"
+        className="md:sticky top-0 z-10 shadow-sm px-4 md:px-8 pt-6 md:pt-8 pb-0"
         style={{
           backgroundColor: "#16181c",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
@@ -62,16 +62,16 @@ export default function PipelineView({ initialVenues, initialStageFilter }: Prop
               Pipeline
             </h1>
             <p className="text-sm mt-1" style={{ color: "#9a9591" }}>
-              {filtered.length} venues · drag cards to update stage
+              {filtered.length} venues
             </p>
           </div>
           <div className="flex items-center gap-2">
             <input
               type="text"
-              placeholder="Search venues…"
+              placeholder="Search…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="text-sm px-3 py-1.5 rounded-lg w-52 focus:outline-none"
+              className="text-sm px-3 py-1.5 rounded-lg w-32 md:w-52 focus:outline-none"
               style={{
                 background: "#262b33",
                 border: "1px solid rgba(255,255,255,0.1)",
@@ -83,11 +83,12 @@ export default function PipelineView({ initialVenues, initialStageFilter }: Prop
               className="text-sm px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all hover:brightness-110"
               style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
             >
-              + Add Venue
+              + Add
             </button>
           </div>
         </div>
-        <div className="flex gap-3">
+        {/* Stage labels — hidden on mobile, they're on each column header instead */}
+        <div className="hidden md:flex gap-3">
           {STAGES.map(({ key, label }) => (
             <div
               key={key}

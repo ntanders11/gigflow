@@ -1,7 +1,7 @@
 "use client";
 
 import { Droppable } from "@hello-pangea/dnd";
-import { Venue, VenueStage } from "@/types";
+import { Venue, VenueStage, STAGES } from "@/types";
 import VenueCard from "@/components/venue/VenueCard";
 
 interface Props {
@@ -11,8 +11,19 @@ interface Props {
 }
 
 export default function KanbanColumn({ stage, venues, onReply }: Props) {
+  const label = STAGES.find((s) => s.key === stage)?.label ?? stage;
+
   return (
     <div className="flex flex-col flex-1 min-w-36">
+      {/* Column header — visible on mobile only (desktop shows them in sticky bar) */}
+      <div className="md:hidden flex items-center justify-between mb-2 px-1">
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#9a9591" }}>
+          {label}
+        </span>
+        <span className="text-xs rounded-full px-2 py-0.5 font-medium" style={{ backgroundColor: "#262b33", color: "#d4a853" }}>
+          {venues.length}
+        </span>
+      </div>
       <Droppable droppableId={stage}>
         {(provided, snapshot) => (
           <div
