@@ -85,7 +85,7 @@ export default function KanbanBoard({ venues, setVenues }: Props) {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex gap-3 pb-4">
+      <div className="flex gap-3 pb-4 overflow-x-auto min-w-0">
         {STAGES.map(({ key }) => (
           <KanbanColumn
             key={key}

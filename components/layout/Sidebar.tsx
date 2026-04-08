@@ -219,3 +219,38 @@ export default function Sidebar() {
     </aside>
   );
 }
+
+// Mobile bottom navigation bar
+export function MobileBottomNav() {
+  const pathname = usePathname();
+
+  const mobileLinks = [
+    { href: "/dashboard",  label: "Overview",  icon: "◆" },
+    { href: "/pipeline",   label: "Pipeline",  icon: "◎" },
+    { href: "/discover",   label: "Discover",  icon: "⊕" },
+    { href: "/calendar",   label: "Calendar",  icon: "☐" },
+    { href: "/invoices",   label: "Invoices",  icon: "$" },
+  ];
+
+  return (
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 py-2"
+      style={{ backgroundColor: "#16181c", borderTop: "1px solid rgba(255,255,255,0.07)" }}
+    >
+      {mobileLinks.map((link) => {
+        const isActive = pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href));
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all"
+            style={{ color: isActive ? "#d4a853" : "#5e5c58" }}
+          >
+            <span style={{ fontSize: "16px" }}>{link.icon}</span>
+            <span style={{ fontSize: "9px", fontWeight: isActive ? 600 : 400 }}>{link.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

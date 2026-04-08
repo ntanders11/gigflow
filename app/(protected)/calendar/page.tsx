@@ -43,7 +43,7 @@ export default async function CalendarPage() {
   const subscriptionUrl = `${baseUrl}/api/calendar/ics?uid=${user.id}`;
 
   return (
-    <div className="min-h-screen p-8" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
+    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6 max-w-5xl">
         <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#f0ede8" }}>

@@ -160,7 +160,7 @@ export default async function DashboardPage() {
 
   return (
     <div
-      className="min-h-screen p-8"
+      className="min-h-screen p-4 md:p-8"
       style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}
     >
       {/* Top bar */}
@@ -194,7 +194,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-5 gap-4 mb-8 max-w-6xl">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-8 max-w-6xl">
         {statCards.map((stat) => (
           <Link
             key={stat.label}
@@ -247,7 +247,7 @@ export default async function DashboardPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {thisWeekGigs.map((gig: any) => {
               const tomorrowStr = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
               const isToday = gig.date === todayStr;
@@ -355,7 +355,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Two-column section */}
-      <div className="flex gap-6 max-w-6xl">
+      <div className="flex flex-col md:flex-row gap-6 max-w-6xl">
         {/* Left: Needs Attention (~60%) */}
         <div className="flex-[3]">
           <div className="flex items-center justify-between mb-4">

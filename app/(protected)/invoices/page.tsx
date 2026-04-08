@@ -42,7 +42,7 @@ export default async function InvoicesPage() {
     .reduce((sum, i) => sum + i.amount_cents, 0);
 
   return (
-    <div className="min-h-screen p-8" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
+    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-8 max-w-4xl">
         <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#f0ede8" }}>
@@ -51,7 +51,7 @@ export default async function InvoicesPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4 mb-8 max-w-4xl">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 max-w-4xl">
         <div
           className="rounded-xl p-5"
           style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}

@@ -192,7 +192,7 @@ export default function ArtistProfilePage() {
   const social = profile?.social_links || DEFAULT_SOCIAL;
 
   return (
-    <div className="min-h-screen p-8" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
+    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
       {cropSrc && (
         <PhotoCropModal
           imageSrc={cropSrc}
