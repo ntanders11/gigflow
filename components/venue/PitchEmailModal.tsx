@@ -1,28 +1,38 @@
 "use client";
 
-import { useState } from "react";
-import { Venue, Interaction } from "@/types";
+import { useState, useEffect } from "react";
+import { Venue, Interaction, ArtistProfile } from "@/types";
 
-function buildDefaultSubject(venueName: string) {
+function buildSubject(venueName: string) {
   return `Live music inquiry for ${venueName} — full-band sound, one performer`;
 }
 
-function buildDefaultBody(venueName: string, contactName?: string | null) {
+function buildBody(venueName: string, profile: ArtistProfile | null, contactName?: string | null) {
   const greeting = contactName ? `Hi ${contactName},` : `Hi there,`;
+  const name = profile?.display_name ?? "Taylor Anderson";
+  const phone = profile?.phone ?? "(503) 997-3586";
+  const website = profile?.social_links?.website ?? "taylorandersonmusic.com";
+  const youtube = profile?.social_links?.youtube
+    ?? profile?.video_samples?.[0]?.url
+    ?? "https://youtu.be/JaPOuz1R0HI?si=lo5JhEbgowL2g5JU";
+  const bio = profile?.bio?.trim()
+    ? profile.bio.trim()
+    : `For over a decade, I ran my own music business — booking and performing at resorts, wineries, and venues throughout the Scottsdale and Phoenix area. What makes my show unique: using a live looper, I build guitar, bass, keys, and drums on the spot — a full-band sound with just one performer. My sets blend Top 40, '60s–'00s classics, and a touch of country.`;
+
   return `${greeting}
 
-I'm Taylor Anderson — a full-time musician with over a decade of live performance experience. I recently relocated to the Newberg area and would love to play at ${venueName}.
+I'm ${name} — a full-time musician with over a decade of live performance experience. I recently relocated to the Newberg area and would love to play at ${venueName}.
 
-For over a decade, I ran my own music business — booking and performing at resorts, wineries, and venues throughout the Scottsdale and Phoenix area. What makes my show unique: using a live looper, I build guitar, bass, keys, and drums on the spot — a full-band sound with just one performer. My sets blend Top 40, '60s–'00s classics, and a touch of country.
+${bio}
 
-Hear it for yourself: https://youtu.be/JaPOuz1R0HI?si=lo5JhEbgowL2g5JU
+Hear it for yourself: ${youtube}
 
 I'm booking upcoming dates now and would love to find a time that works for ${venueName}. Would you be open to a quick call this week?
 
 Thanks so much,
-Taylor Anderson
-(503) 997-3586
-taylorandersonmusic.com`;
+${name}
+${phone}
+${website}`;
 }
 
 interface Props {
@@ -32,12 +42,26 @@ interface Props {
 }
 
 export default function PitchEmailModal({ venue, onClose, onSuccess }: Props) {
+  const [profile, setProfile] = useState<ArtistProfile | null>(null);
   const [to, setTo] = useState(venue.contact_email ?? "");
-  const [subject, setSubject] = useState(buildDefaultSubject(venue.name));
-  const [body, setBody] = useState(buildDefaultBody(venue.name, venue.contact_name));
+  const [subject, setSubject] = useState(buildSubject(venue.name));
+  const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Load artist profile and build email body from it
+  useEffect(() => {
+    fetch("/api/artist-profile")
+      .then((r) => r.json())
+      .then((p: ArtistProfile) => {
+        setProfile(p);
+        setBody(buildBody(venue.name, p, venue.contact_name));
+      })
+      .catch(() => {
+        setBody(buildBody(venue.name, null, venue.contact_name));
+      });
+  }, [venue.name, venue.contact_name]);
 
   async function handleSend() {
     if (!to.trim()) {

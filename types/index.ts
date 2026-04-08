@@ -132,6 +132,8 @@ export interface SocialLinks {
 export interface ArtistProfile {
   id: string;
   user_id: string;
+  display_name: string | null;
+  phone: string | null;
   bio: string;
   genres: string[];
   photo_url: string | null;

@@ -47,6 +47,11 @@ export default function ArtistProfilePage() {
   const [cropFileName, setCropFileName] = useState("");
   const [cropFileType, setCropFileType] = useState("");
 
+  // Name + phone editing
+  const [editingContact, setEditingContact] = useState(false);
+  const [nameText, setNameText] = useState("");
+  const [phoneText, setPhoneText] = useState("");
+
   // Bio editing
   const [editingBio, setEditingBio] = useState(false);
   const [bioText, setBioText] = useState("");
@@ -78,6 +83,8 @@ export default function ArtistProfilePage() {
       if (res.ok) {
         const data: ArtistProfile = await res.json();
         setProfile(data);
+        setNameText(data.display_name || "");
+        setPhoneText(data.phone || "");
         setBioText(data.bio || "");
         setSocialEdits(data.social_links || DEFAULT_SOCIAL);
       }
@@ -438,6 +445,68 @@ export default function ArtistProfilePage() {
 
         {/* ── RIGHT MAIN CONTENT ── */}
         <div className="flex-1 flex flex-col gap-4">
+
+          {/* Contact Info */}
+          <div
+            className="rounded-xl p-5"
+            style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div style={{ fontSize: "9px", color: "#5e5c58", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Contact Info
+              </div>
+              {editingContact ? (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { save({ display_name: nameText, phone: phoneText }); setEditingContact(false); }}
+                    className="text-xs px-2.5 py-0.5 rounded font-semibold transition-all hover:brightness-110"
+                    style={{ backgroundColor: "#d4a853", color: "#0e0f11", cursor: "pointer" }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => { setNameText(profile?.display_name || ""); setPhoneText(profile?.phone || ""); setEditingContact(false); }}
+                    className="text-xs px-2.5 py-0.5 rounded transition-all hover:brightness-125"
+                    style={{ backgroundColor: "#1e2128", color: "#9a9591", cursor: "pointer" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setEditingContact(true)} style={{ color: "#d4a853", fontSize: "11px", cursor: "pointer" }}>
+                  Edit
+                </button>
+              )}
+            </div>
+            {editingContact ? (
+              <div className="flex flex-col gap-2">
+                <input
+                  autoFocus
+                  value={nameText}
+                  onChange={(e) => setNameText(e.target.value)}
+                  placeholder="Your name"
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(212,168,83,0.3)" }}
+                />
+                <input
+                  value={phoneText}
+                  onChange={(e) => setPhoneText(e.target.value)}
+                  placeholder="Phone number"
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(212,168,83,0.3)" }}
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1 cursor-text" onClick={() => setEditingContact(true)}>
+                <p style={{ color: profile?.display_name ? "#f0ede8" : "#5e5c58", fontSize: "13px", fontWeight: 500 }}>
+                  {profile?.display_name || "Add your name"}
+                </p>
+                <p style={{ color: profile?.phone ? "#9a9591" : "#5e5c58", fontSize: "12px" }}>
+                  {profile?.phone || "Add your phone number"}
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Bio */}
           <div
