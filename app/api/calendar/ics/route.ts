@@ -25,10 +25,8 @@ export async function GET(req: NextRequest) {
   let userId: string | null = null;
 
   if (uid) {
-    // Subscription use — no session cookie, use uid directly
     userId = uid;
   } else {
-    // Browser use — read from session
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     userId = user?.id ?? null;
@@ -38,41 +36,47 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  // Use raw Supabase client (no cookies needed) to query venues
   const supabase = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const { data: venues, error } = await supabase
-    .from("venues")
-    .select("id, name, city, address, follow_up_date, gig_time, gig_end_time, notes")
+  // Pull from gigs table, joining venue for name/city/address
+  const { data: gigs, error } = await supabase
+    .from("gigs")
+    .select("id, date, start_time, end_time, notes, status, venues(id, name, city, address)")
     .eq("user_id", userId)
-    .eq("stage", "booked")
-    .not("follow_up_date", "is", null);
+    .neq("status", "cancelled");
 
   if (error) {
-    return new NextResponse("Failed to load venues", { status: 500 });
+    return new NextResponse("Failed to load gigs", { status: 500 });
   }
 
-  const events = (venues ?? []).map((v) => {
-    const startHour = v.gig_time ? parseInt(v.gig_time.split(":")[0]) : 19;
-    const startMin  = v.gig_time ? parseInt(v.gig_time.split(":")[1]) : 0;
-    const endHour   = v.gig_end_time ? parseInt(v.gig_end_time.split(":")[0]) : startHour + 3;
-    const endMin    = v.gig_end_time ? parseInt(v.gig_end_time.split(":")[1]) : startMin;
+  const now = new Date()
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z/, "Z");
 
-    const dtStart = toICSDate(v.follow_up_date!, startHour, startMin);
-    const dtEnd   = toICSDate(v.follow_up_date!, endHour,   endMin);
-    const summary  = escapeICS(`Gig at ${v.name}`);
-    const location = escapeICS(v.address ?? v.city ?? v.name);
-    const description = v.notes
-      ? escapeICS(v.notes)
-      : escapeICS(`Booked gig at ${v.name}`);
-    const eventUid = `gigflow-${v.id}@gigflow.app`;
-    const now = new Date()
-      .toISOString()
-      .replace(/[-:]/g, "")
-      .replace(/\.\d{3}Z/, "Z");
+  const events = (gigs ?? []).map((g: any) => {
+    const venue = g.venues ?? {};
+    const startHour = g.start_time ? parseInt(g.start_time.split(":")[0]) : 19;
+    const startMin  = g.start_time ? parseInt(g.start_time.split(":")[1]) : 0;
+    const endHour   = g.end_time   ? parseInt(g.end_time.split(":")[0])   : startHour + 3;
+    const endMin    = g.end_time   ? parseInt(g.end_time.split(":")[1])   : startMin;
+
+    const dtStart  = toICSDate(g.date, startHour, startMin);
+    const dtEnd    = toICSDate(g.date, endHour,   endMin);
+    const summary  = escapeICS(`Gig at ${venue.name ?? "Venue"}`);
+    const location = escapeICS(venue.address ?? venue.city ?? venue.name ?? "");
+    const descParts = [
+      g.notes,
+      venue.name,
+      venue.city,
+    ].filter(Boolean);
+    const description = escapeICS(descParts.join(" · "));
+
+    // Unique UID per gig (not per venue) so each date is a separate calendar event
+    const eventUid = `gigflow-gig-${g.id}@gigflow.app`;
 
     return [
       "BEGIN:VEVENT",
