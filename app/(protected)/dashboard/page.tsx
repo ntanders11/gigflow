@@ -160,7 +160,7 @@ export default async function DashboardPage() {
 
   return (
     <div
-      className="min-h-screen p-4 md:p-8 overflow-x-hidden"
+      className="min-h-screen p-4 md:p-8"
       style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}
     >
       {/* Top bar */}

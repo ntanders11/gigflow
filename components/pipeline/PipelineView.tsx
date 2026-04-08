@@ -133,7 +133,7 @@ export default function PipelineView({ initialVenues, initialStageFilter }: Prop
       )}
 
       {/* Board */}
-      <div className="px-8 pt-4 pb-8">
+      <div className="px-4 md:px-8 pt-4 pb-8 overflow-x-auto">
         <KanbanBoard venues={filtered} setVenues={setVenues} />
       </div>
     </div>
