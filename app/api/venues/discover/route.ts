@@ -13,79 +13,104 @@ export async function GET(req: NextRequest) {
 
   if (!city) return NextResponse.json({ error: "city is required" }, { status: 400 });
 
-  const apiKey = process.env.GEOAPIFY_API_KEY?.trim();
-  if (!apiKey) return NextResponse.json({ error: "Geoapify API key not configured" }, { status: 500 });
-
-  // 1. Geocode the city
+  // 1. Geocode city
   const geoRes = await fetch(
-    `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(city)}&limit=1&apiKey=${apiKey}`,
-    { signal: AbortSignal.timeout(6000) }
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
+    { headers: { "User-Agent": "GigFlow/1.0 (taylorandersonmusic.com)" }, signal: AbortSignal.timeout(6000) }
   );
-  if (!geoRes.ok) return NextResponse.json({ error: "Location not found" }, { status: 404 });
   const geoData = await geoRes.json();
-  if (!geoData.features?.length) return NextResponse.json({ error: "Location not found" }, { status: 404 });
+  if (!geoData.length) return NextResponse.json({ error: "Location not found" }, { status: 404 });
 
-  const [lon, lat] = geoData.features[0].geometry.coordinates;
+  const lat = parseFloat(geoData[0].lat);
+  const lon = parseFloat(geoData[0].lon);
 
-  // 2. Search for live music / entertainment venues
-  // Geoapify category reference: https://apidocs.geoapify.com/docs/places/
-  const categories = [
-    "entertainment.nightclub",
-    "catering.bar",
-    "catering.pub",
-    "entertainment",
-  ].join(",");
+  // 2. Only venues explicitly tagged as live music in OSM
+  const clauses = [
+    `node["live_music"="yes"]`,
+    `way["live_music"="yes"]`,
+    `node["amenity"="music_venue"]`,
+    `way["amenity"="music_venue"]`,
+    `node["amenity"="nightclub"]`,
+    `way["amenity"="nightclub"]`,
+    `node["amenity"="concert_hall"]`,
+    `way["amenity"="concert_hall"]`,
+  ].map((c) => `${c}(around:${radiusMeters},${lat},${lon});`);
 
-  const placesUrl = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},${radiusMeters}&limit=50&apiKey=${apiKey}`;
-  const placesRes = await fetch(placesUrl, { signal: AbortSignal.timeout(8000) });
+  const query = `[out:json][timeout:25];\n(\n${clauses.join("\n")}\n);\nout body center;`;
+  const encoded = `data=${encodeURIComponent(query)}`;
 
-  if (!placesRes.ok) {
-    const err = await placesRes.text();
-    console.error("Geoapify places error:", placesRes.status, err.slice(0, 400));
-    return NextResponse.json({ error: `Venue search failed (${placesRes.status}) — please try again.` }, { status: 502 });
+  const MIRRORS = [
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+  ];
+
+  let opRes: Response | null = null;
+  for (const mirror of MIRRORS) {
+    try {
+      const r = await fetch(mirror, {
+        method: "POST",
+        body: encoded,
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (r.ok) { opRes = r; break; }
+    } catch { /* try next */ }
   }
 
-  const placesData = await placesRes.json();
+  if (!opRes) {
+    return NextResponse.json({ error: "Search service unavailable — please try again in a moment." }, { status: 502 });
+  }
 
-  // 3. Get existing venue names to flag duplicates
+  const opData = await opRes.json();
+
+  // 3. Dedup against existing pipeline
   const { data: existingVenues } = await supabase
     .from("venues")
     .select("name")
     .eq("user_id", user.id);
   const existingNames = new Set((existingVenues ?? []).map((v) => v.name.toLowerCase().trim()));
 
-  // 4. Map results
+  const TYPE_MAP: Record<string, string> = {
+    bar: "bar", pub: "bar", nightclub: "club", music_venue: "venue",
+    concert_hall: "venue", brewery: "brewery", winery: "winery",
+    restaurant: "restaurant", arts_centre: "venue",
+  };
+
   const seen = new Set<string>();
-  const results = (placesData.features ?? [])
-    .filter((f: any) => {
-      const name = f.properties?.name;
+  const results = (opData.elements ?? [])
+    .filter((el: any) => {
+      const name = el.tags?.name;
       if (!name) return false;
       const key = name.toLowerCase().trim();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     })
-    .map((f: any) => {
-      const p = f.properties ?? {};
-      const cats: string[] = p.categories ?? [];
-      const type = cats.includes("entertainment.nightclub") ? "club"
-        : cats.includes("entertainment.music") ? "venue"
-        : "venue";
+    .map((el: any) => {
+      const tags = el.tags ?? {};
+      const amenity = tags.amenity || tags.craft || "";
+      const type = TYPE_MAP[amenity] ?? "venue";
+      const city2 = tags["addr:city"] || tags["addr:town"] || tags["addr:village"] || null;
+      const street = tags["addr:street"]
+        ? `${tags["addr:housenumber"] ? tags["addr:housenumber"] + " " : ""}${tags["addr:street"]}`
+        : null;
+      const address = street ? `${street}${city2 ? ", " + city2 : ""}` : null;
 
       return {
-        osm_id: p.place_id ?? Math.random().toString(),
-        name: p.name,
+        osm_id: String(el.id),
+        name: tags.name,
         type,
-        city: p.city ?? p.town ?? p.village ?? null,
-        address: p.formatted ?? p.address_line1 ?? null,
-        website: p.website ?? null,
-        phone: p.phone ?? null,
+        city: city2,
+        address,
+        website: tags.website || tags["contact:website"] || null,
+        phone: tags.phone || tags["contact:phone"] || null,
         rating: null,
         review_count: 0,
         live_music_tagged: true,
-        already_in_pipeline: existingNames.has(p.name.toLowerCase().trim()),
+        already_in_pipeline: existingNames.has(tags.name.toLowerCase().trim()),
       };
-    });
+    })
+    .slice(0, 80);
 
   return NextResponse.json({ results });
 }
