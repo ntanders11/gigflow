@@ -160,18 +160,18 @@ export default async function DashboardPage() {
 
   return (
     <div
-      className="min-h-screen p-4 md:p-8"
+      className="min-h-screen p-4 md:p-8 overflow-x-hidden"
       style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}
     >
       {/* Top bar */}
-      <div className="flex items-center justify-between mb-8 max-w-6xl">
+      <div className="flex items-center justify-between mb-6 max-w-6xl">
         <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#f0ede8" }}>
           Overview
         </h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Link
             href="/venues/import"
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:brightness-125"
+            className="hidden sm:block px-4 py-2 rounded-lg text-sm font-medium transition-all hover:brightness-125"
             style={{
               color: "#f0ede8",
               border: "1px solid rgba(255,255,255,0.2)",
@@ -182,13 +182,14 @@ export default async function DashboardPage() {
           </Link>
           <Link
             href="/pipeline"
-            className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
+            className="px-3 py-2 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
             style={{
               backgroundColor: "#d4a853",
               color: "#0e0f11",
             }}
           >
-            Find Gigs
+            <span className="sm:hidden">Pipeline</span>
+            <span className="hidden sm:inline">Find Gigs</span>
           </Link>
         </div>
       </div>

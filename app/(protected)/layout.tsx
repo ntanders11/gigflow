@@ -13,7 +13,7 @@ export default function ProtectedLayout({
         <Sidebar />
       </div>
       {/* Main content — full width on mobile, flex-1 on desktop */}
-      <main className="flex-1 pb-20 md:pb-0">{children}</main>
+      <main className="flex-1 pb-20 md:pb-0 min-w-0 overflow-x-hidden">{children}</main>
       {/* Mobile bottom tab bar */}
       <MobileBottomNav />
     </div>
