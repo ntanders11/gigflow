@@ -1,30 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// Only search for places explicitly confirmed to host live music
+// Lean query — only the tags that definitively mean live music
 const LIVE_MUSIC_CLAUSES = [
   'node["live_music"="yes"]',
   'way["live_music"="yes"]',
-  'node["entertainment"="live_music"]',
-  'way["entertainment"="live_music"]',
   'node["amenity"="music_venue"]',
   'way["amenity"="music_venue"]',
   'node["amenity"="nightclub"]',
   'way["amenity"="nightclub"]',
   'node["amenity"="concert_hall"]',
   'way["amenity"="concert_hall"]',
-  'node["amenity"="arts_centre"]["live_music"="yes"]',
-  'way["amenity"="arts_centre"]["live_music"="yes"]',
-  'node["craft"="winery"]["live_music"="yes"]',
-  'way["craft"="winery"]["live_music"="yes"]',
-  'node["craft"="brewery"]["live_music"="yes"]',
-  'way["craft"="brewery"]["live_music"="yes"]',
-  'node["amenity"="bar"]["live_music"="yes"]',
-  'way["amenity"="bar"]["live_music"="yes"]',
-  'node["amenity"="pub"]["live_music"="yes"]',
-  'way["amenity"="pub"]["live_music"="yes"]',
-  'node["amenity"="restaurant"]["live_music"="yes"]',
-  'way["amenity"="restaurant"]["live_music"="yes"]',
 ];
 
 const OSM_TO_GIGFLOW_TYPE: Record<string, string> = {
@@ -57,17 +43,30 @@ export async function GET(req: NextRequest) {
 
   // 2. Build Overpass query — only confirmed live music venues
   const lines = LIVE_MUSIC_CLAUSES.map((c) => `${c}(around:${radius},${lat},${lon});`);
-  const query = `[out:json][timeout:30];\n(\n${lines.join("\n")}\n);\nout body center;`;
+  const query = `[out:json][timeout:25];\n(\n${lines.join("\n")}\n);\nout body center;`;
+  const encoded = `data=${encodeURIComponent(query)}`;
+  const MIRRORS = [
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+  ];
 
-  const opRes = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: `data=${encodeURIComponent(query)}`,
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  });
-  if (!opRes.ok) {
-    const errText = await opRes.text();
-    console.error("Overpass error:", opRes.status, errText.slice(0, 300));
-    return NextResponse.json({ error: "Overpass API error — try again in a moment" }, { status: 502 });
+  let opRes: Response | null = null;
+  for (const mirror of MIRRORS) {
+    try {
+      const r = await fetch(mirror, {
+        method: "POST",
+        body: encoded,
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (r.ok) { opRes = r; break; }
+    } catch {
+      // try next mirror
+    }
+  }
+
+  if (!opRes) {
+    return NextResponse.json({ error: "Could not reach the venue search service — please try again in a moment." }, { status: 502 });
   }
 
   const opData = await opRes.json();
