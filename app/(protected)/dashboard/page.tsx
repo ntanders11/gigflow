@@ -48,7 +48,7 @@ export default async function DashboardPage() {
 
   const { data: upcomingGigs } = await supabase
     .from("gigs")
-    .select("id, date, start_time, end_time, status, venues(id, name, city)")
+    .select("id, date, start_time, end_time, status, notes, venues(id, name, city, address)")
     .eq("user_id", user.id)
     .eq("status", "upcoming")
     .order("date", { ascending: true });
@@ -93,14 +93,14 @@ export default async function DashboardPage() {
         new Date(b.last_contacted_at!).getTime()
     );
 
-  // This week's gigs — from gigs table
+  // Upcoming gigs — next 30 days
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const sevenDaysOut = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const thirtyDaysOut = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   const thisWeekGigs = (upcomingGigs ?? []).filter((g: any) => {
     const d = new Date(g.date + "T12:00:00");
-    return d >= today && d <= sevenDaysOut;
+    return d >= today && d <= thirtyDaysOut;
   });
 
   // Derived lists
@@ -218,62 +218,133 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* This Week */}
-      {thisWeekGigs.length > 0 && (
-        <div className="mb-8 max-w-6xl">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#9a9591" }}>
-              This Week
-            </h2>
-            <Link href="/calendar" className="text-xs transition-all hover:brightness-125" style={{ color: "#d4a853" }}>
-              View calendar →
-            </Link>
+      {/* Upcoming Gigs */}
+      <div className="mb-8 max-w-6xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#9a9591" }}>
+            Upcoming Gigs
+          </h2>
+          <Link href="/calendar" className="text-xs transition-all hover:brightness-125" style={{ color: "#d4a853" }}>
+            View calendar →
+          </Link>
+        </div>
+
+        {thisWeekGigs.length === 0 ? (
+          <div
+            className="rounded-xl px-5 py-8 text-center"
+            style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>No gigs in the next 30 days</p>
+            <p className="text-xs" style={{ color: "#5e5c58" }}>
+              Add gig dates in a venue&apos;s detail page to see them here.
+            </p>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
             {thisWeekGigs.map((gig: any) => {
               const d = new Date(gig.date + "T12:00:00");
-              const dayLabel = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+              const now = new Date();
+              now.setHours(0, 0, 0, 0);
+              const daysUntil = Math.round((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+              const isToday = daysUntil === 0;
+              const isTomorrow = daysUntil === 1;
+              const dayLabel = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
               const timeLabel = gig.start_time
                 ? new Date(`2000-01-01T${gig.start_time}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
                 : null;
               const endLabel = gig.end_time
                 ? new Date(`2000-01-01T${gig.end_time}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
                 : null;
-              const isToday = d.toDateString() === new Date().toDateString();
               const venue = gig.venues;
+
+              const countdownText = isToday
+                ? "Today"
+                : isTomorrow
+                ? "Tomorrow"
+                : `In ${daysUntil} days`;
+
+              const countdownColor = isToday
+                ? "#d4a853"
+                : isTomorrow
+                ? "#e09b50"
+                : daysUntil <= 7
+                ? "#4caf7d"
+                : "#9a9591";
 
               return (
                 <Link
                   key={gig.id}
                   href={`/venues/${venue?.id}`}
-                  className="rounded-xl px-5 py-4 transition-all hover:brightness-125"
+                  className="rounded-xl p-5 flex flex-col gap-3 transition-all hover:brightness-125"
                   style={{
                     backgroundColor: "#16181c",
-                    border: isToday ? "1px solid rgba(212,168,83,0.4)" : "1px solid rgba(255,255,255,0.07)",
-                    borderLeft: "3px solid #4caf7d",
+                    border: isToday
+                      ? "1px solid rgba(212,168,83,0.35)"
+                      : "1px solid rgba(255,255,255,0.07)",
+                    borderLeft: `3px solid ${isToday ? "#d4a853" : "#4caf7d"}`,
                   }}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-semibold truncate" style={{ color: "#f0ede8" }}>{venue?.name}</p>
-                    {isToday && (
-                      <span className="text-xs font-bold ml-2 shrink-0" style={{ color: "#d4a853" }}>TODAY</span>
+                  {/* Top row: countdown badge + venue name */}
+                  <div className="flex items-start justify-between gap-2">
+                    <p
+                      className="text-sm font-semibold leading-snug"
+                      style={{ color: "#f0ede8", flex: 1 }}
+                    >
+                      {venue?.name ?? "Unknown Venue"}
+                    </p>
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
+                      style={{
+                        backgroundColor: `${countdownColor}22`,
+                        color: countdownColor,
+                        border: `1px solid ${countdownColor}44`,
+                      }}
+                    >
+                      {countdownText}
+                    </span>
+                  </div>
+
+                  {/* Date + time */}
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-xs font-medium" style={{ color: "#9a9591" }}>
+                      {dayLabel}
+                    </p>
+                    {timeLabel ? (
+                      <p className="text-xs" style={{ color: "#4caf7d" }}>
+                        {timeLabel}{endLabel ? ` – ${endLabel}` : ""}
+                      </p>
+                    ) : (
+                      <p className="text-xs" style={{ color: "#5e5c58" }}>No time set</p>
                     )}
                   </div>
-                  <p className="text-xs" style={{ color: "#9a9591" }}>{dayLabel}</p>
-                  {timeLabel && (
-                    <p className="text-xs mt-0.5" style={{ color: "#4caf7d" }}>
-                      {timeLabel}{endLabel ? ` – ${endLabel}` : ""}
+
+                  {/* Location */}
+                  {(venue?.city || venue?.address) && (
+                    <p className="text-xs truncate" style={{ color: "#5e5c58" }}>
+                      📍 {venue.address ?? venue.city}
                     </p>
                   )}
-                  {venue?.city && (
-                    <p className="text-xs mt-0.5" style={{ color: "#5e5c58" }}>{venue.city}</p>
+
+                  {/* Notes */}
+                  {gig.notes && (
+                    <p
+                      className="text-xs leading-relaxed line-clamp-2"
+                      style={{
+                        color: "#9a9591",
+                        borderTop: "1px solid rgba(255,255,255,0.05)",
+                        paddingTop: "8px",
+                        marginTop: "2px",
+                      }}
+                    >
+                      {gig.notes}
+                    </p>
                   )}
                 </Link>
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Two-column section */}
       <div className="flex gap-6 max-w-6xl">
