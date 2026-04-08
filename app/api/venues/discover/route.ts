@@ -49,14 +49,18 @@ export async function GET(req: NextRequest) {
       lines.push(`${clause}(around:${radius},${lat},${lon});`);
     }
   }
-  const query = `[out:json][timeout:30];\n(\n${lines.join("\n")}\n);\nout center tags;`;
+  const query = `[out:json][timeout:30];\n(\n${lines.join("\n")}\n);\nout body center;`;
 
   const opRes = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
-    body: query,
-    headers: { "Content-Type": "text/plain" },
+    body: `data=${encodeURIComponent(query)}`,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
   });
-  if (!opRes.ok) return NextResponse.json({ error: "Overpass API error" }, { status: 502 });
+  if (!opRes.ok) {
+    const errText = await opRes.text();
+    console.error("Overpass error:", opRes.status, errText.slice(0, 300));
+    return NextResponse.json({ error: "Overpass API error — try again in a moment" }, { status: 502 });
+  }
 
   const opData = await opRes.json();
 
