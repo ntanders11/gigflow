@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     `way["amenity"="concert_hall"]`,
   ].map((c) => `${c}(around:${radiusMeters},${lat},${lon});`);
 
-  const query = `[out:json][timeout:25];\n(\n${clauses.join("\n")}\n);\nout body center;`;
+  const query = `[out:json][timeout:20];\n(\n${clauses.join("\n")}\n);\nout body center;`;
   const encoded = `data=${encodeURIComponent(query)}`;
 
   const MIRRORS = [

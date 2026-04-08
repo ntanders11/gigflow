@@ -4,5 +4,10 @@
       "path": "/api/venues/follow-up",
       "schedule": "0 16 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "app/api/venues/discover/route.ts": {
+      "maxDuration": 30
+    }
+  }
 }
