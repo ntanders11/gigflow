@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Venue, Interaction, VenueStage, STAGES, STAGE_COLORS, CONFIDENCE_COLORS, InteractionType } from "@/types";
+import { Venue, Interaction, VenueStage, STAGES, STAGE_COLORS, CONFIDENCE_COLORS, InteractionType, Gig } from "@/types";
 import { cn } from "@/lib/utils";
 import PitchEmailModal from "@/components/venue/PitchEmailModal";
 import InvoiceModal from "@/components/invoice/InvoiceModal";
 import InvoiceStatusBadge from "@/components/invoice/InvoiceStatusBadge";
+import GigsSection from "@/components/venue/GigsSection";
 import { Invoice } from "@/types";
 
 interface Props {
   venue: Venue;
   interactions: Interaction[];
+  initialGigs: Gig[];
 }
 
 const INTERACTION_LABELS: Record<InteractionType, string> = {
@@ -21,7 +23,7 @@ const INTERACTION_LABELS: Record<InteractionType, string> = {
   note: "Note",
 };
 
-export default function VenueDetail({ venue: initialVenue, interactions: initialInteractions }: Props) {
+export default function VenueDetail({ venue: initialVenue, interactions: initialInteractions, initialGigs }: Props) {
   const [venue, setVenue] = useState(initialVenue);
   const [interactions, setInteractions] = useState(initialInteractions);
   const [notes, setNotes] = useState(initialVenue.notes ?? "");
@@ -397,6 +399,9 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
           )}
         </div>
       </div>
+
+      {/* Gig Dates */}
+      <GigsSection venueId={venue.id} initialGigs={initialGigs} />
 
       {/* Notes */}
       <div className="mb-8">

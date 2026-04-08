@@ -1,0 +1,5 @@
+{"type":"server-started","port":57829,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:57829","screen_dir":"/Users/tayloranderson/gigflow/.superpowers/brainstorm/17433-1774329580"}
+{"type":"screen-added","file":"/Users/tayloranderson/gigflow/.superpowers/brainstorm/17433-1774329580/profile-layout.html"}
+{"source":"user-event","type":"click","text":"Taylor Anderson\n            Acoustic · Folk\n            Instagram\n            Spotify\n            YouTube\n          \n          \n          \n            Bio & Genre\n            ▶ Video / Music\n            💰 Rates & Packages\n          \n        \n      \n    \n    \n      B — Two Column\n      Photo, name, genre, and social links pinned in a left sidebar. Main content (bio, video, rates) fills the right. More like a professional EPK layout.","choice":"b","id":null,"timestamp":1774329764093}
+{"type":"screen-added","file":"/Users/tayloranderson/gigflow/.superpowers/brainstorm/17433-1774329580/profile-mockup.html"}
+{"type":"server-stopped","reason":"owner process exited"}

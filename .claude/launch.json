@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gigflow",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "PATH=/usr/local/bin:$PATH npm run dev"],
+      "port": 3000,
+    "autoPort": true,
+      "cwd": "/Users/tayloranderson/gigflow"
+    }
+  ]
+}

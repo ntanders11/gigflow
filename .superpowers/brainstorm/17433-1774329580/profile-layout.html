@@ -1,0 +1,89 @@
+<h2>How should the Artist Profile be laid out?</h2>
+<p class="subtitle">Pick the layout that feels right for an internal hub + shareable booking page</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#0e0f11;border-radius:6px;">
+      <div style="background:#1a1c21;border-radius:6px;padding:12px;font-family:sans-serif;">
+        <!-- Hero -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.08)">
+          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#d4a853,#8b5cf6);flex-shrink:0"></div>
+          <div>
+            <div style="color:#f0ede8;font-weight:700;font-size:13px">Taylor Anderson</div>
+            <div style="color:#9a9591;font-size:10px">Acoustic / Folk · Newberg, OR</div>
+          </div>
+          <div style="margin-left:auto;background:#d4a853;color:#0e0f11;font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px">Share ↗</div>
+        </div>
+        <!-- Sections stacked -->
+        <div style="background:#16181c;border-radius:4px;padding:8px;margin-bottom:6px;color:#9a9591;font-size:10px">📝 Bio</div>
+        <div style="background:#16181c;border-radius:4px;padding:8px;margin-bottom:6px;color:#9a9591;font-size:10px">🎵 Video & Music Samples</div>
+        <div style="background:#16181c;border-radius:4px;padding:8px;margin-bottom:6px;color:#9a9591;font-size:10px">💰 Rates & Packages</div>
+        <div style="background:#16181c;border-radius:4px;padding:8px;color:#9a9591;font-size:10px">🔗 Social Links</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Single Scroll</h3>
+      <p>Header with photo + name, then all sections stacked below. Simple, clean, reads top to bottom. Works great as a shareable link.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#0e0f11;border-radius:6px;">
+      <div style="background:#1a1c21;border-radius:6px;padding:12px;font-family:sans-serif;">
+        <div style="display:flex;gap:10px">
+          <!-- Left sidebar -->
+          <div style="width:80px;flex-shrink:0">
+            <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#d4a853,#8b5cf6);margin:0 auto 8px"></div>
+            <div style="color:#f0ede8;font-size:9px;font-weight:700;text-align:center;margin-bottom:4px">Taylor Anderson</div>
+            <div style="color:#9a9591;font-size:8px;text-align:center;margin-bottom:8px">Acoustic · Folk</div>
+            <div style="background:#16181c;border-radius:3px;padding:4px 6px;color:#9a9591;font-size:8px;margin-bottom:3px">Instagram</div>
+            <div style="background:#16181c;border-radius:3px;padding:4px 6px;color:#9a9591;font-size:8px;margin-bottom:3px">Spotify</div>
+            <div style="background:#16181c;border-radius:3px;padding:4px 6px;color:#9a9591;font-size:8px">YouTube</div>
+          </div>
+          <!-- Right main -->
+          <div style="flex:1">
+            <div style="background:#16181c;border-radius:4px;padding:8px;margin-bottom:6px;color:#9a9591;font-size:9px">Bio & Genre</div>
+            <div style="background:#16181c;border-radius:4px;padding:8px;margin-bottom:6px;color:#9a9591;font-size:9px">▶ Video / Music</div>
+            <div style="background:#16181c;border-radius:4px;padding:8px;color:#9a9591;font-size:9px">💰 Rates & Packages</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Two Column</h3>
+      <p>Photo, name, genre, and social links pinned in a left sidebar. Main content (bio, video, rates) fills the right. More like a professional EPK layout.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#0e0f11;border-radius:6px;">
+      <div style="background:#1a1c21;border-radius:6px;padding:12px;font-family:sans-serif;">
+        <!-- Hero banner -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#d4a853,#8b5cf6);flex-shrink:0"></div>
+          <div>
+            <div style="color:#f0ede8;font-weight:700;font-size:12px">Taylor Anderson</div>
+            <div style="color:#9a9591;font-size:9px">Acoustic / Folk · Newberg, OR</div>
+          </div>
+        </div>
+        <!-- Tabs -->
+        <div style="display:flex;gap:4px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:6px">
+          <div style="color:#d4a853;font-size:9px;font-weight:600;padding:2px 6px;border-bottom:2px solid #d4a853">About</div>
+          <div style="color:#9a9591;font-size:9px;padding:2px 6px">Media</div>
+          <div style="color:#9a9591;font-size:9px;padding:2px 6px">Rates</div>
+          <div style="color:#9a9591;font-size:9px;padding:2px 6px">Links</div>
+        </div>
+        <!-- Tab content -->
+        <div style="background:#16181c;border-radius:4px;padding:10px;color:#9a9591;font-size:9px;line-height:1.5">
+          Bio and genre info shown here. Switch tabs to see media, rates, and social links.
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Tabbed Sections</h3>
+      <p>Compact header at top, content organized into tabs (About / Media / Rates / Links). Keeps the page tidy — less scrolling. Works well as an internal tool.</p>
+    </div>
+  </div>
+
+</div>

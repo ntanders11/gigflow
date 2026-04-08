@@ -83,6 +83,25 @@ export const CONFIDENCE_COLORS: Record<ConfidenceLevel, string> = {
 };
 
 // ============================================================
+// GIGS
+// ============================================================
+
+export type GigStatus = "upcoming" | "completed" | "cancelled";
+
+export interface Gig {
+  id: string;
+  venue_id: string;
+  user_id: string;
+  date: string;           // YYYY-MM-DD
+  start_time: string | null; // HH:MM
+  end_time: string | null;   // HH:MM
+  notes: string | null;
+  status: GigStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================================
 // ARTIST PROFILE
 // ============================================================
 

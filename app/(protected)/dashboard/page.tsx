@@ -42,9 +42,16 @@ export default async function DashboardPage() {
 
   const { data: venues } = await supabase
     .from("venues")
-    .select("id, name, type, city, stage, updated_at, follow_up_date, gig_time, gig_end_time, last_contacted_at")
+    .select("id, name, type, city, stage, updated_at, follow_up_date, last_contacted_at")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
+
+  const { data: upcomingGigs } = await supabase
+    .from("gigs")
+    .select("id, date, start_time, end_time, status, venues(id, name, city)")
+    .eq("user_id", user.id)
+    .eq("status", "upcoming")
+    .order("date", { ascending: true });
 
   const allVenues = venues ?? [];
 
@@ -86,21 +93,15 @@ export default async function DashboardPage() {
         new Date(b.last_contacted_at!).getTime()
     );
 
-  // This week's gigs
+  // This week's gigs — from gigs table
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const sevenDaysOut = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  const thisWeekGigs = allVenues
-    .filter((v) => {
-      if (v.stage !== "booked" || !v.follow_up_date) return false;
-      const d = new Date(v.follow_up_date + "T12:00:00");
-      return d >= today && d <= sevenDaysOut;
-    })
-    .sort((a, b) =>
-      new Date(a.follow_up_date + "T12:00:00").getTime() -
-      new Date(b.follow_up_date + "T12:00:00").getTime()
-    );
+  const thisWeekGigs = (upcomingGigs ?? []).filter((g: any) => {
+    const d = new Date(g.date + "T12:00:00");
+    return d >= today && d <= sevenDaysOut;
+  });
 
   // Derived lists
   const bookedVenues = allVenues
@@ -229,21 +230,22 @@ export default async function DashboardPage() {
             </Link>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            {thisWeekGigs.map((venue) => {
-              const d = new Date(venue.follow_up_date + "T12:00:00");
+            {thisWeekGigs.map((gig: any) => {
+              const d = new Date(gig.date + "T12:00:00");
               const dayLabel = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-              const timeLabel = venue.gig_time
-                ? new Date(`2000-01-01T${venue.gig_time}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+              const timeLabel = gig.start_time
+                ? new Date(`2000-01-01T${gig.start_time}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
                 : null;
-              const endLabel = venue.gig_end_time
-                ? new Date(`2000-01-01T${venue.gig_end_time}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+              const endLabel = gig.end_time
+                ? new Date(`2000-01-01T${gig.end_time}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
                 : null;
               const isToday = d.toDateString() === new Date().toDateString();
+              const venue = gig.venues;
 
               return (
                 <Link
-                  key={venue.id}
-                  href={`/venues/${venue.id}`}
+                  key={gig.id}
+                  href={`/venues/${venue?.id}`}
                   className="rounded-xl px-5 py-4 transition-all hover:brightness-125"
                   style={{
                     backgroundColor: "#16181c",
@@ -252,7 +254,7 @@ export default async function DashboardPage() {
                   }}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-semibold truncate" style={{ color: "#f0ede8" }}>{venue.name}</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: "#f0ede8" }}>{venue?.name}</p>
                     {isToday && (
                       <span className="text-xs font-bold ml-2 shrink-0" style={{ color: "#d4a853" }}>TODAY</span>
                     )}
@@ -263,7 +265,7 @@ export default async function DashboardPage() {
                       {timeLabel}{endLabel ? ` – ${endLabel}` : ""}
                     </p>
                   )}
-                  {venue.city && (
+                  {venue?.city && (
                     <p className="text-xs mt-0.5" style={{ color: "#5e5c58" }}>{venue.city}</p>
                   )}
                 </Link>

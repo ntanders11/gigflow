@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { Venue, Interaction } from "@/types";
+import { Venue, Interaction, Gig } from "@/types";
 import VenueDetail from "@/components/venue/VenueDetail";
 
 export default async function VenueDetailPage({
@@ -29,10 +29,18 @@ export default async function VenueDetailPage({
     .eq("venue_id", id)
     .order("occurred_at", { ascending: false });
 
+  const { data: gigs } = await supabase
+    .from("gigs")
+    .select("*")
+    .eq("venue_id", id)
+    .eq("user_id", user!.id)
+    .order("date", { ascending: true });
+
   return (
     <VenueDetail
       venue={venue as Venue}
       interactions={(interactions as Interaction[]) ?? []}
+      initialGigs={(gigs as Gig[]) ?? []}
     />
   );
 }

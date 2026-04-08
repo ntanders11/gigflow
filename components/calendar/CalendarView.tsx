@@ -17,11 +17,13 @@ import Link from "next/link";
 
 type Venue = {
   id: string;
+  gig_id?: string;
   name: string;
   city: string | null;
   address: string | null;
   follow_up_date: string | null;
   gig_time: string | null;
+  gig_end_time?: string | null;
   notes: string | null;
 };
 

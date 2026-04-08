@@ -10,14 +10,24 @@ export default async function CalendarPage() {
 
   if (!user) redirect("/login");
 
-  const { data: venues } = await supabase
-    .from("venues")
-    .select("id, name, city, address, follow_up_date, gig_time, notes")
+  const { data: gigs } = await supabase
+    .from("gigs")
+    .select("id, date, start_time, end_time, notes, status, venues(id, name, city, address)")
     .eq("user_id", user.id)
-    .eq("stage", "booked")
-    .order("follow_up_date", { ascending: true });
+    .neq("status", "cancelled")
+    .order("date", { ascending: true });
 
-  const bookedVenues = venues ?? [];
+  const bookedVenues = (gigs ?? []).map((g: any) => ({
+    id: g.venues?.id ?? g.id,
+    gig_id: g.id,
+    name: g.venues?.name ?? "Unknown",
+    city: g.venues?.city ?? null,
+    address: g.venues?.address ?? null,
+    follow_up_date: g.date,
+    gig_time: g.start_time,
+    gig_end_time: g.end_time,
+    notes: g.notes,
+  }));
 
   // Build the subscription URL using the user's ID as a token
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://gigflow-git-main-taylor-anderson.vercel.app";
