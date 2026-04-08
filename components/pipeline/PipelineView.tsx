@@ -11,9 +11,10 @@ const KanbanBoard = dynamic(() => import("./KanbanBoard"), { ssr: false });
 interface Props {
   initialVenues: Venue[];
   initialStageFilter: VenueStage | null;
+  outreachMap: Record<string, { count: number; lastDate: string | null }>;
 }
 
-export default function PipelineView({ initialVenues, initialStageFilter }: Props) {
+export default function PipelineView({ initialVenues, initialStageFilter, outreachMap }: Props) {
   const [venues, setVenues] = useState<Venue[]>(initialVenues);
   const [query, setQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -134,7 +135,7 @@ export default function PipelineView({ initialVenues, initialStageFilter }: Prop
 
       {/* Board */}
       <div className="px-4 md:px-8 pt-4 pb-8 overflow-x-auto">
-        <KanbanBoard venues={filtered} setVenues={setVenues} />
+        <KanbanBoard venues={filtered} setVenues={setVenues} outreachMap={outreachMap} />
       </div>
     </div>
   );

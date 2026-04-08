@@ -16,9 +16,18 @@ interface Props {
   venue: Venue;
   index: number;
   onReply: (venueId: string) => void;
+  outreach: { count: number; lastDate: string | null } | null;
 }
 
-export default function VenueCard({ venue, index, onReply }: Props) {
+function daysAgo(dateStr: string | null): string | null {
+  if (!dateStr) return null;
+  const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
+  if (days === 0) return "today";
+  if (days === 1) return "1d ago";
+  return `${days}d ago`;
+}
+
+export default function VenueCard({ venue, index, onReply, outreach }: Props) {
   const conf = CONFIDENCE_DARK[venue.confidence] ?? CONFIDENCE_DARK.LOW;
 
   return (
@@ -70,11 +79,13 @@ export default function VenueCard({ venue, index, onReply }: Props) {
             >
               {conf.label}
             </span>
-            {venue.contact_email && (
+
+            {outreach && outreach.count > 0 && (
               <span className="text-xs" style={{ color: "#5e5c58" }}>
-                has email
+                ✉ {outreach.count}× · {daysAgo(outreach.lastDate)}
               </span>
             )}
+
             {venue.stage === "contacted" && (
               <button
                 onClick={(e) => {

@@ -8,9 +8,10 @@ import KanbanColumn from "./KanbanColumn";
 interface Props {
   venues: Venue[];
   setVenues: React.Dispatch<React.SetStateAction<Venue[]>>;
+  outreachMap: Record<string, { count: number; lastDate: string | null }>;
 }
 
-export default function KanbanBoard({ venues, setVenues }: Props) {
+export default function KanbanBoard({ venues, setVenues, outreachMap }: Props) {
   function getVenuesByStage(stage: VenueStage) {
     return venues.filter((v) => v.stage === stage);
   }
@@ -92,6 +93,7 @@ export default function KanbanBoard({ venues, setVenues }: Props) {
             stage={key}
             venues={getVenuesByStage(key)}
             onReply={onReply}
+            outreachMap={outreachMap}
           />
         ))}
       </div>

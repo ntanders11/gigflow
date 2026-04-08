@@ -8,9 +8,10 @@ interface Props {
   stage: VenueStage;
   venues: Venue[];
   onReply: (venueId: string) => void;
+  outreachMap: Record<string, { count: number; lastDate: string | null }>;
 }
 
-export default function KanbanColumn({ stage, venues, onReply }: Props) {
+export default function KanbanColumn({ stage, venues, onReply, outreachMap }: Props) {
   const label = STAGES.find((s) => s.key === stage)?.label ?? stage;
 
   return (
@@ -37,7 +38,7 @@ export default function KanbanColumn({ stage, venues, onReply }: Props) {
             }}
           >
             {venues.map((venue, index) => (
-              <VenueCard key={venue.id} venue={venue} index={index} onReply={onReply} />
+              <VenueCard key={venue.id} venue={venue} index={index} onReply={onReply} outreach={outreachMap[venue.id] ?? null} />
             ))}
             {provided.placeholder}
           </div>
