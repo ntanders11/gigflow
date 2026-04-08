@@ -16,8 +16,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  if (event.type === "invoice.paid") {
-    const stripeInvoiceObj = event.data.object as { metadata?: { gigflow_invoice_id?: string } };
+  if (event.type === "invoice.paid" || event.type === "invoice_payment.paid") {
+    const stripeInvoiceObj = event.data.object as { metadata?: { gigflow_invoice_id?: string }; invoice?: string };
+    // invoice_payment.paid nests the invoice ID differently
     const gigflowInvoiceId = stripeInvoiceObj.metadata?.gigflow_invoice_id;
 
     if (gigflowInvoiceId) {
