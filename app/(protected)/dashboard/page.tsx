@@ -40,6 +40,15 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
+  // Auto-complete any gigs whose date has already passed
+  const yesterdayStr = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  await supabase
+    .from("gigs")
+    .update({ status: "completed" })
+    .eq("user_id", user.id)
+    .eq("status", "upcoming")
+    .lt("date", yesterdayStr);
+
   const { data: venues } = await supabase
     .from("venues")
     .select("id, name, type, city, stage, updated_at, follow_up_date, last_contacted_at")

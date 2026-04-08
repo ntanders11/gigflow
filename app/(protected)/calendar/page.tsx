@@ -10,6 +10,15 @@ export default async function CalendarPage() {
 
   if (!user) redirect("/login");
 
+  // Auto-complete any gigs whose date has already passed
+  const yesterdayStr = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  await supabase
+    .from("gigs")
+    .update({ status: "completed" })
+    .eq("user_id", user.id)
+    .eq("status", "upcoming")
+    .lt("date", yesterdayStr);
+
   const { data: gigs } = await supabase
     .from("gigs")
     .select("id, date, start_time, end_time, notes, status, venues(id, name, city, address)")
