@@ -1,98 +1,91 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// Foursquare category IDs for live music / performance venues
-// https://docs.foursquare.com/data-products/docs/categories
-const FSQ_CATEGORIES = [
-  "10032", // Music Venue
-  "10033", // Jazz Club
-  "10034", // Karaoke Bar (skip but included for broadness)
-  "13003", // Bar (filtered by live music)
-  "10035", // Concert Hall
-  "10000", // Nightlife (parent — catches subvenues)
-].join(",");
-
-const FSQ_TYPE_MAP: Record<string, string> = {
-  "10032": "venue",
-  "10033": "bar",
-  "10034": "bar",
-  "10035": "venue",
-  "10000": "club",
-  "13003": "bar",
-};
-
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = req.nextUrl;
-  const city   = searchParams.get("city")?.trim();
-  const miles  = parseInt(searchParams.get("radius") ?? "25");
-  const radius = Math.min(miles * 1609, 100000);
+  const city  = searchParams.get("city")?.trim();
+  const miles = parseInt(searchParams.get("radius") ?? "25");
+  const radiusMeters = Math.min(miles * 1609, 50000);
 
   if (!city) return NextResponse.json({ error: "city is required" }, { status: 400 });
 
-  const apiKey = process.env.FOURSQUARE_API_KEY?.trim();
-  if (!apiKey) return NextResponse.json({ error: `Foursquare API key not configured (saw: ${JSON.stringify(process.env.FOURSQUARE_API_KEY)})` }, { status: 500 });
+  const apiKey = process.env.GEOAPIFY_API_KEY?.trim();
+  if (!apiKey) return NextResponse.json({ error: "Geoapify API key not configured" }, { status: 500 });
 
-  const params = new URLSearchParams({
-    near: city,
-    categories: FSQ_CATEGORIES,
-    radius: String(radius),
-    limit: "50",
-    sort: "RATING",
-    fields: "name,location,tel,website,rating,stats,categories,fsq_id",
-  });
+  // 1. Geocode the city
+  const geoRes = await fetch(
+    `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(city)}&limit=1&apiKey=${apiKey}`,
+    { signal: AbortSignal.timeout(6000) }
+  );
+  if (!geoRes.ok) return NextResponse.json({ error: "Location not found" }, { status: 404 });
+  const geoData = await geoRes.json();
+  if (!geoData.features?.length) return NextResponse.json({ error: "Location not found" }, { status: 404 });
 
-  const fsqRes = await fetch(
-    `https://api.foursquare.com/v3/places/search?${params}`,
-    {
-      headers: {
-        Authorization: apiKey,
-        Accept: "application/json",
-      },
-      signal: AbortSignal.timeout(8000),
-    }
+  const [lon, lat] = geoData.features[0].geometry.coordinates;
+
+  // 2. Search for live music / entertainment venues
+  const categories = [
+    "entertainment.music",
+    "entertainment.nightclub",
+    "entertainment.culture",
+  ].join(",");
+
+  const placesRes = await fetch(
+    `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},${radiusMeters}&limit=50&apiKey=${apiKey}`,
+    { signal: AbortSignal.timeout(8000) }
   );
 
-  if (!fsqRes.ok) {
-    const err = await fsqRes.text();
-    console.error("Foursquare error:", fsqRes.status, err.slice(0, 200));
+  if (!placesRes.ok) {
+    const err = await placesRes.text();
+    console.error("Geoapify error:", placesRes.status, err.slice(0, 200));
     return NextResponse.json({ error: "Venue search failed — please try again." }, { status: 502 });
   }
 
-  const fsqData = await fsqRes.json();
+  const placesData = await placesRes.json();
 
-  // Get existing venue names to flag duplicates
+  // 3. Get existing venue names to flag duplicates
   const { data: existingVenues } = await supabase
     .from("venues")
     .select("name")
     .eq("user_id", user.id);
   const existingNames = new Set((existingVenues ?? []).map((v) => v.name.toLowerCase().trim()));
 
-  const results = (fsqData.results ?? []).map((b: any) => {
-    const loc = b.location ?? {};
-    const city2 = loc.locality ?? loc.region ?? null;
-    const address = [loc.address, loc.address_extended].filter(Boolean).join(", ") || null;
-    const fullAddress = address ? `${address}${city2 ? ", " + city2 : ""}` : null;
-    const topCategory = b.categories?.[0]?.id ? String(b.categories[0].id) : "10032";
-    const type = FSQ_TYPE_MAP[topCategory] ?? "venue";
+  // 4. Map results
+  const seen = new Set<string>();
+  const results = (placesData.features ?? [])
+    .filter((f: any) => {
+      const name = f.properties?.name;
+      if (!name) return false;
+      const key = name.toLowerCase().trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((f: any) => {
+      const p = f.properties ?? {};
+      const cats: string[] = p.categories ?? [];
+      const type = cats.includes("entertainment.nightclub") ? "club"
+        : cats.includes("entertainment.music") ? "venue"
+        : "venue";
 
-    return {
-      osm_id: b.fsq_id,
-      name: b.name,
-      type,
-      city: city2,
-      address: fullAddress,
-      website: b.website ?? null,
-      phone: b.tel ?? null,
-      rating: b.rating ? Math.round(b.rating) / 2 : null, // FSQ rates 0-10, convert to 0-5
-      review_count: b.stats?.total_ratings ?? 0,
-      live_music_tagged: true,
-      already_in_pipeline: existingNames.has(b.name.toLowerCase().trim()),
-    };
-  });
+      return {
+        osm_id: p.place_id ?? Math.random().toString(),
+        name: p.name,
+        type,
+        city: p.city ?? p.town ?? p.village ?? null,
+        address: p.formatted ?? p.address_line1 ?? null,
+        website: p.website ?? null,
+        phone: p.phone ?? null,
+        rating: null,
+        review_count: 0,
+        live_music_tagged: true,
+        already_in_pipeline: existingNames.has(p.name.toLowerCase().trim()),
+      };
+    });
 
   return NextResponse.json({ results });
 }
