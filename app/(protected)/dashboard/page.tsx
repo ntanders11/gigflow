@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     .from("gigs")
     .select("id, date, start_time, end_time, status, notes, venues(id, name, city, address)")
     .eq("user_id", user.id)
-    .eq("status", "upcoming")
+    .neq("status", "cancelled")
     .order("date", { ascending: true });
 
   const allVenues = venues ?? [];
@@ -93,14 +93,12 @@ export default async function DashboardPage() {
         new Date(b.last_contacted_at!).getTime()
     );
 
-  // Upcoming gigs — next 30 days
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const thirtyDaysOut = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+  // Upcoming gigs — next 30 days (and any past gigs not yet marked done)
+  const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD" in UTC
+  const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const thisWeekGigs = (upcomingGigs ?? []).filter((g: any) => {
-    const d = new Date(g.date + "T12:00:00");
-    return d >= today && d <= thirtyDaysOut;
+    return g.date >= todayStr && g.date <= thirtyDaysFromNow;
   });
 
   // Derived lists
@@ -242,12 +240,13 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid grid-cols-3 gap-4">
             {thisWeekGigs.map((gig: any) => {
+              const tomorrowStr = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+              const isToday = gig.date === todayStr;
+              const isTomorrow = gig.date === tomorrowStr;
+              const daysUntil = Math.round(
+                (new Date(gig.date + "T12:00:00Z").getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+              );
               const d = new Date(gig.date + "T12:00:00");
-              const now = new Date();
-              now.setHours(0, 0, 0, 0);
-              const daysUntil = Math.round((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-              const isToday = daysUntil === 0;
-              const isTomorrow = daysUntil === 1;
               const dayLabel = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
               const timeLabel = gig.start_time
                 ? new Date(`2000-01-01T${gig.start_time}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
