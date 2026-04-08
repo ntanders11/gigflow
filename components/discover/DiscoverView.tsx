@@ -3,13 +3,13 @@
 import { useState } from "react";
 
 const VENUE_TYPES = [
-  { key: "bar",        label: "Bars & Pubs",    color: "#d4a853" },
-  { key: "brewery",    label: "Breweries",       color: "#e09b50" },
-  { key: "winery",     label: "Wineries",        color: "#c06080" },
-  { key: "restaurant", label: "Restaurants",     color: "#4caf7d" },
-  { key: "hotel",      label: "Hotels",          color: "#9b7fe8" },
-  { key: "club",       label: "Clubs",           color: "#e25c5c" },
-  { key: "venue",      label: "Event Venues",    color: "#9a9591" },
+  { key: "bar",        label: "Bar",          color: "#d4a853" },
+  { key: "brewery",    label: "Brewery",      color: "#e09b50" },
+  { key: "winery",     label: "Winery",       color: "#c06080" },
+  { key: "restaurant", label: "Restaurant",   color: "#4caf7d" },
+  { key: "hotel",      label: "Hotel",        color: "#9b7fe8" },
+  { key: "club",       label: "Club",         color: "#e25c5c" },
+  { key: "venue",      label: "Event Venue",  color: "#9a9591" },
 ];
 
 type DiscoverResult = {
@@ -26,8 +26,7 @@ type DiscoverResult = {
 
 export default function DiscoverView() {
   const [city, setCity]       = useState("Newberg, OR");
-  const [radius, setRadius]   = useState(15);
-  const [types, setTypes]     = useState<Set<string>>(new Set(VENUE_TYPES.map((t) => t.key)));
+  const [radius, setRadius]   = useState(25);
   const [results, setResults] = useState<DiscoverResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
@@ -35,17 +34,8 @@ export default function DiscoverView() {
   const [adding, setAdding]   = useState<Set<string>>(new Set());
   const [added, setAdded]     = useState<Set<string>>(new Set());
 
-  function toggleType(key: string) {
-    setTypes((prev) => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  }
-
   async function handleSearch() {
     if (!city.trim()) return;
-    if (types.size === 0) { setError("Select at least one venue type."); return; }
     setLoading(true);
     setError("");
     setSearched(false);
@@ -53,7 +43,6 @@ export default function DiscoverView() {
     const params = new URLSearchParams({
       city: city.trim(),
       radius: String(radius),
-      types: Array.from(types).join(","),
     });
 
     const res = await fetch(`/api/venues/discover?${params}`);
@@ -92,11 +81,8 @@ export default function DiscoverView() {
   const typeColor = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.color ?? "#9a9591";
   const typeLabel = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.label.replace(/s$/, "").replace(/ies$/, "y") ?? type;
 
-  const filtered = results
-    .filter((r) => r.live_music_tagged || types.has(r.type))
-    .sort((a, b) => Number(b.live_music_tagged) - Number(a.live_music_tagged));
-  const newVenues = filtered.filter((r) => !r.already_in_pipeline);
-  const inPipeline = filtered.filter((r) => r.already_in_pipeline);
+  const newVenues = results.filter((r) => !r.already_in_pipeline);
+  const inPipeline = results.filter((r) => r.already_in_pipeline);
 
   return (
     <div>
@@ -136,29 +122,6 @@ export default function DiscoverView() {
           </div>
         </div>
 
-        {/* Type toggles */}
-        <div className="mb-5">
-          <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>
-            Venue Types
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {VENUE_TYPES.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => toggleType(t.key)}
-                className="px-3 py-1 rounded-full text-xs font-medium transition-all"
-                style={{
-                  backgroundColor: types.has(t.key) ? `${t.color}22` : "#1e2128",
-                  color: types.has(t.key) ? t.color : "#5e5c58",
-                  border: `1px solid ${types.has(t.key) ? t.color + "55" : "rgba(255,255,255,0.07)"}`,
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <button
           onClick={handleSearch}
           disabled={loading}
@@ -182,8 +145,8 @@ export default function DiscoverView() {
         <>
           {newVenues.length === 0 && inPipeline.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>No venues found</p>
-              <p className="text-xs" style={{ color: "#5e5c58" }}>Try a larger radius or different venue types.</p>
+              <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>No confirmed live music venues found</p>
+              <p className="text-xs" style={{ color: "#5e5c58" }}>Try a larger radius — or many venues simply haven&apos;t listed themselves online yet, so manual search may be needed for smaller markets.</p>
             </div>
           ) : (
             <>
