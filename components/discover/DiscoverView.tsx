@@ -4,10 +4,9 @@ import { useState } from "react";
 
 const VENUE_TYPES = [
   { key: "bar",        label: "Bars & Pubs",    color: "#d4a853" },
-  { key: "restaurant", label: "Restaurants",     color: "#4caf7d" },
-  { key: "winery",     label: "Wineries",        color: "#c06080" },
   { key: "brewery",    label: "Breweries",       color: "#e09b50" },
-  { key: "cafe",       label: "Cafés",           color: "#5b9bd5" },
+  { key: "winery",     label: "Wineries",        color: "#c06080" },
+  { key: "restaurant", label: "Restaurants",     color: "#4caf7d" },
   { key: "hotel",      label: "Hotels",          color: "#9b7fe8" },
   { key: "club",       label: "Clubs",           color: "#e25c5c" },
   { key: "venue",      label: "Event Venues",    color: "#9a9591" },
@@ -21,6 +20,7 @@ type DiscoverResult = {
   address: string | null;
   website: string | null;
   phone: string | null;
+  live_music_tagged: boolean;
   already_in_pipeline: boolean;
 };
 
@@ -92,7 +92,9 @@ export default function DiscoverView() {
   const typeColor = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.color ?? "#9a9591";
   const typeLabel = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.label.replace(/s$/, "").replace(/ies$/, "y") ?? type;
 
-  const filtered = results.filter((r) => types.has(r.type) || !VENUE_TYPES.find((t) => t.key === r.type));
+  const filtered = results
+    .filter((r) => r.live_music_tagged || types.has(r.type))
+    .sort((a, b) => Number(b.live_music_tagged) - Number(a.live_music_tagged));
   const newVenues = filtered.filter((r) => !r.already_in_pipeline);
   const inPipeline = filtered.filter((r) => r.already_in_pipeline);
 
@@ -205,12 +207,22 @@ export default function DiscoverView() {
                             <p className="text-sm font-semibold leading-snug" style={{ color: "#f0ede8" }}>
                               {venue.name}
                             </p>
-                            <span
-                              className="text-xs px-2 py-0.5 rounded-full shrink-0"
-                              style={{ backgroundColor: `${color}22`, color, border: `1px solid ${color}44` }}
-                            >
-                              {typeLabel(venue.type)}
-                            </span>
+                            <div className="flex flex-col items-end gap-1 shrink-0">
+                              {venue.live_music_tagged && (
+                                <span
+                                  className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                                  style={{ backgroundColor: "rgba(76,175,125,0.2)", color: "#4caf7d", border: "1px solid rgba(76,175,125,0.4)" }}
+                                >
+                                  🎵 Live Music
+                                </span>
+                              )}
+                              <span
+                                className="text-xs px-2 py-0.5 rounded-full"
+                                style={{ backgroundColor: `${color}22`, color, border: `1px solid ${color}44` }}
+                              >
+                                {typeLabel(venue.type)}
+                              </span>
+                            </div>
                           </div>
 
                           {(venue.city || venue.address) && (

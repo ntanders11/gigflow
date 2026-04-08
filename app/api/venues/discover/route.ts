@@ -1,16 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+// Overpass clauses for each venue type
 const TYPE_OVERPASS: Record<string, string[]> = {
   bar:        ['node["amenity"="bar"]', 'way["amenity"="bar"]', 'node["amenity"="pub"]', 'way["amenity"="pub"]'],
-  restaurant: ['node["amenity"="restaurant"]', 'way["amenity"="restaurant"]'],
-  cafe:       ['node["amenity"="cafe"]', 'way["amenity"="cafe"]'],
+  restaurant: ['node["amenity"="restaurant"]["live_music"="yes"]', 'way["amenity"="restaurant"]["live_music"="yes"]'],
+  cafe:       ['node["amenity"="cafe"]["live_music"="yes"]', 'way["amenity"="cafe"]["live_music"="yes"]'],
   brewery:    ['node["craft"="brewery"]', 'way["craft"="brewery"]', 'node["amenity"="brewery"]'],
   winery:     ['node["craft"="winery"]', 'way["craft"="winery"]', 'node["amenity"="winery"]'],
   club:       ['node["amenity"="nightclub"]', 'way["amenity"="nightclub"]'],
   hotel:      ['node["tourism"="hotel"]', 'way["tourism"="hotel"]'],
-  venue:      ['node["amenity"="events_venue"]', 'way["amenity"="events_venue"]', 'node["amenity"="arts_centre"]'],
+  venue:      ['node["amenity"="events_venue"]', 'way["amenity"="events_venue"]', 'node["amenity"="arts_centre"]', 'way["amenity"="arts_centre"]', 'node["amenity"="music_venue"]', 'way["amenity"="music_venue"]'],
 };
+
+// Always include explicitly live-music-tagged venues regardless of type filter
+const LIVE_MUSIC_CLAUSES = [
+  'node["live_music"="yes"]',
+  'way["live_music"="yes"]',
+  'node["entertainment"="live_music"]',
+  'way["entertainment"="live_music"]',
+  'node["amenity"="music_venue"]',
+  'way["amenity"="music_venue"]',
+];
 
 const OSM_TO_GIGFLOW_TYPE: Record<string, string> = {
   bar: "bar", pub: "bar", restaurant: "restaurant", cafe: "cafe",
@@ -41,14 +52,22 @@ export async function GET(req: NextRequest) {
   const lat = parseFloat(geoData[0].lat);
   const lon = parseFloat(geoData[0].lon);
 
-  // 2. Build Overpass query
+  // 2. Build Overpass query — always include explicit live music tags, plus type-based clauses
   const lines: string[] = [];
+
+  // Always search for explicitly tagged live music venues
+  for (const clause of LIVE_MUSIC_CLAUSES) {
+    lines.push(`${clause}(around:${radius},${lat},${lon});`);
+  }
+
+  // Also search by venue type (restaurants/cafes only if they have live_music tag)
   for (const t of types) {
     const clauses = TYPE_OVERPASS[t] ?? [];
     for (const clause of clauses) {
       lines.push(`${clause}(around:${radius},${lat},${lon});`);
     }
   }
+
   const query = `[out:json][timeout:30];\n(\n${lines.join("\n")}\n);\nout body center;`;
 
   const opRes = await fetch("https://overpass-api.de/api/interpreter", {
@@ -93,6 +112,11 @@ export async function GET(req: NextRequest) {
         ? `${tags["addr:housenumber"] ? tags["addr:housenumber"] + " " : ""}${tags["addr:street"]}${city2 ? ", " + city2 : ""}`
         : null;
 
+      const hasLiveMusicTag =
+        tags.live_music === "yes" ||
+        tags.entertainment === "live_music" ||
+        tags.amenity === "music_venue";
+
       return {
         osm_id: String(el.id),
         name: tags.name,
@@ -103,6 +127,7 @@ export async function GET(req: NextRequest) {
         phone: tags.phone || tags["contact:phone"] || null,
         lat: lat2,
         lon: lon2,
+        live_music_tagged: hasLiveMusicTag,
         already_in_pipeline: existingNames.has(tags.name.toLowerCase().trim()),
       };
     })
