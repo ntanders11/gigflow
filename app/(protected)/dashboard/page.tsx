@@ -194,6 +194,58 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Follow-up alert banner */}
+      {needsAttention.length > 0 && (
+        <div
+          className="mb-6 max-w-6xl rounded-xl p-4"
+          style={{
+            backgroundColor: "rgba(226,92,92,0.08)",
+            border: "1px solid rgba(226,92,92,0.25)",
+            borderLeft: "3px solid #e25c5c",
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-base mt-0.5">🔔</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold mb-2.5" style={{ color: "#e25c5c" }}>
+                {needsAttention.length} venue{needsAttention.length !== 1 ? "s" : ""} waiting on a follow-up
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {needsAttention.slice(0, 5).map((venue) => {
+                  const daysSince = Math.floor(
+                    (Date.now() - new Date(venue.last_contacted_at!).getTime()) /
+                      (1000 * 60 * 60 * 24)
+                  );
+                  return (
+                    <Link
+                      key={venue.id}
+                      href={`/venues/${venue.id}`}
+                      className="text-xs px-3 py-1.5 rounded-full transition-all hover:brightness-125"
+                      style={{
+                        backgroundColor: "rgba(226,92,92,0.12)",
+                        color: "#f0ede8",
+                        border: "1px solid rgba(226,92,92,0.2)",
+                      }}
+                    >
+                      {venue.name} · {daysSince}d ago
+                    </Link>
+                  );
+                })}
+                {needsAttention.length > 5 && (
+                  <Link
+                    href="/pipeline?stage=contacted"
+                    className="text-xs px-3 py-1.5 rounded-full transition-all hover:brightness-125"
+                    style={{ color: "#9a9591", border: "1px solid rgba(255,255,255,0.1)" }}
+                  >
+                    +{needsAttention.length - 5} more →
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-8 max-w-6xl">
         {statCards.map((stat) => (
