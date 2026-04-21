@@ -96,6 +96,7 @@ export interface Gig {
   start_time: string | null; // HH:MM
   end_time: string | null;   // HH:MM
   notes: string | null;
+  checklist: string[];    // array of completed checklist item IDs
   status: GigStatus;
   created_at: string;
   updated_at: string;

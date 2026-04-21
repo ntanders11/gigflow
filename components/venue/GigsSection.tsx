@@ -8,6 +8,16 @@ interface Props {
   initialGigs: Gig[];
 }
 
+const CHECKLIST_ITEMS = [
+  { id: "load_in",    label: "Load-in time confirmed" },
+  { id: "sound_check",label: "Sound check scheduled" },
+  { id: "payment",    label: "Deposit / payment arranged" },
+  { id: "set_list",   label: "Set list ready" },
+  { id: "equipment",  label: "Equipment packed" },
+  { id: "parking",    label: "Parking figured out" },
+  { id: "contact",    label: "Point of contact confirmed" },
+];
+
 const STATUS_STYLE = {
   upcoming:  { color: "#4caf7d", label: "Upcoming" },
   completed: { color: "#9a9591", label: "Completed" },
@@ -31,6 +41,7 @@ function fmtDate(dateStr: string) {
 export default function GigsSection({ venueId, initialGigs }: Props) {
   const [gigs, setGigs] = useState<Gig[]>(initialGigs);
   const [showForm, setShowForm] = useState(false);
+  const [expandedGigId, setExpandedGigId] = useState<string | null>(null);
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -68,6 +79,23 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
   async function deleteGig(id: string) {
     const res = await fetch(`/api/gigs/${id}`, { method: "DELETE" });
     if (res.ok) setGigs((prev) => prev.filter((g) => g.id !== id));
+  }
+
+  async function toggleChecklistItem(gig: Gig, itemId: string) {
+    const current: string[] = (gig as any).checklist ?? [];
+    const updated = current.includes(itemId)
+      ? current.filter((i) => i !== itemId)
+      : [...current, itemId];
+
+    setGigs((prev) =>
+      prev.map((g) => g.id === gig.id ? { ...g, checklist: updated } as any : g)
+    );
+
+    await fetch(`/api/gigs/${gig.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ checklist: updated }),
+    });
   }
 
   const inputStyle = {
@@ -147,50 +175,101 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
             const s = STATUS_STYLE[gig.status];
             const start = fmt12(gig.start_time);
             const end = fmt12(gig.end_time);
+            const checklist: string[] = (gig as any).checklist ?? [];
+            const doneCount = CHECKLIST_ITEMS.filter((i) => checklist.includes(i.id)).length;
+            const total = CHECKLIST_ITEMS.length;
+            const isExpanded = expandedGigId === gig.id;
+            const allDone = doneCount === total;
+
             return (
               <div
                 key={gig.id}
-                className="flex items-center gap-3 rounded-lg px-4 py-3"
+                className="rounded-lg overflow-hidden"
                 style={{
                   background: "#1e2128",
                   borderLeft: `3px solid ${s.color}`,
                   opacity: gig.status === "cancelled" ? 0.5 : 1,
                 }}
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium" style={{ color: "#f0ede8" }}>
-                    {fmtDate(gig.date)}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: "#9a9591" }}>
-                    {start ? `${start}${end ? ` – ${end}` : ""}` : "No time set"}
-                    {gig.notes ? ` · ${gig.notes}` : ""}
-                  </p>
+                {/* Main row */}
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium" style={{ color: "#f0ede8" }}>
+                      {fmtDate(gig.date)}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "#9a9591" }}>
+                      {start ? `${start}${end ? ` – ${end}` : ""}` : "No time set"}
+                      {gig.notes ? ` · ${gig.notes}` : ""}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Checklist progress badge */}
+                    {gig.status === "upcoming" && (
+                      <button
+                        onClick={() => setExpandedGigId(isExpanded ? null : gig.id)}
+                        className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+                        style={{
+                          background: allDone ? "rgba(76,175,125,0.15)" : "rgba(255,255,255,0.05)",
+                          color: allDone ? "#4caf7d" : "#9a9591",
+                          border: `1px solid ${allDone ? "rgba(76,175,125,0.3)" : "rgba(255,255,255,0.08)"}`,
+                        }}
+                      >
+                        <span>{allDone ? "✓" : "☐"}</span>
+                        <span>{doneCount}/{total} prep</span>
+                      </button>
+                    )}
+
+                    {gig.status === "upcoming" && (
+                      <button
+                        onClick={() => markStatus(gig.id, "completed")}
+                        className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+                        style={{ background: "rgba(76,175,125,0.15)", color: "#4caf7d", border: "1px solid rgba(76,175,125,0.3)" }}
+                      >
+                        ✓ Done
+                      </button>
+                    )}
+                    {gig.status === "completed" && (
+                      <span className="text-xs px-2 py-1 rounded-lg" style={{ background: "rgba(154,149,145,0.15)", color: "#9a9591" }}>
+                        ✓ Completed
+                      </span>
+                    )}
+                    <button
+                      onClick={() => deleteGig(gig.id)}
+                      className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+                      style={{ background: "rgba(226,92,92,0.1)", color: "#e25c5c" }}
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
 
-                {/* Status toggle */}
-                <div className="flex gap-1 shrink-0">
-                  {gig.status === "upcoming" && (
-                    <button
-                      onClick={() => markStatus(gig.id, "completed")}
-                      className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
-                      style={{ background: "rgba(76,175,125,0.15)", color: "#4caf7d", border: "1px solid rgba(76,175,125,0.3)" }}
-                    >
-                      ✓ Done
-                    </button>
-                  )}
-                  {gig.status === "completed" && (
-                    <span className="text-xs px-2 py-1 rounded-lg" style={{ background: "rgba(154,149,145,0.15)", color: "#9a9591" }}>
-                      ✓ Completed
-                    </span>
-                  )}
-                  <button
-                    onClick={() => deleteGig(gig.id)}
-                    className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
-                    style={{ background: "rgba(226,92,92,0.1)", color: "#e25c5c" }}
+                {/* Expandable checklist */}
+                {isExpanded && (
+                  <div
+                    className="px-4 pb-4 pt-1 grid grid-cols-1 sm:grid-cols-2 gap-2"
+                    style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
                   >
-                    ✕
-                  </button>
-                </div>
+                    {CHECKLIST_ITEMS.map((item) => {
+                      const checked = checklist.includes(item.id);
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => toggleChecklistItem(gig, item.id)}
+                          className="flex items-center gap-2 text-left text-xs py-1.5 px-2 rounded-lg transition-all hover:brightness-125"
+                          style={{
+                            background: checked ? "rgba(76,175,125,0.1)" : "rgba(255,255,255,0.03)",
+                            color: checked ? "#4caf7d" : "#9a9591",
+                            border: `1px solid ${checked ? "rgba(76,175,125,0.25)" : "rgba(255,255,255,0.06)"}`,
+                          }}
+                        >
+                          <span className="text-base leading-none">{checked ? "✓" : "○"}</span>
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
