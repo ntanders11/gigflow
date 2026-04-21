@@ -64,6 +64,11 @@ export default async function DashboardPage() {
 
   const allVenues = venues ?? [];
 
+  const { count: totalInteractions } = await supabase
+    .from("interactions")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
   const { data: unpaidInvoices } = await supabase
     .from("invoices")
     .select("id, amount_cents, status")
@@ -82,9 +87,32 @@ export default async function DashboardPage() {
 
   // Aggregate stats
   const totalVenues = allVenues.length;
-  const bookedCount = allVenues.filter((v) => v.stage === "booked").length;
-  const respondedCount = allVenues.filter((v) => v.stage === "responded").length;
-  const contactedCount = allVenues.filter((v) => v.stage === "contacted").length;
+  const bookedCount      = allVenues.filter((v) => v.stage === "booked").length;
+  const respondedCount   = allVenues.filter((v) => v.stage === "responded").length;
+  const contactedCount   = allVenues.filter((v) => v.stage === "contacted").length;
+  const negotiatingCount = allVenues.filter((v) => v.stage === "negotiating").length;
+  const discoveredCount  = allVenues.filter((v) => v.stage === "discovered").length;
+
+  // Conversion funnel
+  const activeVenues = allVenues.filter((v) => v.stage !== "dormant");
+  const totalActive  = activeVenues.length;
+  const funnelStages = [
+    { key: "discovered",  label: "Discovered",  color: "#5b9bd5", count: discoveredCount },
+    { key: "contacted",   label: "Contacted",   color: "#d4a853", count: contactedCount  },
+    { key: "responded",   label: "Responded",   color: "#9b7fe8", count: respondedCount  },
+    { key: "negotiating", label: "Negotiating", color: "#e09b50", count: negotiatingCount},
+    { key: "booked",      label: "Booked",      color: "#4caf7d", count: bookedCount     },
+  ].map((s) => ({
+    ...s,
+    pct: totalActive > 0 ? Math.round((s.count / totalActive) * 100) : 0,
+  }));
+  const maxFunnelCount = Math.max(...funnelStages.map((s) => s.count), 1);
+
+  const everContacted = contactedCount + respondedCount + negotiatingCount + bookedCount;
+  const everResponded = respondedCount + negotiatingCount + bookedCount;
+  const contactRate  = totalActive > 0   ? Math.round((everContacted / totalActive)   * 100) : 0;
+  const responseRate = everContacted > 0 ? Math.round((everResponded / everContacted)  * 100) : 0;
+  const bookingRate  = everResponded > 0 ? Math.round((bookedCount   / everResponded)  * 100) : 0;
 
   const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
 
@@ -405,6 +433,82 @@ export default async function DashboardPage() {
             })}
           </div>
         )}
+      </div>
+
+      {/* Conversion Stats */}
+      <div className="mb-8 max-w-6xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#9a9591" }}>
+            Pipeline Funnel
+          </h2>
+          {totalInteractions != null && totalInteractions > 0 && (
+            <span className="text-xs" style={{ color: "#5e5c58" }}>
+              {totalInteractions} total interaction{totalInteractions !== 1 ? "s" : ""} logged
+            </span>
+          )}
+        </div>
+
+        <div
+          className="rounded-xl p-5 mb-4"
+          style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <div className="space-y-3">
+            {funnelStages.map((stage) => (
+              <div key={stage.key} className="flex items-center gap-3">
+                <span
+                  className="text-xs font-medium w-24 shrink-0 text-right"
+                  style={{ color: "#9a9591" }}
+                >
+                  {stage.label}
+                </span>
+                <div className="flex-1 rounded-full overflow-hidden" style={{ backgroundColor: "#1e2128", height: "8px" }}>
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.round((stage.count / maxFunnelCount) * 100)}%`,
+                      backgroundColor: stage.color,
+                      minWidth: stage.count > 0 ? "4px" : "0",
+                    }}
+                  />
+                </div>
+                <span className="text-xs font-semibold w-6 text-right shrink-0" style={{ color: stage.color }}>
+                  {stage.count}
+                </span>
+                <span className="text-xs w-8 shrink-0" style={{ color: "#5e5c58" }}>
+                  {stage.pct}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Conversion rate cards */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Contact Rate", value: contactRate, desc: "venues reached out to", color: "#d4a853" },
+            { label: "Response Rate", value: responseRate, desc: "of contacted replied", color: "#9b7fe8" },
+            { label: "Booking Rate", value: bookingRate, desc: "of replies turned to gigs", color: "#4caf7d" },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-xl p-4 text-center"
+              style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+            >
+              <p
+                className="text-3xl font-bold mb-1"
+                style={{ color: stat.value > 0 ? stat.color : "#5e5c58" }}
+              >
+                {stat.value}%
+              </p>
+              <p className="text-xs font-semibold mb-0.5" style={{ color: "#f0ede8" }}>
+                {stat.label}
+              </p>
+              <p className="text-xs" style={{ color: "#5e5c58" }}>
+                {stat.desc}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Two-column section */}
