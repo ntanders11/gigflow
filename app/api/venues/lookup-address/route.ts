@@ -8,25 +8,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
 
-  const query = [name, city].filter(Boolean).join(", ");
+  const headers = {
+    "User-Agent": "GigFlow/1.0 (taylorandersonmusic.com)",
+    "Accept-Language": "en-US,en",
+  };
 
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=3&addressdetails=1&countrycodes=us`;
+  // Try full query first (name + city), then fall back to name only
+  const queries = [
+    [name, city, "USA"].filter(Boolean).join(", "),
+    [name, "USA"].filter(Boolean).join(", "),
+  ];
 
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "GigFlow/1.0 (taylorandersonmusic.com)",
-      "Accept-Language": "en-US,en",
-    },
-  });
-
-  if (!res.ok) {
-    return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
+  let results: any[] = [];
+  for (const q of queries) {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=3&addressdetails=1`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) continue;
+    const data = await res.json();
+    if (data && data.length > 0) { results = data; break; }
   }
 
-  const results = await res.json();
-
-  if (!results || results.length === 0) {
-    return NextResponse.json({ address: null, message: "No results found" });
+  if (results.length === 0) {
+    return NextResponse.json({ address: null, message: "No results found — please enter the address manually." });
   }
 
   // Build a clean address from the best result

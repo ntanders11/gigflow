@@ -48,6 +48,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
   // Address
   const [address, setAddress] = useState(initialVenue.address ?? "");
   const [lookingUpAddress, setLookingUpAddress] = useState(false);
+  const [addressLookupMsg, setAddressLookupMsg] = useState("");
 
   useEffect(() => {
     fetch(`/api/invoices?venue_id=${venue.id}`)
@@ -87,6 +88,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
 
   async function lookUpAddress() {
     setLookingUpAddress(true);
+    setAddressLookupMsg("");
     const params = new URLSearchParams({ name: venue.name });
     if (venue.city) params.append("city", venue.city);
     const res = await fetch(`/api/venues/lookup-address?${params}`);
@@ -94,6 +96,9 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
     if (data.address) {
       setAddress(data.address);
       await saveAddress(data.address);
+      setAddressLookupMsg("");
+    } else {
+      setAddressLookupMsg("Not found — enter manually.");
     }
     setLookingUpAddress(false);
   }
@@ -306,6 +311,9 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
               className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-full"
               style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#f0ede8" }}
             />
+            {addressLookupMsg && (
+              <p className="text-xs mt-1" style={{ color: "#e09b50" }}>{addressLookupMsg}</p>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
