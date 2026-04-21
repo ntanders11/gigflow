@@ -19,11 +19,12 @@ export async function GET(req: NextRequest) {
       "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.types",
     };
 
-    // First pass: search for a business/establishment specifically
-    // Second pass: open search (catches venues Google categorizes differently)
+    // Try multiple queries, each must return an address that starts with a
+    // street number — otherwise it's a road/region result, not a business.
     const passes = [
-      { textQuery: query, includedType: "establishment" },
-      { textQuery: query },
+      { textQuery: `${query}`, includedType: "establishment" },
+      { textQuery: `${query}` },
+      { textQuery: `${name} Oregon` },
     ];
 
     for (const body of passes) {
@@ -35,16 +36,14 @@ export async function GET(req: NextRequest) {
         });
         if (!res.ok) continue;
         const data = await res.json();
-        const place = data?.places?.[0];
-        if (!place?.formattedAddress) continue;
 
-        // Skip pure geographic results (roads, regions, etc.) — no house number
-        const geoTypes = ["route", "locality", "administrative_area_level_1",
-          "administrative_area_level_2", "country", "natural_feature", "neighborhood"];
-        const isGeo = (place.types ?? []).every((t: string) => geoTypes.includes(t));
-        if (isGeo) continue;
-
-        return NextResponse.json({ address: place.formattedAddress });
+        // Walk through results — take the first one with a real street number
+        for (const place of data?.places ?? []) {
+          const addr: string = place?.formattedAddress ?? "";
+          if (/^\d/.test(addr.trim())) {
+            return NextResponse.json({ address: addr });
+          }
+        }
       } catch {
         continue;
       }
