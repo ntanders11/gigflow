@@ -7,6 +7,34 @@ function buildSubject(venueName: string) {
   return `Live music inquiry for ${venueName} — full-band sound, one performer`;
 }
 
+function buildFollowUpSubject(venueName: string) {
+  return `Following up — live music inquiry for ${venueName}`;
+}
+
+function buildFollowUpBody(venueName: string, profile: ArtistProfile | null, contactName?: string | null) {
+  const greeting = contactName ? `Hi ${contactName},` : `Hi there,`;
+  const name = profile?.display_name ?? "Taylor Anderson";
+  const phone = profile?.phone ?? "(503) 997-3586";
+  const website = profile?.social_links?.website ?? "taylorandersonmusic.com";
+  const youtube = profile?.social_links?.youtube
+    ?? profile?.video_samples?.[0]?.url
+    ?? "https://youtu.be/JaPOuz1R0HI?si=lo5JhEbgowL2g5JU";
+
+  return `${greeting}
+
+I wanted to follow up on my email from last week about playing at ${venueName}.
+
+I know inboxes get busy — just wanted to make sure my note didn't get buried. I'd love to find a time to connect and see if there's a fit.
+
+Hear it for yourself: ${youtube}
+
+Happy to work around your schedule. Thanks for your time!
+
+${name}
+${phone}
+${website}`;
+}
+
 function buildBody(venueName: string, profile: ArtistProfile | null, contactName?: string | null) {
   const greeting = contactName ? `Hi ${contactName},` : `Hi there,`;
   const name = profile?.display_name ?? "Taylor Anderson";
@@ -39,12 +67,13 @@ interface Props {
   venue: Venue;
   onClose: () => void;
   onSuccess: (interaction: Interaction) => void;
+  followUp?: boolean;
 }
 
-export default function PitchEmailModal({ venue, onClose, onSuccess }: Props) {
+export default function PitchEmailModal({ venue, onClose, onSuccess, followUp = false }: Props) {
   const [profile, setProfile] = useState<ArtistProfile | null>(null);
   const [to, setTo] = useState(venue.contact_email ?? "");
-  const [subject, setSubject] = useState(buildSubject(venue.name));
+  const [subject, setSubject] = useState(followUp ? buildFollowUpSubject(venue.name) : buildSubject(venue.name));
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -56,12 +85,18 @@ export default function PitchEmailModal({ venue, onClose, onSuccess }: Props) {
       .then((r) => r.json())
       .then((p: ArtistProfile) => {
         setProfile(p);
-        setBody(buildBody(venue.name, p, venue.contact_name));
+        setBody(followUp
+          ? buildFollowUpBody(venue.name, p, venue.contact_name)
+          : buildBody(venue.name, p, venue.contact_name)
+        );
       })
       .catch(() => {
-        setBody(buildBody(venue.name, null, venue.contact_name));
+        setBody(followUp
+          ? buildFollowUpBody(venue.name, null, venue.contact_name)
+          : buildBody(venue.name, null, venue.contact_name)
+        );
       });
-  }, [venue.name, venue.contact_name]);
+  }, [venue.name, venue.contact_name, followUp]);
 
   async function handleSend() {
     if (!to.trim()) {
@@ -111,7 +146,7 @@ export default function PitchEmailModal({ venue, onClose, onSuccess }: Props) {
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
-          <h2 className="text-base font-semibold text-slate-900">Send Pitch Email</h2>
+          <h2 className="text-base font-semibold text-slate-900">{followUp ? "Send Follow-up" : "Send Pitch Email"}</h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-700 transition-colors text-xl leading-none"

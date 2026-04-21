@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { VenueStage } from "@/types";
+import NeedsAttentionSection from "@/components/dashboard/NeedsAttentionSection";
 
 const STAGE_STYLE: Record<
   VenueStage,
@@ -51,7 +52,7 @@ export default async function DashboardPage() {
 
   const { data: venues } = await supabase
     .from("venues")
-    .select("id, name, type, city, stage, updated_at, follow_up_date, last_contacted_at")
+    .select("id, name, type, city, stage, updated_at, follow_up_date, last_contacted_at, contact_email, contact_name")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
 
@@ -528,69 +529,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{
-              backgroundColor: "#16181c",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            {needsAttention.length === 0 ? (
-              <div className="px-5 py-8 text-center">
-                <p className="text-sm font-medium mb-1" style={{ color: "#4caf7d" }}>
-                  You&apos;re all caught up!
-                </p>
-                <p className="text-xs" style={{ color: "#5e5c58" }}>
-                  No contacted venues have been waiting more than 5 days.
-                </p>
-              </div>
-            ) : (
-              needsAttention.map((venue, idx) => {
-                const iconColor = typeColor(venue.type);
-                const firstLetter = (venue.type ?? "V")[0].toUpperCase();
-                const isLast = idx === needsAttention.length - 1;
-                const daysSince = Math.floor(
-                  (Date.now() - new Date(venue.last_contacted_at!).getTime()) /
-                    (1000 * 60 * 60 * 24)
-                );
-
-                return (
-                  <Link
-                    key={venue.id}
-                    href={`/venues/${venue.id}`}
-                    className="flex items-center gap-4 px-5 py-4 transition-all hover:brightness-125"
-                    style={{
-                      borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.05)",
-                      borderLeft: "3px solid #e25c5c",
-                    }}
-                  >
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-sm"
-                      style={{
-                        backgroundColor: `${iconColor}22`,
-                        color: iconColor,
-                      }}
-                    >
-                      <span style={{ fontWeight: 800 }}>{firstLetter}</span>
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: "#f0ede8" }}>
-                        {venue.name}
-                      </p>
-                      <p className="text-xs truncate" style={{ color: "#9a9591" }}>
-                        {[venue.type, venue.city].filter(Boolean).join(" · ")}
-                      </p>
-                    </div>
-
-                    <span className="text-xs font-medium flex-shrink-0" style={{ color: "#e25c5c" }}>
-                      {daysSince}d ago
-                    </span>
-                  </Link>
-                );
-              })
-            )}
-          </div>
+          <NeedsAttentionSection venues={needsAttention} />
         </div>
 
         {/* Right: Booked Gigs (~40%) */}
