@@ -20,7 +20,43 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
   const [query, setQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [emailVenue, setEmailVenue] = useState<Venue | null>(null);
+  const [fillProgress, setFillProgress] = useState<{ done: number; total: number; found: number } | null>(null);
   const router = useRouter();
+
+  async function fillMissingAddresses() {
+    const missing = venues.filter((v) => !v.address?.trim());
+    if (missing.length === 0) return;
+
+    setFillProgress({ done: 0, total: missing.length, found: 0 });
+
+    let found = 0;
+    for (let i = 0; i < missing.length; i++) {
+      const v = missing[i];
+      try {
+        const params = new URLSearchParams({ name: v.name });
+        if (v.city) params.append("city", v.city);
+        const res = await fetch(`/api/venues/lookup-address?${params}`);
+        const data = await res.json();
+        if (data.address) {
+          found++;
+          await fetch(`/api/venues/${v.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ address: data.address }),
+          });
+          setVenues((prev) =>
+            prev.map((venue) => venue.id === v.id ? { ...venue, address: data.address } : venue)
+          );
+        }
+      } catch { /* skip on error */ }
+      setFillProgress({ done: i + 1, total: missing.length, found });
+      // Small delay to be kind to the API
+      if (i < missing.length - 1) await new Promise((r) => setTimeout(r, 120));
+    }
+
+    // Auto-dismiss after 4s
+    setTimeout(() => setFillProgress(null), 4000);
+  }
 
   const filtered = venues.filter((v) => {
     const matchesStage = initialStageFilter ? v.stage === initialStageFilter : true;
@@ -90,6 +126,15 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
               }}
             />
             <button
+              onClick={fillMissingAddresses}
+              disabled={!!fillProgress}
+              className="hidden md:block text-sm px-3 py-1.5 rounded-lg shrink-0 transition-all hover:brightness-110 disabled:opacity-50"
+              style={{ backgroundColor: "#1e2128", color: "#9a9591", border: "1px solid rgba(255,255,255,0.1)" }}
+              title="Auto-fill missing venue addresses"
+            >
+              {fillProgress ? `${fillProgress.done}/${fillProgress.total}…` : "📍 Fill addresses"}
+            </button>
+            <button
               onClick={() => setShowAddModal(true)}
               className="text-sm px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all hover:brightness-110"
               style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
@@ -121,6 +166,35 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
           ))}
         </div>
       </div>
+
+      {/* Address fill progress banner */}
+      {fillProgress && (
+        <div className="px-4 md:px-8 pt-4">
+          <div
+            className="rounded-lg px-4 py-3 flex items-center gap-4"
+            style={{ backgroundColor: "rgba(212,168,83,0.1)", border: "1px solid rgba(212,168,83,0.25)" }}
+          >
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-medium" style={{ color: "#d4a853" }}>
+                  {fillProgress.done < fillProgress.total
+                    ? `Looking up addresses… ${fillProgress.done} of ${fillProgress.total}`
+                    : `Done — found ${fillProgress.found} of ${fillProgress.total} addresses`}
+                </span>
+                <span className="text-xs" style={{ color: "#9a9591" }}>
+                  {fillProgress.found} filled in
+                </span>
+              </div>
+              <div className="w-full rounded-full overflow-hidden" style={{ backgroundColor: "#262b33", height: "4px" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round((fillProgress.done / fillProgress.total) * 100)}%`, backgroundColor: "#d4a853" }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stage filter banner */}
       {initialStageFilter && (
