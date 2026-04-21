@@ -8,12 +8,40 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
 
+  const query = [name, city].filter(Boolean).join(", ");
+
+  // ── Google Places Text Search (preferred) ──────────────────────────────────
+  const googleKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (googleKey) {
+    try {
+      const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": googleKey,
+          "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.shortFormattedAddress",
+        },
+        body: JSON.stringify({ textQuery: query }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const place = data?.places?.[0];
+        if (place?.formattedAddress) {
+          return NextResponse.json({ address: place.formattedAddress });
+        }
+      }
+    } catch {
+      // fall through to Nominatim
+    }
+  }
+
+  // ── Nominatim fallback (OpenStreetMap) ─────────────────────────────────────
   const headers = {
     "User-Agent": "GigFlow/1.0 (taylorandersonmusic.com)",
     "Accept-Language": "en-US,en",
   };
 
-  // Try full query first (name + city), then fall back to name only
   const queries = [
     [name, city, "USA"].filter(Boolean).join(", "),
     [name, "USA"].filter(Boolean).join(", "),
@@ -29,13 +57,11 @@ export async function GET(req: NextRequest) {
   }
 
   if (results.length === 0) {
-    return NextResponse.json({ address: null, message: "No results found — please enter the address manually." });
+    return NextResponse.json({ address: null, message: "Not found — please enter the address manually." });
   }
 
-  // Build a clean address from the best result
   const best = results[0];
   const a = best.address ?? {};
-
   const parts = [
     a.house_number && a.road ? `${a.house_number} ${a.road}` : a.road ?? null,
     a.city ?? a.town ?? a.village ?? a.county ?? null,
@@ -44,6 +70,5 @@ export async function GET(req: NextRequest) {
   ].filter(Boolean);
 
   const address = parts.length > 0 ? parts.join(", ") : best.display_name;
-
-  return NextResponse.json({ address, all: results.slice(0, 3).map((r: { display_name: string }) => r.display_name) });
+  return NextResponse.json({ address });
 }
