@@ -10,29 +10,44 @@ export async function GET(req: NextRequest) {
 
   const query = [name, city].filter(Boolean).join(", ");
 
-  // ── Google Places Text Search (preferred) ──────────────────────────────────
+  // ── Google Places Text Search ──────────────────────────────────────────────
   const googleKey = process.env.GOOGLE_PLACES_API_KEY;
   if (googleKey) {
-    try {
-      const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": googleKey,
-          "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.shortFormattedAddress",
-        },
-        body: JSON.stringify({ textQuery: query }),
-      });
+    const gHeaders = {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": googleKey,
+      "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.types",
+    };
 
-      if (res.ok) {
+    // First pass: search for a business/establishment specifically
+    // Second pass: open search (catches venues Google categorizes differently)
+    const passes = [
+      { textQuery: query, includedType: "establishment" },
+      { textQuery: query },
+    ];
+
+    for (const body of passes) {
+      try {
+        const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+          method: "POST",
+          headers: gHeaders,
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) continue;
         const data = await res.json();
         const place = data?.places?.[0];
-        if (place?.formattedAddress) {
-          return NextResponse.json({ address: place.formattedAddress });
-        }
+        if (!place?.formattedAddress) continue;
+
+        // Skip pure geographic results (roads, regions, etc.) — no house number
+        const geoTypes = ["route", "locality", "administrative_area_level_1",
+          "administrative_area_level_2", "country", "natural_feature", "neighborhood"];
+        const isGeo = (place.types ?? []).every((t: string) => geoTypes.includes(t));
+        if (isGeo) continue;
+
+        return NextResponse.json({ address: place.formattedAddress });
+      } catch {
+        continue;
       }
-    } catch {
-      // fall through to Nominatim
     }
   }
 
