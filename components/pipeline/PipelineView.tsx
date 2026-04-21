@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Venue, VenueStage, STAGES } from "@/types";
 import AddVenueModal from "@/components/venue/AddVenueModal";
+import PitchEmailModal from "@/components/venue/PitchEmailModal";
 
 const KanbanBoard = dynamic(() => import("./KanbanBoard"), { ssr: false });
 
@@ -18,6 +19,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
   const [venues, setVenues] = useState<Venue[]>(initialVenues);
   const [query, setQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [emailVenue, setEmailVenue] = useState<Venue | null>(null);
   const router = useRouter();
 
   const filtered = venues.filter((v) => {
@@ -47,6 +49,14 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
             setVenues((prev) => [venue, ...prev]);
             setShowAddModal(false);
           }}
+        />
+      )}
+
+      {emailVenue && (
+        <PitchEmailModal
+          venue={emailVenue}
+          onClose={() => setEmailVenue(null)}
+          onSuccess={() => setEmailVenue(null)}
         />
       )}
       {/* Header — sticky on desktop, static on mobile */}
@@ -135,7 +145,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
 
       {/* Board */}
       <div className="px-4 md:px-8 pt-4 pb-8 overflow-x-auto">
-        <KanbanBoard venues={filtered} setVenues={setVenues} outreachMap={outreachMap} />
+        <KanbanBoard venues={filtered} setVenues={setVenues} outreachMap={outreachMap} onEmail={setEmailVenue} />
       </div>
     </div>
   );

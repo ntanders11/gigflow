@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Draggable } from "@hello-pangea/dnd";
 import { Venue } from "@/types";
-import { cn } from "@/lib/utils";
 
 // Dark-theme confidence colors using inline styles
 const CONFIDENCE_DARK: Record<string, { bg: string; color: string; border: string; label: string }> = {
@@ -16,6 +15,7 @@ interface Props {
   venue: Venue;
   index: number;
   onReply: (venueId: string) => void;
+  onEmail: (venue: Venue) => void;
   outreach: { count: number; lastDate: string | null } | null;
 }
 
@@ -27,7 +27,7 @@ function daysAgo(dateStr: string | null): string | null {
   return `${days}d ago`;
 }
 
-export default function VenueCard({ venue, index, onReply, outreach }: Props) {
+export default function VenueCard({ venue, index, onReply, onEmail, outreach }: Props) {
   const conf = CONFIDENCE_DARK[venue.confidence] ?? CONFIDENCE_DARK.LOW;
 
   return (
@@ -86,23 +86,41 @@ export default function VenueCard({ venue, index, onReply, outreach }: Props) {
               </span>
             )}
 
-            {venue.stage === "contacted" && (
+            <div className="ml-auto flex items-center gap-1.5">
+              {venue.stage === "contacted" && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onReply(venue.id);
+                  }}
+                  className="text-xs px-1.5 py-0.5 rounded font-medium transition-all hover:brightness-125"
+                  style={{
+                    backgroundColor: "rgba(155,127,232,0.15)",
+                    color: "#9b7fe8",
+                    border: "1px solid rgba(155,127,232,0.3)",
+                  }}
+                >
+                  Got a reply? →
+                </button>
+              )}
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onReply(venue.id);
+                  onEmail(venue);
                 }}
-                className="text-xs px-1.5 py-0.5 rounded font-medium transition-all hover:brightness-125 ml-auto"
+                className="text-xs px-1.5 py-0.5 rounded font-medium transition-all hover:brightness-125"
                 style={{
-                  backgroundColor: "rgba(155,127,232,0.15)",
-                  color: "#9b7fe8",
-                  border: "1px solid rgba(155,127,232,0.3)",
+                  backgroundColor: "rgba(212,168,83,0.12)",
+                  color: "#d4a853",
+                  border: "1px solid rgba(212,168,83,0.25)",
                 }}
+                title="Send email"
               >
-                Got a reply? →
+                ✉
               </button>
-            )}
+            </div>
           </div>
         </div>
       )}
