@@ -76,6 +76,8 @@ export default function DiscoverView() {
 
   async function handleAdd(venue: DiscoverResult) {
     setAdding((prev) => new Set(prev).add(venue.osm_id));
+
+    // 1. Add venue to pipeline
     const res = await fetch("/api/venues", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -85,17 +87,44 @@ export default function DiscoverView() {
         city: venue.city,
         address: venue.address,
         website: venue.website,
-        phone: venue.phone,
+        contact_phone: venue.phone,
         stage: "discovered",
       }),
     });
-    setAdding((prev) => { const n = new Set(prev); n.delete(venue.osm_id); return n; });
+
     if (res.ok) {
+      const created = await res.json();
+
+      // 2. Auto-enrich — look up email, phone, address in background
+      try {
+        const params = new URLSearchParams({ name: venue.name });
+        if (venue.city)    params.append("city", venue.city);
+        if (venue.website) params.append("website", venue.website);
+        const enrichRes = await fetch(`/api/venues/enrich?${params}`);
+        if (enrichRes.ok) {
+          const data = await enrichRes.json();
+          const patch: Record<string, string | null> = {};
+          if (data.email)                              patch.contact_email = data.email;
+          if (data.phone   && !venue.phone)            patch.contact_phone = data.phone;
+          if (data.website && !venue.website)          patch.website       = data.website;
+          if (data.address && !venue.address)          patch.address       = data.address;
+          if (Object.keys(patch).length > 0) {
+            await fetch(`/api/venues/${created.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(patch),
+            });
+          }
+        }
+      } catch { /* enrichment failure is non-critical */ }
+
       setAdded((prev) => new Set(prev).add(venue.osm_id));
       setResults((prev) =>
         prev.map((r) => r.osm_id === venue.osm_id ? { ...r, already_in_pipeline: true } : r)
       );
     }
+
+    setAdding((prev) => { const n = new Set(prev); n.delete(venue.osm_id); return n; });
   }
 
   const typeColor = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.color ?? "#9a9591";
