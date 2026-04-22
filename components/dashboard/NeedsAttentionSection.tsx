@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import PitchEmailModal from "@/components/venue/PitchEmailModal";
+import BulkFollowUpModal from "@/components/dashboard/BulkFollowUpModal";
 
 interface VenueSummary {
   id: string;
@@ -35,13 +36,16 @@ function typeColor(type: string | null): string {
 export default function NeedsAttentionSection({ venues }: { venues: VenueSummary[] }) {
   const [list, setList] = useState(venues);
   const [emailVenue, setEmailVenue] = useState<VenueSummary | null>(null);
+  const [showBulk, setShowBulk] = useState(false);
 
   function handleSent() {
-    // Remove the venue from the list once a follow-up is sent
-    if (emailVenue) {
-      setList((prev) => prev.filter((v) => v.id !== emailVenue.id));
-    }
+    if (emailVenue) setList((prev) => prev.filter((v) => v.id !== emailVenue.id));
     setEmailVenue(null);
+  }
+
+  function handleBulkSent(count: number) {
+    // Refresh the list — simplest is to clear it, a full reload would re-fetch
+    if (count > 0) setList([]);
   }
 
   return (
@@ -53,6 +57,24 @@ export default function NeedsAttentionSection({ venues }: { venues: VenueSummary
           onClose={() => setEmailVenue(null)}
           onSuccess={handleSent}
         />
+      )}
+      {showBulk && (
+        <BulkFollowUpModal
+          onClose={() => setShowBulk(false)}
+          onSent={handleBulkSent}
+        />
+      )}
+
+      {list.length > 0 && (
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={() => setShowBulk(true)}
+            className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:brightness-110"
+            style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
+          >
+            ✉ Send all follow-ups ({list.length})
+          </button>
+        </div>
       )}
 
       <div
