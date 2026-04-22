@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { Venue, VenueStage, STAGES } from "@/types";
 import KanbanColumn from "./KanbanColumn";
+import LogReplyModal from "./LogReplyModal";
 
 interface Props {
   venues: Venue[];
@@ -13,6 +15,8 @@ interface Props {
 }
 
 export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail }: Props) {
+  const [replyVenue, setReplyVenue] = useState<Venue | null>(null);
+
   function getVenuesByStage(stage: VenueStage) {
     return venues.filter((v) => v.stage === stage);
   }
@@ -47,6 +51,19 @@ export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail }:
     }
   }
 
+  // Opens the "Log Reply" modal — stage update happens inside the modal
+  function onReply(venue: Venue) {
+    setReplyVenue(venue);
+  }
+
+  // Called by the modal after both the interaction and stage patch succeed
+  function handleReplyLogged(venueId: string) {
+    setVenues((prev) =>
+      prev.map((v) => (v.id === venueId ? { ...v, stage: "responded" } : v))
+    );
+    setReplyVenue(null);
+  }
+
   if (venues.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -64,41 +81,29 @@ export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail }:
     );
   }
 
-  async function onReply(venueId: string) {
-    const venue = venues.find((v) => v.id === venueId);
-    if (!venue) return;
-
-    setVenues((prev) =>
-      prev.map((v) => (v.id === venueId ? { ...v, stage: "responded" } : v))
-    );
-
-    const res = await fetch(`/api/venues/${venueId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stage: "responded" }),
-    });
-
-    if (!res.ok) {
-      setVenues((prev) =>
-        prev.map((v) => (v.id === venueId ? { ...v, stage: venue.stage } : v))
-      );
-    }
-  }
-
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex gap-3 pb-4 overflow-x-auto min-w-0">
-        {STAGES.map(({ key }) => (
-          <KanbanColumn
-            key={key}
-            stage={key}
-            venues={getVenuesByStage(key)}
-            onReply={onReply}
-            onEmail={onEmail}
-            outreachMap={outreachMap}
-          />
-        ))}
-      </div>
-    </DragDropContext>
+    <>
+      {replyVenue && (
+        <LogReplyModal
+          venue={replyVenue}
+          onClose={() => setReplyVenue(null)}
+          onLogged={handleReplyLogged}
+        />
+      )}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="flex gap-3 pb-4 overflow-x-auto min-w-0">
+          {STAGES.map(({ key }) => (
+            <KanbanColumn
+              key={key}
+              stage={key}
+              venues={getVenuesByStage(key)}
+              onReply={onReply}
+              onEmail={onEmail}
+              outreachMap={outreachMap}
+            />
+          ))}
+        </div>
+      </DragDropContext>
+    </>
   );
 }

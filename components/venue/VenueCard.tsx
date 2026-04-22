@@ -14,7 +14,7 @@ const CONFIDENCE_DARK: Record<string, { bg: string; color: string; border: strin
 interface Props {
   venue: Venue;
   index: number;
-  onReply: (venueId: string) => void;
+  onReply: (venue: Venue) => void;
   onEmail: (venue: Venue) => void;
   outreach: { count: number; lastDate: string | null } | null;
 }
@@ -92,7 +92,7 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach }: 
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    onReply(venue.id);
+                    onReply(venue);
                   }}
                   className="text-xs px-1.5 py-0.5 rounded font-medium transition-all hover:brightness-125"
                   style={{

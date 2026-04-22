@@ -21,6 +21,7 @@ const INTERACTION_LABELS: Record<InteractionType, string> = {
   call: "Call",
   in_person: "In Person",
   note: "Note",
+  reply: "Reply",
 };
 
 export default function VenueDetail({ venue: initialVenue, interactions: initialInteractions, initialGigs }: Props) {
@@ -377,8 +378,8 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
 
         {showLogForm && (
           <div className="rounded-lg p-4 mb-4 space-y-3" style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)" }}>
-            <div className="flex gap-2">
-              {(["call", "email", "in_person", "note"] as InteractionType[]).map((t) => (
+            <div className="flex gap-2 flex-wrap">
+              {(["reply", "call", "email", "in_person", "note"] as InteractionType[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => setLogType(t)}
@@ -423,27 +424,39 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
           <p className="text-sm" style={{ color: "#5e5c58" }}>No interactions logged yet.</p>
         ) : (
           <div className="space-y-3">
-            {interactions.map((interaction) => (
-              <div key={interaction.id} className="flex gap-3">
-                <div className="w-16 shrink-0">
-                  <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: "#1e2128", color: "#9a9591" }}>
-                    {INTERACTION_LABELS[interaction.type]}
-                  </span>
+            {interactions.map((interaction) => {
+              const isReply = interaction.type === "reply";
+              return (
+                <div key={interaction.id} className="flex gap-3">
+                  <div className="shrink-0 pt-0.5">
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded font-medium whitespace-nowrap"
+                      style={isReply
+                        ? { background: "rgba(76,175,125,0.15)", color: "#4caf7d", border: "1px solid rgba(76,175,125,0.3)" }
+                        : { background: "#1e2128", color: "#9a9591" }
+                      }
+                    >
+                      {isReply ? "↩ Reply" : INTERACTION_LABELS[interaction.type]}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {interaction.notes && (
+                      <p className="text-sm" style={{ color: isReply ? "#f0ede8" : "#f0ede8" }}>{interaction.notes}</p>
+                    )}
+                    {interaction.email_subject && (
+                      <p className="text-xs font-medium mt-0.5" style={{ color: "#9a9591" }}>{interaction.email_subject}</p>
+                    )}
+                    <p className="text-xs mt-0.5" style={{ color: "#5e5c58" }}>
+                      {new Date(interaction.occurred_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  {interaction.notes && (
-                    <p className="text-sm" style={{ color: "#f0ede8" }}>{interaction.notes}</p>
-                  )}
-                  <p className="text-xs mt-0.5" style={{ color: "#5e5c58" }}>
-                    {new Date(interaction.occurred_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

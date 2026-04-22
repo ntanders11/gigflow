@@ -8,7 +8,7 @@ export type VenueStage =
 
 export type ConfidenceLevel = "HIGH" | "MEDIUM" | "LOW";
 
-export type InteractionType = "email" | "call" | "in_person" | "note";
+export type InteractionType = "email" | "call" | "in_person" | "note" | "reply";
 
 export interface Zone {
   id: string;

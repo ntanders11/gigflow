@@ -7,7 +7,7 @@ import VenueCard from "@/components/venue/VenueCard";
 interface Props {
   stage: VenueStage;
   venues: Venue[];
-  onReply: (venueId: string) => void;
+  onReply: (venue: Venue) => void;
   onEmail: (venue: Venue) => void;
   outreachMap: Record<string, { count: number; lastDate: string | null }>;
 }
