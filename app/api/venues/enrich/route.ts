@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 const SKIP_DOMAINS = ["example.com", "sentry.io", "w3.org", "schema.org",
   "twitter.com", "facebook.com", "instagram.com", "google.com", "apple.com",
-  "yoursite.com", "youremail.com", "email.com", "domain.com"];
+  "yoursite.com", "youremail.com", "email.com", "domain.com",
+  "wixpress.com", "squarespace.com", "mystore.com", "myshopify.com",
+  "lunabeanmedia.com", "icewingcc.com"];
 
 const SKIP_PREFIXES = ["noreply", "no-reply", "donotreply", "webmaster",
-  "postmaster", "mailer-daemon", "bounce", "support@sentry"];
+  "postmaster", "mailer-daemon", "bounce", "support@sentry", "user@", "hi@mystore"];
 
 function extractEmails(html: string): string[] {
   const found = new Set<string>();
