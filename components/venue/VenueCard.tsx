@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { Draggable } from "@hello-pangea/dnd";
 import { Venue } from "@/types";
@@ -16,6 +17,7 @@ interface Props {
   index: number;
   onReply: (venue: Venue) => void;
   onEmail: (venue: Venue) => void;
+  onEmailSaved: (venueId: string, email: string) => void;
   outreach: { count: number; lastDate: string | null } | null;
 }
 
@@ -27,8 +29,34 @@ function daysAgo(dateStr: string | null): string | null {
   return `${days}d ago`;
 }
 
-export default function VenueCard({ venue, index, onReply, onEmail, outreach }: Props) {
+export default function VenueCard({ venue, index, onReply, onEmail, onEmailSaved, outreach }: Props) {
   const conf = CONFIDENCE_DARK[venue.confidence] ?? CONFIDENCE_DARK.LOW;
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function saveEmail() {
+    const trimmed = emailInput.trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      setEditingEmail(false);
+      setEmailInput("");
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      await fetch(`/api/venues/${venue.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contact_email: trimmed }),
+      });
+      onEmailSaved(venue.id, trimmed);
+    } finally {
+      setSavingEmail(false);
+      setEditingEmail(false);
+      setEmailInput("");
+    }
+  }
 
   return (
     <Draggable draggableId={venue.id} index={index}>
@@ -122,6 +150,52 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach }: 
               </button>
             </div>
           </div>
+
+          {/* Inline email entry — shown on Discovered cards with no email */}
+          {venue.stage === "discovered" && !venue.contact_email && (
+            <div className="mt-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+              {editingEmail ? (
+                <div className="flex gap-1">
+                  <input
+                    ref={inputRef}
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveEmail();
+                      if (e.key === "Escape") { setEditingEmail(false); setEmailInput(""); }
+                    }}
+                    onBlur={() => { if (!savingEmail) { setEditingEmail(false); setEmailInput(""); } }}
+                    placeholder="paste email…"
+                    autoFocus
+                    className="flex-1 min-w-0 text-xs px-2 py-1 rounded focus:outline-none"
+                    style={{
+                      backgroundColor: "#1e2128",
+                      border: "1px solid rgba(212,168,83,0.4)",
+                      color: "#f0ede8",
+                    }}
+                  />
+                  <button
+                    onMouseDown={(e) => e.preventDefault()} // prevent blur before click
+                    onClick={saveEmail}
+                    disabled={savingEmail}
+                    className="text-xs px-2 py-1 rounded font-medium shrink-0"
+                    style={{ backgroundColor: "rgba(212,168,83,0.2)", color: "#d4a853" }}
+                  >
+                    {savingEmail ? "…" : "✓"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setEditingEmail(true); setTimeout(() => inputRef.current?.focus(), 0); }}
+                  className="text-xs transition-all hover:brightness-125"
+                  style={{ color: "#5e5c58" }}
+                >
+                  + add email
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </Draggable>

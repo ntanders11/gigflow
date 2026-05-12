@@ -302,7 +302,17 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
 
       {/* Board */}
       <div className="px-4 md:px-8 pt-4 pb-8 overflow-x-auto">
-        <KanbanBoard venues={filtered} setVenues={setVenues} outreachMap={outreachMap} onEmail={setEmailVenue} />
+        <KanbanBoard
+          venues={filtered}
+          setVenues={setVenues}
+          outreachMap={outreachMap}
+          onEmail={setEmailVenue}
+          onEmailSaved={(venueId, email) =>
+            setVenues((prev) =>
+              prev.map((v) => v.id === venueId ? { ...v, contact_email: email } : v)
+            )
+          }
+        />
       </div>
     </div>
   );
