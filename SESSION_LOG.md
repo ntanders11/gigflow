@@ -105,6 +105,56 @@ Built out the full working app across several sessions. GigFlow is now live on V
 
 ---
 
+## Session 7 - 2026-04-22 - Outreach, Enrichment & Reply Tracking
+
+### What Happened
+
+**Outreach tracking on pipeline cards:**
+- Email count badge on each card (e.g. "✉ 3× · 2d ago")
+- Quick ✉ button on every card to send pitch email without opening venue detail
+
+**Dashboard improvements:**
+- Follow-up alert banner — red banner when venues haven't replied in 5+ days
+- "Needs Attention" section upgraded to client component with per-venue "✉ Follow up" buttons and bulk "Send all follow-ups" button
+- Pipeline conversion funnel — horizontal bars showing venue counts at each stage with conversion rate stats (contacted %, responded %, booked %)
+
+**Gig prep checklist:**
+- Each gig in the venue detail now has a 7-item prep checklist: load-in, sound check, payment, set list, equipment, parking, contact
+- Tap the checklist badge to expand it; badge turns green with ✓ when all 7 are done
+- Supabase migration 007 (gigs table) and checklist column added
+
+**Contact email & address enrichment:**
+- Auto-enriches venue email, phone, website, and address when adding from Discover
+- "🔍 Find contacts" button in pipeline header to bulk-enrich all discovered venues
+- "📍 Fill addresses" button in pipeline header to bulk-fill missing addresses
+- Address lookup fixed — now uses Google Places API to find real street addresses (not road names)
+
+**Email backfill:**
+- Ran `scripts/enrich-venues.mjs` — found emails for 19 of 63 discovered venues, cleaned 10 fake/template emails, leaving 9 real usable addresses
+- Ran `scripts/clean-emails.mjs` — cleared template emails (user@domain.com, wix sentry tracking, web designer emails)
+
+**Pitch email batch send:**
+- Sent full pitch emails to 9 newly-found venues: Furioso Vineyards, Cooper Mountain Ale Works, McMenamins Old Church & Pub, The Headliners Club, Two Dogs Taphouse, Domaine Willamette, Vanguard Brewing, Flaneur Wines, Press & Barrel Wine Collective
+- All 9 moved to "contacted" stage with interactions logged
+
+**Reply tracking:**
+- "Got a reply? →" on Contacted cards now opens a modal to capture how they replied (email/call/in person) and what they said
+- Saves a "reply" interaction type (new) before moving to Responded
+- Venue timeline shows replies with a distinct green "↩ Reply" badge
+- Reply option added to manual log form in venue detail
+- Supabase migration 009 adds 'reply' to the interaction_type enum
+
+### Decisions Made
+- Enrichment runs automatically when adding venues via Discover (no separate button needed)
+- Email scoring: booking/events/music addresses rank highest, then contact/info, then manager/owner
+- Fake email detection: skip domains (wixpress, squarespace, lunabeanmedia, etc.) and skip prefixes (noreply, webmaster, etc.)
+
+### Pick Up Here Next Session
+- Gig prep checklist dashboard widget (upcoming gigs with checklist status at a glance)
+- Any other items Taylor brings up
+
+---
+
 ## Session 6 - 2026-04-07 - Calendar, Venue Tools, Dashboard
 
 ### What Happened

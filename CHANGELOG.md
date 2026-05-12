@@ -1,5 +1,18 @@
 # GigFlow Changelog
 
+## 2026-04-22
+- [Feature] Reply tracking — "Got a reply?" on pipeline cards now opens a popup to log how the venue replied (email, phone call, or in person) and what they said, before moving them to Responded
+  - Reply is saved as a real interaction so you have a record of every conversation
+  - Venue timeline shows replies with a green "↩ Reply" badge — easy to tell apart from emails you sent
+  - Reply option also available in the manual log form inside every venue detail page
+- [Feature] Contact email finder — auto-scrapes venue websites for booking/contact emails when adding venues from Discover
+- [Feature] Bulk enrichment — ran backfill to find emails and addresses for all existing discovered venues
+- [Data] Sent initial pitch emails to 9 newly-found venues: Furioso Vineyards, Cooper Mountain Ale Works, McMenamins Old Church & Pub, The Headliners Club, Two Dogs Taphouse, Domaine Willamette, Vanguard Brewing, Flaneur Wines, Press & Barrel Wine Collective
+- [Feature] Dashboard follow-up alerts — banner and list of venues that haven't replied in 5+ days, with one-click follow-up sending
+- [Feature] Pipeline conversion funnel — visual bar chart on dashboard showing how many venues are at each stage and conversion rates
+- [Feature] Gig prep checklist — each gig has a 7-item checklist (load-in, sound check, payment, set list, equipment, parking, contact); badge turns green when all done
+- [Fix] Venue address lookup now correctly finds street addresses instead of road names
+
 ## 2026-04-02
 - [Feature] Automated follow-up emails — any venue in "contacted" stage for 5+ days with no reply gets a follow-up automatically every morning at 8 AM Pacific
   - Each venue only ever receives one follow-up (never spammed)

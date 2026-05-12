@@ -12,10 +12,9 @@ interface Props {
   setVenues: React.Dispatch<React.SetStateAction<Venue[]>>;
   outreachMap: Record<string, { count: number; lastDate: string | null }>;
   onEmail: (venue: Venue) => void;
-  onEmailSaved: (venueId: string, email: string) => void;
 }
 
-export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail, onEmailSaved }: Props) {
+export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail }: Props) {
   const [replyVenue, setReplyVenue] = useState<Venue | null>(null);
 
   function getVenuesByStage(stage: VenueStage) {
@@ -100,7 +99,6 @@ export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail, o
               venues={getVenuesByStage(key)}
               onReply={onReply}
               onEmail={onEmail}
-              onEmailSaved={onEmailSaved}
               outreachMap={outreachMap}
             />
           ))}

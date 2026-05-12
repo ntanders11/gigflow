@@ -307,11 +307,6 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
           setVenues={setVenues}
           outreachMap={outreachMap}
           onEmail={setEmailVenue}
-          onEmailSaved={(venueId, email) =>
-            setVenues((prev) =>
-              prev.map((v) => v.id === venueId ? { ...v, contact_email: email } : v)
-            )
-          }
         />
       </div>
     </div>
