@@ -57,13 +57,13 @@ export async function proxy(request: NextRequest) {
   const isApiRoute = pathname.startsWith("/api/");
 
   if (user && !isPublicRoute && !isLoginPage && !isOnboardingRoute && !isApiRoute) {
-    const { data: artistProfile } = await supabase
+    const { data: artistProfile, error: profileError } = await supabase
       .from("artist_profiles")
       .select("display_name")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (!artistProfile?.display_name) {
+    if (!profileError && !artistProfile?.display_name) {
       const url = request.nextUrl.clone();
       url.pathname = "/onboarding";
       return NextResponse.redirect(url);
