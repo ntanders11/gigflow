@@ -71,6 +71,13 @@ export default function OnboardingPage() {
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Photo must be under 5MB.");
+      return;
+    }
+    if (form.photoPreview) {
+      URL.revokeObjectURL(form.photoPreview);
+    }
     update({
       photoFile: file,
       photoPreview: URL.createObjectURL(file),
@@ -87,7 +94,12 @@ export default function OnboardingPage() {
     // Upload photo if provided
     let photoUrl: string | null = null;
     if (form.photoFile) {
-      const ext  = form.photoFile.name.split(".").pop();
+      const mimeToExt: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+      };
+      const ext = mimeToExt[form.photoFile.type] ?? "jpg";
       const path = `${user.id}/avatar.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("artist-photos")
@@ -313,6 +325,7 @@ export default function OnboardingPage() {
                   style={{ background: "#262b33", border: "2px dashed rgba(255,255,255,0.15)" }}
                 >
                   {form.photoPreview
+                    // eslint-disable-next-line @next/next/no-img-element
                     ? <img src={form.photoPreview} alt="Preview" className="w-full h-full object-cover" />
                     : <span className="text-2xl">🎸</span>
                   }
