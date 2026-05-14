@@ -34,7 +34,8 @@ export async function proxy(request: NextRequest) {
   // Public routes that don't require authentication
   const isPublicRoute =
     pathname.startsWith("/profile/") ||
-    pathname === "/api/calendar/ics";
+    pathname === "/api/calendar/ics" ||
+    pathname === "/api/auth/validate-code";
 
   if (!user && !isLoginPage && !isPublicRoute) {
     const url = request.nextUrl.clone();
