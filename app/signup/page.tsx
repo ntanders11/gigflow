@@ -37,24 +37,31 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setLoading(true);
 
     // Re-validate code before submitting
     if (codeStatus !== "valid") {
-      const res = await fetch("/api/auth/validate-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: code.trim() }),
-      });
-      const data = await res.json();
-      if (!data.valid) {
-        setCodeStatus("invalid");
-        setError("Invalid invite code.");
+      try {
+        const res = await fetch("/api/auth/validate-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: code.trim() }),
+        });
+        const data = await res.json();
+        if (!data.valid) {
+          setCodeStatus("invalid");
+          setError("Invalid invite code.");
+          setLoading(false);
+          return;
+        }
+        setCodeStatus("valid");
+      } catch {
+        setError("Could not validate invite code. Please try again.");
+        setLoading(false);
         return;
       }
-      setCodeStatus("valid");
     }
 
-    setLoading(true);
     const supabase = createClient();
     const { error: signUpError } = await supabase.auth.signUp({ email, password });
 
@@ -111,7 +118,7 @@ export default function SignupPage() {
                            : "rgba(255,255,255,0.07)",
                 letterSpacing: "0.05em",
               }}
-              onFocus={(e) => (e.target.style.borderColor = focusBorder)}
+              onFocus={(e) => { if (codeStatus === "idle" || codeStatus === "checking") e.target.style.borderColor = focusBorder; }}
             />
             {codeStatus === "valid" && (
               <p className="text-xs mt-1" style={{ color: "#4caf7d" }}>✓ Valid invite code</p>
