@@ -13,12 +13,20 @@ The database is already multi-tenant ready — all tables have `user_id` columns
 
 ---
 
+## Table Structure (relevant tables)
+
+- **`profiles`** — base auth extension (`id`, `display_name`, `email`, `created_at`). One row per auth user; must exist before `artist_profiles` can be created. `profiles.display_name` is not used by any current feature and is left null; it exists only to satisfy the FK chain.
+- **`artist_profiles`** — booking/EPK profile (`user_id` → `profiles.id`, `display_name`, `phone`, `bio`, `social_links` jsonb, etc.). **`artist_profiles.display_name` is the authoritative artist/stage name** — it is what email templates and the pipeline read. This is where all onboarding data is written.
+- **`zones`** — geographic region (`user_id`, `name`, `zip_code`, `radius_mi`). Created during onboarding step 2.
+
+---
+
 ## Access Model
 
 - **Invite-only beta** using a fixed list of reusable invite codes
 - Codes are stored in a new `invite_codes` table, seeded with ~20 codes
 - Codes are **reusable** — any number of people can sign up with the same code
-- If a code is in the table and `active = true`, it's valid
+- A code is valid if it exists in the table with `active = true`
 - No per-use tracking, no admin UI needed
 - Taylor shares codes manually (text, DM, email)
 
@@ -27,57 +35,72 @@ The database is already multi-tenant ready — all tables have `user_id` columns
 ## New Pages & Routes
 
 ### `/signup` (public)
-- Accessible without authentication (added to middleware allowlist alongside `/login`)
+- Accessible without authentication
+- Added to `proxy.ts` via `isPublicRoute`: `pathname === "/signup"` (same condition as `/api/auth/validate-code`)
 - Fields: Invite Code, Email, Password
 - On submit:
-  1. Validate invite code against `invite_codes` table via API route
-  2. Create Supabase auth user
-  3. Redirect to `/onboarding`
-- Inline validation: code field shows green checkmark when valid, red error when not
+  1. Call `POST /api/auth/validate-code` to check the code
+  2. Create Supabase auth user via `supabase.auth.signUp()`
+  3. Insert a row into `profiles` using the **service role client** (RLS on `profiles` requires `auth.uid() = id`; the session cookie may not be set yet immediately after signUp, so the anon/SSR client is unreliable here — service role bypasses this)
+  4. Redirect to `/onboarding`
+- Inline code validation: green checkmark when valid, red error when not
 - "Already have an account? Sign in" link at bottom
 
 ### `/onboarding` (auth required)
-- 4-step wizard, one step per view
-- Progress bar fills across steps
+- 4-step wizard, client-side React state carries data between steps (no refresh loss risk — user is guided linearly)
+- Progress bar at top fills across steps
 - Back button on steps 2–4
 - "Skip for now" on steps 3 and 4 (optional fields)
-- On final step completion: writes to `profiles` and `zones` tables, redirects to `/dashboard`
+- On final step completion:
+  1. Upsert `artist_profiles` row (all collected fields)
+  2. Insert `zones` row
+  3. Redirect to `/dashboard`
 
-### Middleware update
-- `/signup` added to public routes
-- After authentication, check if user's profile has `display_name` set
-- If not → redirect to `/onboarding` instead of `/dashboard`
-- This handles users who closed the browser mid-wizard
+### `/api/auth/validate-code` (public API route)
+- Must be excluded from auth-gating in `proxy.ts` — logged-out users on `/signup` need to call it
+- Add to `isPublicRoute`: `pathname === "/api/auth/validate-code"`
+
+### Middleware update (`proxy.ts`)
+- `/signup` and `/api/auth/validate-code` both added to `isPublicRoute`
+- After authentication, and **only when `pathname` is not `/onboarding`** (to prevent an infinite redirect loop), check if user has an `artist_profiles` row with `display_name` set:
+  - If `artist_profiles` row **does not exist** → redirect to `/onboarding`
+  - If row exists but `display_name` is null/empty → redirect to `/onboarding`
+  - If row exists with `display_name` set → proceed normally
+- The guard is skipped on `/onboarding` and all `/api/*` routes
+- This handles mid-wizard abandonment: user is always routed back to `/onboarding` until setup is complete
 
 ---
 
 ## Onboarding Wizard Steps
 
-### Step 1 — Artist Info
-- Artist / Stage Name (required → saved to `profiles.display_name`)
-- Phone Number (→ `profiles.phone`)
+State is held in React (`useState`) across all 4 steps. A single upsert/insert fires on step 4 completion. **If the user abandons mid-wizard and returns later, they restart from step 1** — no partial saves. This is intentional for beta simplicity; the data entry is short enough that restarting is not a significant burden.
 
-### Step 2 — Your Region
-- Home City (text → `zones.name`)
-- Zip Code (→ `zones.zip_code`)
-- Search Radius in miles, default 30 (→ `zones.radius_mi`)
+### Step 1 — Artist Info *(required)*
+- Artist / Stage Name → `artist_profiles.display_name`
+- Phone Number → `artist_profiles.phone`
+
+### Step 2 — Your Region *(required)*
+- Home City (text) → `zones.name`
+- Zip Code → `zones.zip_code`
+- Search Radius (miles, default 30) → `zones.radius_mi`
 
 ### Step 3 — Links *(optional, skippable)*
-- Website (→ `profiles.social_links.website`)
-- YouTube sample video link (→ `profiles.social_links.youtube`)
-- Instagram handle (→ `profiles.social_links.instagram`)
+- Website → `artist_profiles.social_links.website`
+- YouTube sample video link → `artist_profiles.social_links.youtube`
+- Instagram handle → `artist_profiles.social_links.instagram`
 
 ### Step 4 — Bio *(optional, skippable)*
-- Short bio / blurb (2–3 sentences, → `profiles.bio`)
+- Short bio / blurb (2–3 sentences) → `artist_profiles.bio`
 - Used in pitch email templates
 
-Final button: "Let's go! 🎸" → creates profile + zone rows → redirects to `/dashboard`
+Final button: **"Let's go! 🎸"** → upserts `artist_profiles` + inserts `zones` → redirects to `/dashboard`
 
 ---
 
 ## Database Changes
 
 ### New table: `invite_codes`
+
 ```sql
 create table public.invite_codes (
   id         uuid primary key default gen_random_uuid(),
@@ -85,31 +108,41 @@ create table public.invite_codes (
   active     boolean not null default true,
   created_at timestamptz default now()
 );
-```
-- No RLS needed (validated via service role in API route)
-- Seeded with ~20 reusable codes (e.g. `GIGFLOW-BETA-01` through `GIGFLOW-BETA-20`)
 
-### New migration: `010_invite_codes.sql`
+-- Seed with reusable beta codes
+insert into public.invite_codes (code) values
+  ('GIGFLOW-BETA-01'), ('GIGFLOW-BETA-02'), ('GIGFLOW-BETA-03'),
+  ('GIGFLOW-BETA-04'), ('GIGFLOW-BETA-05'), ('GIGFLOW-BETA-06'),
+  ('GIGFLOW-BETA-07'), ('GIGFLOW-BETA-08'), ('GIGFLOW-BETA-09'),
+  ('GIGFLOW-BETA-10'), ('GIGFLOW-BETA-11'), ('GIGFLOW-BETA-12'),
+  ('GIGFLOW-BETA-13'), ('GIGFLOW-BETA-14'), ('GIGFLOW-BETA-15'),
+  ('GIGFLOW-BETA-16'), ('GIGFLOW-BETA-17'), ('GIGFLOW-BETA-18'),
+  ('GIGFLOW-BETA-19'), ('GIGFLOW-BETA-20');
+```
+
+- **No RLS** on this table — it is queried exclusively via the service role client in the API route. The anon key cannot read it.
+- Migration file: `010_invite_codes.sql` *(note: existing migrations have a pre-existing numbering collision — two files are named `003_*`. This is a known state. `010_` is the correct next number and avoids further conflicts. Migrations are applied by filename order.)*
 
 ---
 
-## New API Route
+## API Route: `POST /api/auth/validate-code`
 
-### `POST /api/auth/validate-code`
-- Body: `{ code: string }`
-- Queries `invite_codes` where `code = input AND active = true`
-- Returns `{ valid: true }` or `{ valid: false, error: "Invalid invite code" }`
-- Uses service role client (bypasses RLS)
-- Rate-limited by Vercel's built-in edge protections
+- **Auth:** none required (public endpoint)
+- **Client:** Supabase service role client (required — anon key cannot read `invite_codes`)
+- **Body:** `{ code: string }`
+- **Logic:** query `invite_codes` where `code = input AND active = true`
+- **Response:**
+  - `200 { valid: true }` — code exists and is active
+  - `200 { valid: false, error: "Invalid invite code" }` — not found or inactive
 
 ---
 
 ## Visual Design
 
-- Matches existing GigFlow dark theme (`#0e0f11` background, `#16181c` cards, `#d4a853` gold)
-- Sign-up page mirrors the login page layout
-- Onboarding uses purple accent (`#9b7fe8`) for progress bar and Continue buttons
-- Final "Let's go!" button uses gold (`#d4a853`) to match the dashboard feel
+- Sign-up page mirrors the existing login page (same card layout, same dark theme)
+- Onboarding wizard uses purple accent (`#9b7fe8`) for progress bar and Continue buttons
+- Final "Let's go!" button uses gold (`#d4a853`) to match the dashboard
+- GigFlow wordmark in serif gold on each wizard step for continuity
 
 ---
 
@@ -119,7 +152,7 @@ create table public.invite_codes (
 - Password reset (Supabase's built-in flow handles this)
 - Admin UI for code management
 - Paid tiers or subscription gating
-- Per-use code tracking
+- Per-use invite code tracking
 
 ---
 
@@ -131,4 +164,4 @@ create table public.invite_codes (
 | `app/signup/page.tsx` | Create — sign-up page |
 | `app/onboarding/page.tsx` | Create — 4-step wizard |
 | `app/api/auth/validate-code/route.ts` | Create — code validation endpoint |
-| `proxy.ts` | Modify — allow `/signup`, redirect incomplete profiles to `/onboarding` |
+| `proxy.ts` | Modify — public routes + onboarding redirect logic |
