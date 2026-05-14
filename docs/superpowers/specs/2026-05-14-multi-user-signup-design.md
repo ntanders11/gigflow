@@ -89,11 +89,12 @@ State is held in React (`useState`) across all 4 steps. A single upsert/insert f
 - YouTube sample video link → `artist_profiles.social_links.youtube`
 - Instagram handle → `artist_profiles.social_links.instagram`
 
-### Step 4 — Bio *(optional, skippable)*
+### Step 4 — Bio & Photo *(optional, skippable)*
+- Profile photo upload → uploaded to the `artist-photos` Supabase storage bucket (path: `{user_id}/avatar`), URL saved to `artist_profiles.photo_url`
 - Short bio / blurb (2–3 sentences) → `artist_profiles.bio`
-- Used in pitch email templates
+- Both used on the public profile/EPK page
 
-Final button: **"Let's go! 🎸"** → upserts `artist_profiles` + inserts `zones` → redirects to `/dashboard`
+Final button: **"Let's go! 🎸"** → upserts `artist_profiles` (including `photo_url` if uploaded) + inserts `zones` → redirects to `/dashboard`
 
 ---
 
