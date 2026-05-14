@@ -35,7 +35,8 @@ export async function proxy(request: NextRequest) {
   const isPublicRoute =
     pathname.startsWith("/profile/") ||
     pathname === "/api/calendar/ics" ||
-    pathname === "/api/auth/validate-code";
+    pathname === "/api/auth/validate-code" ||
+    pathname === "/signup";
 
   if (!user && !isLoginPage && !isPublicRoute) {
     const url = request.nextUrl.clone();
@@ -47,6 +48,26 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
+  }
+
+  // Guard: authenticated users who haven't completed onboarding
+  // are redirected to /onboarding. Skip this check on /onboarding
+  // itself (would cause infinite redirect) and on all API routes.
+  const isOnboardingRoute = pathname === "/onboarding";
+  const isApiRoute = pathname.startsWith("/api/");
+
+  if (user && !isPublicRoute && !isLoginPage && !isOnboardingRoute && !isApiRoute) {
+    const { data: artistProfile } = await supabase
+      .from("artist_profiles")
+      .select("display_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!artistProfile?.display_name) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;
