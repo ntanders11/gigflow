@@ -1,5 +1,11 @@
 # GigFlow Changelog
 
+## 2026-05-14
+- [Feature] Multi-user sign-up: other musicians can now create GigFlow accounts using an invite code at /signup
+- [Feature] 4-step onboarding wizard at /onboarding collects artist name, location, social links, and profile photo
+- [Feature] Middleware now routes new users to onboarding until their profile is complete
+- [Feature] 20 reusable beta invite codes (GIGFLOW-BETA-01 through GIGFLOW-BETA-20) — run migration 010_invite_codes.sql in the Supabase SQL Editor to activate them
+
 ## 2026-04-22
 - [Feature] Reply tracking — "Got a reply?" on pipeline cards now opens a popup to log how the venue replied (email, phone call, or in person) and what they said, before moving them to Responded
   - Reply is saved as a real interaction so you have a record of every conversation

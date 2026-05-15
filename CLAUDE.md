@@ -53,6 +53,8 @@ If a session involves significant decisions, research, or direction changes (not
   - Zone — geographic region (zip code + radius) that belongs to a user; container for venues
   - Venue — music venue with contact info, pipeline stage, and confidence level
   - Interaction — logged contact event (email, call, in-person, note) tied to a venue
+  - artist_profiles — artist/EPK profile (user_id → profiles.id, display_name, phone, bio, social_links jsonb, photo_url). display_name is the authoritative artist name used in emails and the pipeline. Written by the onboarding wizard.
+  - invite_codes — reusable beta access codes (code, active). No RLS — queried only via service role from /api/auth/validate-code.
                                                                                                                                                                     
   Pipeline stages (in order): discovered → contacted → responded → negotiating → booked
                                                                                                                                                                     
@@ -60,7 +62,11 @@ If a session involves significant decisions, research, or direction changes (not
 
   Key Flows
 
-  Authentication — proxy.ts is the Next.js middleware. It uses the Supabase SSR client (cookie-based sessions) to protect all routes except /login.                 
+  Authentication — proxy.ts is the Next.js middleware. It uses the Supabase SSR client (cookie-based sessions) to protect all routes except /login, /signup, and /api/auth/validate-code.
+
+  Multi-User Sign-up — /signup (public) validates an invite code then creates a Supabase auth user. A SECURITY DEFINER DB trigger (handle_new_user) auto-creates a profiles row on auth.users INSERT. New users are then routed to /onboarding to complete their profile.
+
+  Onboarding Wizard — /onboarding is a 4-step client-side wizard collecting artist name/phone (step 1), home region (step 2), social links (step 3), and bio/photo (step 4). On completion it upserts artist_profiles and inserts a zones row, then redirects to /dashboard. The middleware checks for artist_profiles.display_name and routes incomplete users back to /onboarding.                 
    
   Kanban Pipeline — app/pipeline/page.tsx fetches all venues for the current user and renders components/pipeline/KanbanBoard.tsx, which uses @hello-pangea/dnd for 
   drag-and-drop. Stage changes optimistically update local state, then PATCH /api/venues/[id] — rolling back on failure.

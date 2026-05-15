@@ -89,7 +89,11 @@ export default function OnboardingPage() {
     setError(null);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setError("Session expired. Please sign in again."); setSaving(false); return; }
+    if (!user) {
+      setSaving(false);
+      router.push("/login");
+      return;
+    }
 
     // Upload photo if provided
     let photoUrl: string | null = null;
@@ -136,19 +140,17 @@ export default function OnboardingPage() {
       return;
     }
 
-    // Insert zone (delete-then-insert to handle re-submission safely)
-    // zones supports multiple rows per user, so upsert by user_id alone isn't
-    // appropriate. Instead, delete any existing onboarding zone before inserting.
-    await supabase.from("zones").delete().eq("user_id", user.id);
-
+    // Upsert zone — the unique(user_id, name) constraint lets us safely
+    // insert or update based on the city name. Existing zones with different
+    // names are preserved, so re-submitting onboarding never deletes venue data.
     const { error: zoneError } = await supabase
       .from("zones")
-      .insert({
+      .upsert({
         user_id:   user.id,
         name:      form.city.trim(),
         zip_code:  form.zipCode.trim() || null,
         radius_mi: form.radiusMi,
-      });
+      }, { onConflict: "user_id,name" });
 
     if (zoneError) {
       setError("Failed to save region: " + zoneError.message);
