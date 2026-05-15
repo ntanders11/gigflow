@@ -1,5 +1,11 @@
 # GigFlow Changelog
 
+## 2026-05-14
+- [Feature] Multi-user sign-up: other musicians can now create GigFlow accounts using an invite code at /signup
+- [Feature] 4-step onboarding wizard at /onboarding collects artist name, location, social links, and profile photo
+- [Feature] Middleware now routes new users to onboarding until their profile is complete
+- [Feature] 20 reusable beta invite codes (GIGFLOW-BETA-01 through GIGFLOW-BETA-20) — run migration 010_invite_codes.sql in the Supabase SQL Editor to activate them
+
 ## 2026-05-12
 - [Data] Verified and patched contact names + emails from NW Venues spreadsheet onto all 37 recently imported venues
 - [Feature] Email guesser script — for venues missing an email but with a known website, auto-generates pattern emails (info@domain.com, booking@domain.com, etc.) and verifies the domain resolves before saving; filled 21 venues
