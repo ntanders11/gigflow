@@ -30,7 +30,7 @@ const resend   = new Resend(RESEND_KEY);
 
 // ── Follow-up email template (matches PitchEmailModal buildFollowUpBody) ────
 function buildSubject(venueName) {
-  return `Following up — live music inquiry for ${venueName}`;
+  return `Still interested in playing at ${venueName}`;
 }
 
 function buildBody(venueName, profile, contactName) {
@@ -44,14 +44,13 @@ function buildBody(venueName, profile, contactName) {
 
   return `${greeting}
 
-I wanted to follow up on my email from a few weeks ago about playing at ${venueName}.
+Just one more quick note — I've reached out a couple of times about booking a live music set at ${venueName} and wanted to make sure I hadn't slipped through the cracks.
 
-I know inboxes get busy — just wanted to make sure my note didn't get buried. I'd love to find a time to connect and see if there's a fit.
+If the timing isn't right or it's not a fit, no worries at all — just let me know and I'll stop bugging you! But if there's any interest, I'd love to connect.
 
-Hear it for yourself: ${youtube}
+A sample of my music: ${youtube}
 
-Happy to work around your schedule. Thanks for your time!
-
+Thanks so much for your time,
 ${name}
 ${phone}
 ${website}`;

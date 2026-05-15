@@ -1,5 +1,14 @@
 # GigFlow Changelog
 
+## 2026-05-12
+- [Data] Verified and patched contact names + emails from NW Venues spreadsheet onto all 37 recently imported venues
+- [Feature] Email guesser script — for venues missing an email but with a known website, auto-generates pattern emails (info@domain.com, booking@domain.com, etc.) and verifies the domain resolves before saving; filled 21 venues
+- [Feature] Phone number filler script — uses Google Places to look up phone numbers for venues missing an email; added 13 phone numbers
+- [Feature] Address filler script — bulk-filled 129 missing venue addresses via Google Places; last 2 (Amity Vineyards, Chehalem Valley Brewing) found via DuckDuckGo scraping
+- [Fix] Removed bad Facebook email (info@facebook.com) mistakenly stored for Lay Low Lounge
+- [Data] Sent second follow-up email to all 33 contacted venues — shorter "last check-in" tone with updated subject line
+- [Data] Sent initial pitch emails to 81 discovered venues
+
 ## 2026-04-22
 - [Feature] Reply tracking — "Got a reply?" on pipeline cards now opens a popup to log how the venue replied (email, phone call, or in person) and what they said, before moving them to Responded
   - Reply is saved as a real interaction so you have a record of every conversation
