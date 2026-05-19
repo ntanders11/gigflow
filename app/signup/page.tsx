@@ -1,21 +1,29 @@
 // app/signup/page.tsx
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 type CodeStatus = "idle" | "checking" | "valid" | "invalid";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
-  const [code, setCode]         = useState("");
+  const searchParams = useSearchParams();
+  const [code, setCode]         = useState(searchParams.get("code")?.toUpperCase() ?? "");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [codeStatus, setCodeStatus] = useState<CodeStatus>("idle");
   const [error, setError]       = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
+
+  // Auto-validate if code came from URL
+  useEffect(() => {
+    const urlCode = searchParams.get("code");
+    if (urlCode) handleCodeBlur();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Validate invite code on blur
   async function handleCodeBlur() {
@@ -185,5 +193,13 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }
