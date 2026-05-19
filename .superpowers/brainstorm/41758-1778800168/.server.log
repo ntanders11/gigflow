@@ -1,0 +1,7 @@
+{"type":"server-started","port":57965,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:57965","screen_dir":"/Users/tayloranderson/gigflow/.superpowers/brainstorm/41758-1778800168"}
+{"type":"screen-added","file":"/Users/tayloranderson/gigflow/.superpowers/brainstorm/41758-1778800168/signup-flow.html"}
+{"type":"screen-added","file":"/Users/tayloranderson/gigflow/.superpowers/brainstorm/41758-1778800168/signup-mockup.html"}
+{"type":"screen-added","file":"/Users/tayloranderson/gigflow/.superpowers/brainstorm/41758-1778800168/waiting-1.html"}
+{"type":"screen-added","file":"/Users/tayloranderson/gigflow/.superpowers/brainstorm/41758-1778800168/onboarding-wizard.html"}
+{"type":"screen-added","file":"/Users/tayloranderson/gigflow/.superpowers/brainstorm/41758-1778800168/step4-photo.html"}
+{"type":"server-stopped","reason":"idle timeout"}

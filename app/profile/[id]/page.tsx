@@ -47,7 +47,7 @@ export default async function PublicProfilePage({
         style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", backgroundColor: "#16181c" }}
       >
         <div style={{ fontFamily: "serif", fontSize: "1rem", color: "#d4a853", fontWeight: 600 }}>
-          GigFlow
+          StageReach
         </div>
         <div style={{ color: "#5e5c58", fontSize: "11px" }}>Booking Profile</div>
       </div>
@@ -258,7 +258,7 @@ export default async function PublicProfilePage({
 
           {/* Footer note */}
           <p style={{ color: "#5e5c58", fontSize: "11px", textAlign: "center" as const }}>
-            Profile powered by GigFlow · All pricing is approximate and subject to change
+            Profile powered by StageReach · All pricing is approximate and subject to change
           </p>
 
         </div>
