@@ -80,14 +80,13 @@ export default function ArtistProfilePage() {
       if (!user) return;
       setUserId(user.id);
 
-      setEmailText(user.email ?? "");
-
       const res = await fetch("/api/artist-profile");
       if (res.ok) {
-        const data: ArtistProfile = await res.json();
+        const data: ArtistProfile & { email?: string } = await res.json();
         setProfile(data);
         setNameText(data.display_name || "");
         setPhoneText(data.phone || "");
+        setEmailText(data.email || user.email || "");
         setBioText(data.bio || "");
         setSocialEdits(data.social_links || DEFAULT_SOCIAL);
       }

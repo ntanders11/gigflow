@@ -63,10 +63,10 @@ export async function GET() {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(newProfile);
+    return NextResponse.json({ ...newProfile, email: user.email ?? null });
   }
 
-  return NextResponse.json(profile);
+  return NextResponse.json({ ...profile, email: user.email ?? null });
 }
 
 export async function PATCH(request: Request) {
