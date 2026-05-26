@@ -82,11 +82,11 @@ export default function ArtistProfilePage() {
 
       const res = await fetch("/api/artist-profile");
       if (res.ok) {
-        const data: ArtistProfile & { email?: string } = await res.json();
+        const data: ArtistProfile = await res.json();
         setProfile(data);
         setNameText(data.display_name || "");
         setPhoneText(data.phone || "");
-        setEmailText(data.email || user.email || "");
+        setEmailText(data.contact_email || "");
         setBioText(data.bio || "");
         setSocialEdits(data.social_links || DEFAULT_SOCIAL);
       }
@@ -460,14 +460,14 @@ export default function ArtistProfilePage() {
               {editingContact ? (
                 <div className="flex gap-2">
                   <button
-                    onClick={() => { save({ display_name: nameText, phone: phoneText }); setEditingContact(false); }}
+                    onClick={() => { save({ display_name: nameText, phone: phoneText, contact_email: emailText }); setEditingContact(false); }}
                     className="text-xs px-2.5 py-0.5 rounded font-semibold transition-all hover:brightness-110"
                     style={{ backgroundColor: "#d4a853", color: "#0e0f11", cursor: "pointer" }}
                   >
                     Save
                   </button>
                   <button
-                    onClick={() => { setNameText(profile?.display_name || ""); setPhoneText(profile?.phone || ""); setEditingContact(false); /* email is read-only */ }}
+                    onClick={() => { setNameText(profile?.display_name || ""); setPhoneText(profile?.phone || ""); setEmailText(profile?.contact_email || ""); setEditingContact(false); }}
                     className="text-xs px-2.5 py-0.5 rounded transition-all hover:brightness-125"
                     style={{ backgroundColor: "#1e2128", color: "#9a9591", cursor: "pointer" }}
                   >
@@ -498,13 +498,13 @@ export default function ArtistProfilePage() {
                   style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(212,168,83,0.3)" }}
                 />
                 <input
+                  type="email"
                   value={emailText}
-                  disabled
+                  onChange={(e) => setEmailText(e.target.value)}
+                  placeholder="Booking email address"
                   className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{ backgroundColor: "#1e2128", color: "#5e5c58", border: "1px solid rgba(255,255,255,0.05)", cursor: "not-allowed" }}
-                  title="This is your account email and cannot be changed here"
+                  style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(212,168,83,0.3)" }}
                 />
-                <p style={{ fontSize: "10px", color: "#5e5c58" }}>Email is your account login and can't be changed here.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-1 cursor-text" onClick={() => setEditingContact(true)}>

@@ -24,14 +24,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Look up artist's display name for the From field
+  // Look up artist's display name and booking email for From/Reply-To
   const { data: artistProfile } = await supabase
     .from("artist_profiles")
-    .select("display_name")
+    .select("display_name, contact_email")
     .eq("user_id", user.id)
     .maybeSingle();
 
   const artistName = artistProfile?.display_name ?? "StageReach Artist";
+  const replyToEmail = artistProfile?.contact_email ?? user.email ?? "";
   const fromAddress = `${artistName} <${process.env.RESEND_FROM_EMAIL}>`;
 
   // Send via Resend
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
 
   const { data: sendData, error: sendError } = await resend.emails.send({
     from: fromAddress,
-    replyTo: user.email!,
+    replyTo: replyToEmail,
     to,
     subject,
     text: emailBody,

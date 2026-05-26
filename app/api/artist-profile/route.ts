@@ -63,10 +63,13 @@ export async function GET() {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ...newProfile, email: user.email ?? null });
+    const contact_email = newProfile.contact_email ?? user.email ?? null;
+    return NextResponse.json({ ...newProfile, contact_email });
   }
 
-  return NextResponse.json({ ...profile, email: user.email ?? null });
+  // contact_email falls back to the auth email if not explicitly set
+  const contact_email = profile.contact_email ?? user.email ?? null;
+  return NextResponse.json({ ...profile, contact_email });
 }
 
 export async function PATCH(request: Request) {
