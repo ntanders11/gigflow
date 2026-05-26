@@ -24,6 +24,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Look up artist's display name for the From field
+  const { data: artistProfile } = await supabase
+    .from("artist_profiles")
+    .select("display_name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const artistName = artistProfile?.display_name ?? "StageReach Artist";
+  const fromAddress = `${artistName} <${process.env.RESEND_FROM_EMAIL}>`;
+
   // Send via Resend
   // Convert plain text to HTML, making the YouTube link clickable
   const htmlBody = emailBody
@@ -37,7 +47,8 @@ export async function POST(request: NextRequest) {
     .replace(/\n/g, "<br>");
 
   const { data: sendData, error: sendError } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL!,
+    from: fromAddress,
+    replyTo: user.email!,
     to,
     subject,
     text: emailBody,

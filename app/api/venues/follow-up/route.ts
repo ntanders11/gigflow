@@ -5,20 +5,29 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-function buildFollowUpBody(venueName: string): string {
+interface ArtistInfo {
+  name: string;
+  email: string;
+  phone: string | null;
+  website: string | null;
+}
+
+function buildFollowUpBody(venueName: string, artist: ArtistInfo): string {
+  const signature = [
+    artist.name,
+    artist.phone,
+    artist.website,
+  ].filter(Boolean).join("\n");
+
   return `Hi there,
 
 I wanted to follow up on my email from last week about playing at ${venueName}.
 
 I know inboxes get busy — just wanted to make sure my note didn't get buried. I'd love to find a time to connect and see if there's a fit.
 
-Here's my performance video again if it's helpful: https://youtu.be/JaPOuz1R0HI?si=lo5JhEbgowL2g5JU
-
 Happy to work around your schedule. Thanks for your time!
 
-Taylor Anderson
-(503) 997-3586
-taylorandersonmusic.com`;
+${signature}`;
 }
 
 export async function POST(request: NextRequest) {
@@ -65,12 +74,38 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ sent: 0, message: "All contacted venues already received a follow-up" });
   }
 
+  // Batch-fetch artist profiles and emails for all unique users
+  const uniqueUserIds = [...new Set(eligible.map((v) => v.user_id))];
+
+  const { data: artistProfiles } = await supabase
+    .from("artist_profiles")
+    .select("user_id, display_name, phone, social_links")
+    .in("user_id", uniqueUserIds);
+
+  const { data: profileEmails } = await supabase
+    .from("profiles")
+    .select("id, email")
+    .in("id", uniqueUserIds);
+
+  const artistMap = new Map<string, ArtistInfo>();
+  for (const uid of uniqueUserIds) {
+    const ap = artistProfiles?.find((p) => p.user_id === uid);
+    const pr = profileEmails?.find((p) => p.id === uid);
+    artistMap.set(uid, {
+      name: ap?.display_name ?? "StageReach Artist",
+      email: pr?.email ?? "",
+      phone: ap?.phone ?? null,
+      website: ap?.social_links?.website ?? null,
+    });
+  }
+
   const now = new Date().toISOString();
   const results: { venue: string; status: string }[] = [];
 
   for (const venue of eligible) {
+    const artist = artistMap.get(venue.user_id)!;
     const subject = `Following up — live music inquiry for ${venue.name}`;
-    const body = buildFollowUpBody(venue.name);
+    const body = buildFollowUpBody(venue.name, artist);
     const htmlBody = body
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -79,7 +114,8 @@ export async function POST(request: NextRequest) {
       .replace(/\n/g, "<br>");
 
     const { data: sendData, error: sendError } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL!,
+      from: `${artist.name} <${process.env.RESEND_FROM_EMAIL}>`,
+      replyTo: artist.email,
       to: venue.contact_email!,
       subject,
       text: body,
