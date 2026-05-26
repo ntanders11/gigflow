@@ -94,10 +94,10 @@ export async function GET(req: NextRequest) {
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//GigFlow//GigFlow//EN",
+    "PRODID:-//StageReach//StageReach//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:GigFlow Gigs",
+    "X-WR-CALNAME:StageReach Gigs",
     "X-WR-TIMEZONE:America/Los_Angeles",
     ...events,
     "END:VCALENDAR",

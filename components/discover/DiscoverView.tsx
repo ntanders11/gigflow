@@ -47,7 +47,7 @@ export default function DiscoverView() {
     try {
       const geoRes = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city.trim())}&format=json&limit=1`,
-        { headers: { "User-Agent": "GigFlow/1.0" } }
+        { headers: { "User-Agent": "StageReach/1.0" } }
       );
       const geoData = await geoRes.json();
       if (!geoData.length) { setError("Location not found — try a different city or zip."); setLoading(false); return; }

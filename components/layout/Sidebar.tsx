@@ -47,7 +47,7 @@ export default function Sidebar() {
             lineHeight: 1.2,
           }}
         >
-          GigFlow
+          StageReach
         </div>
         <div
           style={{

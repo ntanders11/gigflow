@@ -181,7 +181,7 @@ export default function OnboardingPage() {
       <div className="rounded-xl p-8 w-full max-w-sm" style={card}>
         <div className="mb-6">
           <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.5rem", color: "#d4a853" }}>
-            GigFlow
+            StageReach
           </h1>
         </div>
 

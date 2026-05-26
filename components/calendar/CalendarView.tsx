@@ -42,7 +42,7 @@ function downloadICS(venue: Venue) {
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//GigFlow//GigFlow//EN",
+    "PRODID:-//StageReach//StageReach//EN",
     "BEGIN:VEVENT",
     `UID:gigflow-${venue.id}@gigflow.app`,
     `DTSTAMP:${now}`,

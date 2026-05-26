@@ -49,7 +49,7 @@ export default function LoginPage() {
               lineHeight: 1.2,
             }}
           >
-            GigFlow
+            StageReach
           </h1>
           <p className="mt-1 text-sm" style={{ color: "#9a9591" }}>
             Sign in to your account

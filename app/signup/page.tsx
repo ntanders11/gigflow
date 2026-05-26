@@ -100,7 +100,7 @@ function SignupForm() {
       >
         <div className="mb-8">
           <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.75rem", color: "#d4a853", lineHeight: 1.2 }}>
-            GigFlow
+            StageReach
           </h1>
           <p className="mt-1 text-sm" style={{ color: "#9a9591" }}>Create your account</p>
         </div>

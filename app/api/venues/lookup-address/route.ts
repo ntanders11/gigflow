@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 
   // ── Nominatim fallback (OpenStreetMap) ─────────────────────────────────────
   const headers = {
-    "User-Agent": "GigFlow/1.0 (taylorandersonmusic.com)",
+    "User-Agent": "StageReach/1.0 (taylorandersonmusic.com)",
     "Accept-Language": "en-US,en",
   };
 
