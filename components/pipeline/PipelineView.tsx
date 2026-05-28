@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Venue, VenueStage, STAGES } from "@/types";
+import { Venue, VenueStage, STAGES, OutreachInfo } from "@/types";
 import AddVenueModal from "@/components/venue/AddVenueModal";
 import PitchEmailModal from "@/components/venue/PitchEmailModal";
 
@@ -12,7 +12,7 @@ const KanbanBoard = dynamic(() => import("./KanbanBoard"), { ssr: false });
 interface Props {
   initialVenues: Venue[];
   initialStageFilter: VenueStage | null;
-  outreachMap: Record<string, { count: number; lastDate: string | null }>;
+  outreachMap: Record<string, OutreachInfo>;
 }
 
 export default function PipelineView({ initialVenues, initialStageFilter, outreachMap }: Props) {

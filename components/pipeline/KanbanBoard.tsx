@@ -3,14 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { Venue, VenueStage, STAGES } from "@/types";
+import { Venue, VenueStage, STAGES, OutreachInfo } from "@/types";
 import KanbanColumn from "./KanbanColumn";
 import LogReplyModal from "./LogReplyModal";
 
 interface Props {
   venues: Venue[];
   setVenues: React.Dispatch<React.SetStateAction<Venue[]>>;
-  outreachMap: Record<string, { count: number; lastDate: string | null }>;
+  outreachMap: Record<string, OutreachInfo>;
   onEmail: (venue: Venue) => void;
 }
 

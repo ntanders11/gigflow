@@ -1,7 +1,7 @@
 "use client";
 
 import { Droppable } from "@hello-pangea/dnd";
-import { Venue, VenueStage, STAGES } from "@/types";
+import { Venue, VenueStage, STAGES, OutreachInfo } from "@/types";
 import VenueCard from "@/components/venue/VenueCard";
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   venues: Venue[];
   onReply: (venue: Venue) => void;
   onEmail: (venue: Venue) => void;
-  outreachMap: Record<string, { count: number; lastDate: string | null }>;
+  outreachMap: Record<string, OutreachInfo>;
 }
 
 export default function KanbanColumn({ stage, venues, onReply, onEmail, outreachMap }: Props) {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Draggable } from "@hello-pangea/dnd";
-import { Venue } from "@/types";
+import { Venue, OutreachInfo } from "@/types";
 
 // Dark-theme confidence colors using inline styles
 const CONFIDENCE_DARK: Record<string, { bg: string; color: string; border: string; label: string }> = {
@@ -16,7 +16,7 @@ interface Props {
   index: number;
   onReply: (venue: Venue) => void;
   onEmail: (venue: Venue) => void;
-  outreach: { count: number; lastDate: string | null } | null;
+  outreach: OutreachInfo | null;
 }
 
 function daysAgo(dateStr: string | null): string | null {
