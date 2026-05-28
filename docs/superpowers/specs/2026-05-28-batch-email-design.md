@@ -56,13 +56,19 @@ After confirming, the modal shows a progress state: "Sending 2 of 9…". Emails 
 
 ### Post-send
 
-- Each sent email logs an interaction (type: "email") on the venue — same as individual sends
+- Pitch emails log an interaction with `type: "email"` — same as individual sends
+- Follow-up emails log an interaction with `type: "follow_up"`. This requires adding `"follow_up"` to the `InteractionType` union in `types/index.ts` and passing an optional `interaction_type` field to `POST /api/send-email` (defaults to `"email"` if omitted, so existing individual sends are unaffected)
 - Venues in the **pitch** batch automatically advance from `discovered` → `contacted` stage
 - Venues in the **follow-up** batch stay in `contacted` (stage does not change)
+- "Already followed up" is detected via `outreachMap`. The map's value shape expands to `{ count: number; lastDate: string | null; hasFollowUp: boolean }`. `PipelinePage` sets `hasFollowUp: true` for any venue that has an interaction with `type: "follow_up"`. `PipelineView`'s prop type is updated to match. The `interactions` select query in `pipeline/page.tsx` already fetches `type` — this just uses it
 
 ---
 
 ## Architecture
+
+### New file: `lib/email-templates.ts`
+
+Extract `buildSubject`, `buildFollowUpSubject`, `buildBody`, and `buildFollowUpBody` from `PitchEmailModal.tsx` into a shared utility file at `lib/email-templates.ts`. Both `PitchEmailModal` and `BatchEmailModal` import from this shared file. No logic changes — pure extraction.
 
 ### New component: `BatchEmailModal.tsx`
 
@@ -70,24 +76,37 @@ Location: `components/pipeline/BatchEmailModal.tsx`
 
 Responsibilities:
 - Receives the list of selected venues and the email type (`"pitch"` | `"follow_up"`)
-- Loads the artist profile from `/api/artist-profile` to build the email preview
+- Loads the artist profile from `/api/artist-profile` to build the email preview (preview shows the email as it will be sent to the **first** selected venue, labelled "Preview — first venue")
 - Renders the confirm screen and progress state
-- Calls `/api/send-email` for each venue in sequence
-- On pitch batch completion, calls `PATCH /api/venues/[id]` to advance each venue to `contacted`
+- Calls `POST /api/send-email` for each venue in sequence, passing `interaction_type: "follow_up"` when in follow-up mode
+- On pitch batch completion, calls `PATCH /api/venues/[id]` for each successfully sent venue to advance stage to `contacted`
 - Reports results back to the parent via `onComplete(results)`
 
 ### Changes to `PipelineView.tsx`
 
-- Add `batchMode` state per column (`null | "pitch" | "followup"`)
-- Add `selectedVenueIds` state (Set of venue IDs)
-- Render batch buttons in Discovered and Contacted column headers
-- When in batch mode: render checkboxes on venue cards, Select All toggle, floating action bar
-- On Send: open `BatchEmailModal` with selected venues
-- On complete: update local venue state (stage advances for pitched venues), exit batch mode
+`PipelineView` owns all batch state — this keeps it co-located with `venues` state and the existing drag-and-drop logic.
 
-### No new API endpoints
+- Add `batchMode` state: `null | "pitch" | "followup"` (only one column can be in batch mode at a time)
+- Add `selectedVenueIds` state: `Set<string>`
+- Pass `batchMode`, `selectedVenueIds`, and batch callbacks (`onBatchStart`, `onToggleSelect`, `onSelectAll`, `onBatchSend`, `onBatchCancel`) down through `KanbanBoard` to the relevant column headers and venue cards
+- When in batch mode: the relevant column renders checkboxes on venue cards, Select All toggle, floating action bar; drag-and-drop is disabled for that column while in select mode
+- On Send: open `BatchEmailModal` with selected venues and email type
+- On complete (`onComplete(results)`): update local `venues` state to advance pitched venues to `contacted`, clear batch state
 
-All sending goes through the existing `POST /api/send-email`. Stage updates use the existing `PATCH /api/venues/[id]`. No backend changes needed.
+### Changes to `KanbanBoard.tsx` / column headers
+
+- Accept and thread through the batch props from `PipelineView`
+- Render "Send Batch Pitch" button in Discovered header and "Send Follow-up" button in Contacted header
+- Render Select All toggle and a floating action bar **fixed to the bottom of the viewport** (not the column scroll area) when in batch mode, so it's always visible regardless of scroll position
+- When in batch mode, venue cards in the active column render with `isDragDisabled={true}` on their `Draggable` wrapper (the `@hello-pangea/dnd` prop) to disable drag while selecting
+
+### Minor API change: `POST /api/send-email`
+
+Add an optional `interaction_type` field to the request body. Defaults to `"email"` if omitted (backward compatible). When `"follow_up"` is passed, the logged interaction uses that type instead. No other endpoint changes needed — stage updates use the existing `PATCH /api/venues/[id]`.
+
+### Database migration required
+
+A Supabase migration must add `"follow_up"` as an allowed value for the `type` column on the `interactions` table (in case a check constraint exists). Migration file: `supabase/migrations/012_interactions_followup_type.sql`. The migration uses `ALTER TABLE` to add the new value if the column is constrained, or is a no-op comment if the column is free-form text.
 
 ---
 
@@ -107,6 +126,11 @@ All sending goes through the existing `POST /api/send-email`. Stage updates use 
 
 ---
 
+## Implementation Notes
+
+- **Send rate**: Add a ~200ms delay between sends in the `BatchEmailModal` loop to avoid Resend rate-limit errors on large batches
+- **Stale outreachMap**: After batch completion, call `router.refresh()` in `PipelineView` so the server re-fetches `outreachMap` with the newly logged interactions — this ensures `hasFollowUp` flags are accurate on next use
+
 ## Edge Cases
 
 - **No email on file**: venue is shown disabled in select mode, never included in the send loop
@@ -120,6 +144,14 @@ All sending goes through the existing `POST /api/send-email`. Stage updates use 
 
 | File | Change |
 |------|--------|
-| `components/pipeline/PipelineView.tsx` | Add batch mode state, buttons, select UI, open modal |
-| `components/pipeline/BatchEmailModal.tsx` | New — confirm + progress + send loop |
-| `components/pipeline/KanbanBoard.tsx` | Pass batch mode props down to column headers if needed |
+| `supabase/migrations/012_interactions_followup_type.sql` | New — add "follow_up" as allowed interaction type |
+| `types/index.ts` | Add `"follow_up"` to `InteractionType` union; expand `outreachMap` value type |
+| `lib/email-templates.ts` | New — extract shared email build functions from `PitchEmailModal.tsx` |
+| `components/venue/PitchEmailModal.tsx` | Import template functions from `lib/email-templates.ts` instead of defining them locally |
+| `app/api/send-email/route.ts` | Accept optional `interaction_type` field; use it when logging interaction |
+| `app/(protected)/pipeline/page.tsx` | Expand `outreachMap` to include `hasFollowUp: boolean` using the `type` field already fetched |
+| `components/pipeline/PipelineView.tsx` | Add batch mode state, pass props to KanbanBoard, open BatchEmailModal, handle onComplete |
+| `components/pipeline/KanbanBoard.tsx` | Thread batch props down to `KanbanColumn` |
+| `components/pipeline/KanbanColumn.tsx` | Render batch button, Select All toggle, floating action bar; pass checkbox prop to venue cards |
+| `components/venue/VenueCard.tsx` | Accept `batchSelected` / `batchDisabled` props; render checkbox overlay when in batch mode; pass `isDragDisabled` to `Draggable` |
+| `components/pipeline/BatchEmailModal.tsx` | New — confirm screen, email preview, send loop with small delay between sends (~200ms), progress, results |
