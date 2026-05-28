@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialized per-request so env var updates take effect without redeploy
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -51,6 +54,7 @@ export async function POST(request: NextRequest) {
     )
     .replace(/\n/g, "<br>");
 
+  const resend = getResend();
   const { data: sendData, error: sendError } = await resend.emails.send({
     from: fromAddress,
     replyTo: replyToEmail,
