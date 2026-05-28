@@ -31,9 +31,12 @@ export async function POST(request: NextRequest) {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const artistName = artistProfile?.display_name ?? "StageReach Artist";
-  const replyToEmail = artistProfile?.contact_email ?? user.email ?? "";
-  const fromAddress = `${artistName} <${process.env.RESEND_FROM_EMAIL}>`;
+  const fromEmail = (process.env.RESEND_FROM_EMAIL ?? "").trim();
+  const artistName = (artistProfile?.display_name ?? "StageReach Artist").replace(/[<>"]/g, "").trim();
+  const replyToEmail = (artistProfile?.contact_email ?? user.email ?? "").trim();
+  const fromAddress = artistName && fromEmail
+    ? `${artistName} <${fromEmail}>`
+    : fromEmail;
 
   // Send via Resend
   // Convert plain text to HTML, making the YouTube link clickable
