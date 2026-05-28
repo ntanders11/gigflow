@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { to, subject, body: emailBody, venue_id, user_id } = body;
+  const { to, subject, body: emailBody, venue_id, user_id, interaction_type } = body;
 
   const missing = [!to && "to", !subject && "subject", !emailBody && "body", !venue_id && "venue_id"].filter(Boolean);
   if (missing.length > 0) {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     .insert({
       venue_id,
       user_id: user_id ?? user.id,
-      type: "email",
+      type: interaction_type === "follow_up" ? "follow_up" : "email",
       email_subject: subject,
       email_body: emailBody,
       email_sent: true,
