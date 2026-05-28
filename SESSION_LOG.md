@@ -1,5 +1,27 @@
 # StageReach - Session Log
 
+## Session: 2026-05-28 — Batch Email, Domain, Branding
+
+### What Was Built
+- **Batch pitch email**: "Send Batch Pitch" button on Pipeline's Discovered column. Select venues with checkboxes (Select All available), preview the email, confirm, and send. Successfully pitched venues auto-advance to Contacted in both local state and the DB.
+- **Batch follow-up email**: Same pattern on the Contacted column. Venues already followed up are greyed out and skipped automatically.
+- **stagereach.app domain**: Set up as the production URL via Vercel + GoDaddy A/CNAME records.
+- **Beta invite link**: `stagereach.app/signup?code=STAGEREACH2026` — the signup page already supported `?code=` params.
+- **Email from/reply-to**: All emails send from `booking@stagereach.app` with Reply-To set to the artist's real contact email (from artist profile).
+- **Branding**: All "GigFlow" references replaced with "StageReach" across the UI.
+
+### Key Technical Decisions
+- Follow-up emails logged as `type: "follow_up"` (new InteractionType value) so batch UI can detect which venues already received one.
+- Email template functions extracted to `lib/email-templates.ts` so both PitchEmailModal and BatchEmailModal share the same logic.
+- Batch state (mode + selected IDs) lives in PipelineView and threads down through KanbanBoard → KanbanColumn → VenueCard.
+- Floating action bar fixed to viewport bottom so it's always visible regardless of scroll position.
+- 200ms delay between batch sends to stay within Resend rate limits.
+
+### Left Open
+- Nothing critical. The system is working end-to-end.
+
+---
+
 ## Session 1 - 2026-03-22 - Initial Brainstorm & Research
 
 ### Participants

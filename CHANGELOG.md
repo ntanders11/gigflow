@@ -1,4 +1,15 @@
-# GigFlow Changelog
+# StageReach Changelog
+
+## 2026-05-28
+- [Feature] Batch Pitch Email — "Send Batch Pitch" button on the Discovered column lets you select multiple venues, preview the email, and send to all of them at once; successfully sent venues automatically advance to Contacted
+- [Feature] Batch Follow-up Email — "Send Follow-up" button on the Contacted column works the same way; venues already followed up are greyed out and skipped
+- [Feature] Select mode with checkboxes, Select All / Deselect All, and a floating send bar on the Pipeline page
+- [Feature] Custom domain live: app now runs at stagereach.app (Vercel + GoDaddy DNS)
+- [Feature] Beta invite link: stagereach.app/signup?code=STAGEREACH2026 — code pre-fills and auto-validates
+- [Fix] Pitch email body no longer arrives empty if the artist profile loads slowly — template text is shown immediately on modal open
+- [Fix] Follow-up emails now log with type "follow_up" so the system correctly identifies venues that have already been followed up
+- [Change] All in-app branding updated from GigFlow to StageReach
+- [Change] Emails now send from booking@stagereach.app with Reply-To set to the artist's real booking email
 
 ## 2026-05-14
 - [Feature] Multi-user sign-up: other musicians can now create GigFlow accounts using an invite code at /signup
