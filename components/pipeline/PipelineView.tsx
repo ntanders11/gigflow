@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { Venue, VenueStage, STAGES, OutreachInfo } from "@/types";
 import AddVenueModal from "@/components/venue/AddVenueModal";
 import PitchEmailModal from "@/components/venue/PitchEmailModal";
+import BatchEmailModal, { SendResult } from "@/components/pipeline/BatchEmailModal";
 
 const KanbanBoard = dynamic(() => import("./KanbanBoard"), { ssr: false });
 
@@ -22,6 +23,9 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
   const [emailVenue, setEmailVenue] = useState<Venue | null>(null);
   const [fillProgress, setFillProgress] = useState<{ done: number; total: number; found: number } | null>(null);
   const [enrichProgress, setEnrichProgress] = useState<{ done: number; total: number; found: number } | null>(null);
+  const [batchMode, setBatchMode] = useState<"pitch" | "followup" | null>(null);
+  const [selectedVenueIds, setSelectedVenueIds] = useState<Set<string>>(new Set());
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
   const router = useRouter();
 
   async function fillMissingAddresses() {
@@ -105,6 +109,55 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
     setTimeout(() => setEnrichProgress(null), 5000);
   }
 
+  function startBatch(mode: "pitch" | "followup") {
+    setBatchMode(mode);
+    setSelectedVenueIds(new Set());
+  }
+
+  function cancelBatch() {
+    setBatchMode(null);
+    setSelectedVenueIds(new Set());
+  }
+
+  function toggleVenueSelect(venueId: string) {
+    setSelectedVenueIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(venueId)) next.delete(venueId);
+      else next.add(venueId);
+      return next;
+    });
+  }
+
+  function selectAllForBatch(venueIds: string[]) {
+    setSelectedVenueIds(new Set(venueIds));
+  }
+
+  function openBatchModal() {
+    if (selectedVenueIds.size === 0) return;
+    setBatchModalOpen(true);
+  }
+
+  async function handleBatchComplete(results: SendResult[], sentVenueIds: string[]) {
+    if (batchMode === "pitch" && sentVenueIds.length > 0) {
+      sentVenueIds.forEach((id) => {
+        fetch(`/api/venues/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stage: "contacted" }),
+        }).catch(() => {});
+      });
+      setVenues((prev) =>
+        prev.map((v) =>
+          sentVenueIds.includes(v.id) ? { ...v, stage: "contacted" as const } : v
+        )
+      );
+    }
+    setBatchModalOpen(false);
+    setBatchMode(null);
+    setSelectedVenueIds(new Set());
+    router.refresh();
+  }
+
   const filtered = venues.filter((v) => {
     const matchesStage = initialStageFilter ? v.stage === initialStageFilter : true;
     const matchesQuery = query.trim()
@@ -140,6 +193,15 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
           venue={emailVenue}
           onClose={() => setEmailVenue(null)}
           onSuccess={() => setEmailVenue(null)}
+        />
+      )}
+
+      {batchModalOpen && batchMode && (
+        <BatchEmailModal
+          venues={venues.filter((v) => selectedVenueIds.has(v.id) && !!v.contact_email?.trim())}
+          mode={batchMode}
+          onClose={() => setBatchModalOpen(false)}
+          onComplete={handleBatchComplete}
         />
       )}
       {/* Header — sticky on desktop, static on mobile */}
@@ -307,6 +369,13 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
           setVenues={setVenues}
           outreachMap={outreachMap}
           onEmail={setEmailVenue}
+          batchMode={batchMode}
+          selectedVenueIds={selectedVenueIds}
+          onBatchStart={startBatch}
+          onToggleSelect={toggleVenueSelect}
+          onSelectAll={selectAllForBatch}
+          onBatchSend={openBatchModal}
+          onBatchCancel={cancelBatch}
         />
       </div>
     </div>

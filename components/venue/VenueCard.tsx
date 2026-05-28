@@ -17,6 +17,10 @@ interface Props {
   onReply: (venue: Venue) => void;
   onEmail: (venue: Venue) => void;
   outreach: OutreachInfo | null;
+  batchActive?: boolean;
+  batchSelected?: boolean;
+  batchDisabled?: boolean;
+  onBatchToggle?: () => void;
 }
 
 function daysAgo(dateStr: string | null): string | null {
@@ -27,29 +31,44 @@ function daysAgo(dateStr: string | null): string | null {
   return `${days}d ago`;
 }
 
-export default function VenueCard({ venue, index, onReply, onEmail, outreach }: Props) {
+export default function VenueCard({ venue, index, onReply, onEmail, outreach, batchActive, batchSelected, batchDisabled, onBatchToggle }: Props) {
   const conf = CONFIDENCE_DARK[venue.confidence] ?? CONFIDENCE_DARK.LOW;
 
   return (
-    <Draggable draggableId={venue.id} index={index}>
+    <Draggable draggableId={venue.id} index={index} isDragDisabled={!!batchActive}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className="rounded-lg p-3 cursor-pointer select-none transition-shadow"
+          className="rounded-lg p-3 select-none transition-shadow relative"
+          onClick={batchActive && !batchDisabled ? onBatchToggle : undefined}
           style={{
             ...provided.draggableProps.style,
-            backgroundColor: "#16181c",
-            border: snapshot.isDragging
+            backgroundColor: batchSelected ? "rgba(212,168,83,0.08)" : "#16181c",
+            border: batchSelected
+              ? "1px solid rgba(212,168,83,0.4)"
+              : snapshot.isDragging
               ? "1px solid rgba(255,255,255,0.12)"
               : "1px solid rgba(255,255,255,0.07)",
-            boxShadow: snapshot.isDragging
-              ? "0 8px 24px rgba(0,0,0,0.4)"
-              : "none",
+            boxShadow: snapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.4)" : "none",
+            opacity: batchDisabled ? 0.35 : 1,
+            cursor: batchActive ? (batchDisabled ? "not-allowed" : "pointer") : "grab",
           }}
         >
-          <Link href={`/venues/${venue.id}`} onClick={(e) => e.stopPropagation()}>
+          {/* Checkbox indicator in batch mode */}
+          {batchActive && (
+            <div
+              className="absolute top-2 right-2 w-4 h-4 rounded flex items-center justify-center"
+              style={{
+                backgroundColor: batchSelected ? "#d4a853" : "transparent",
+                border: `1px solid ${batchSelected ? "#d4a853" : "rgba(255,255,255,0.2)"}`,
+              }}
+            >
+              {batchSelected && <span style={{ color: "#0e0f11", fontSize: "9px", fontWeight: 700 }}>✓</span>}
+            </div>
+          )}
+          <Link href={`/venues/${venue.id}`} onClick={(e) => { e.stopPropagation(); if (batchActive) e.preventDefault(); }}>
             <p
               className="font-medium text-sm leading-snug hover:underline"
               style={{ color: "#ffffff" }}

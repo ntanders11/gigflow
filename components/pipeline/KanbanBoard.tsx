@@ -12,9 +12,16 @@ interface Props {
   setVenues: React.Dispatch<React.SetStateAction<Venue[]>>;
   outreachMap: Record<string, OutreachInfo>;
   onEmail: (venue: Venue) => void;
+  batchMode: "pitch" | "followup" | null;
+  selectedVenueIds: Set<string>;
+  onBatchStart: (mode: "pitch" | "followup") => void;
+  onToggleSelect: (venueId: string) => void;
+  onSelectAll: (venueIds: string[]) => void;
+  onBatchSend: () => void;
+  onBatchCancel: () => void;
 }
 
-export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail }: Props) {
+export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail, batchMode, selectedVenueIds, onBatchStart, onToggleSelect, onSelectAll, onBatchSend, onBatchCancel }: Props) {
   const [replyVenue, setReplyVenue] = useState<Venue | null>(null);
 
   function getVenuesByStage(stage: VenueStage) {
@@ -100,6 +107,13 @@ export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail }:
               onReply={onReply}
               onEmail={onEmail}
               outreachMap={outreachMap}
+              batchMode={batchMode}
+              selectedVenueIds={selectedVenueIds}
+              onBatchStart={onBatchStart}
+              onToggleSelect={onToggleSelect}
+              onSelectAll={onSelectAll}
+              onBatchSend={onBatchSend}
+              onBatchCancel={onBatchCancel}
             />
           ))}
         </div>
