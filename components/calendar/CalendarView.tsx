@@ -201,7 +201,7 @@ export default function CalendarView({
               const isLast = idx === bookedVenues.length - 1;
               return (
                 <div
-                  key={venue.id}
+                  key={`${venue.id}-${idx}`}
                   className="flex items-center gap-4 px-5 py-4"
                   style={{
                     backgroundColor: "#16181c",
