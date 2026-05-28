@@ -22,6 +22,7 @@ const INTERACTION_LABELS: Record<InteractionType, string> = {
   in_person: "In Person",
   note: "Note",
   reply: "Reply",
+  follow_up: "Follow-up",
 };
 
 export default function VenueDetail({ venue: initialVenue, interactions: initialInteractions, initialGigs }: Props) {

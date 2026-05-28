@@ -8,7 +8,13 @@ export type VenueStage =
 
 export type ConfidenceLevel = "HIGH" | "MEDIUM" | "LOW";
 
-export type InteractionType = "email" | "call" | "in_person" | "note" | "reply";
+export type InteractionType = "email" | "call" | "in_person" | "note" | "reply" | "follow_up";
+
+export interface OutreachInfo {
+  count: number;
+  lastDate: string | null;
+  hasFollowUp: boolean;
+}
 
 export interface Zone {
   id: string;
