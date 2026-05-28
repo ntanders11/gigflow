@@ -1,4 +1,4 @@
-# GigFlow - Session Log
+# StageReach - Session Log
 
 ## Session 1 - 2026-03-22 - Initial Brainstorm & Research
 
@@ -201,3 +201,52 @@ Built out the full working app across several sessions. GigFlow is now live on V
 
 ### Pick Up Here Next Session
 - **Multiple gig dates per venue** — build a `gigs` table so Taylor can schedule recurring monthly gigs at the same venue (e.g. Kopitos Cocina once a month). Each gig has its own date, start/end time, and can have its own invoice. The calendar and dashboard pull from all gigs across all venues.
+
+---
+
+## Session 2026-05-19 — Multi-User Sign-up, App Rename, Batch Email Design
+
+### What Was Built
+
+**Multi-user sign-up (fully shipped):**
+- `/signup` page — invite-code gated, with inline code validation and "Create Account" flow
+- `/onboarding` — 4-step wizard collecting artist name/phone, home region, social links, bio/photo
+- Invite codes — 20 reusable beta codes (GIGFLOW-BETA-01 through GIGFLOW-BETA-20) in new `invite_codes` table
+- Middleware guard — routes incomplete users back to /onboarding until profile is complete
+- Auto-profile trigger — DB trigger auto-creates `profiles` row on new sign-up (no race condition)
+- Login page — added "Don't have an account? Create one" link
+- Shareable sign-up link format: `yourapp.com/signup?code=GIGFLOW-BETA-01` (code pre-fills + auto-validates)
+- Data isolation confirmed — RLS on all tables, every user sees only their own venues
+
+**App renamed: GigFlow → StageReach**
+- All UI wordmarks, page titles, docs, and package.json updated
+- Folder/directory names unchanged
+
+**Vercel URL (from previous session):** `gigflow-git-main-taylor-anderson.vercel.app`
+
+**Supabase migration to run (if not done yet):**
+- `supabase/migrations/010_invite_codes.sql` — paste into Supabase SQL Editor and run
+
+### Decisions Made
+- Invite codes are reusable (no per-use tracking) — share the same code with multiple people
+- New user profiles row created via SECURITY DEFINER DB trigger (not service role client)
+- Wizard state held in React only — if user abandons mid-wizard, they restart from step 1
+- Zones: upsert on (user_id, name) to avoid deleting existing venue data on re-submission
+
+### Pick Up Here Next Session
+**Batch pitch email feature — design partially complete, paused at email routing question:**
+
+Agreed design so far:
+- Button: "✉ Send pitch emails" in the Discovered column header on the pipeline page
+- Modal mirrors existing `BulkFollowUpModal` pattern (3 phases: review → sending → done)
+- Shows all discovered venues; grays out those without a contact email
+- Sends via existing `/api/send-email` route, one by one with progress bar
+- Auto-advances successfully sent venues from Discovered → Contacted
+
+**Open question before implementation can start:**
+How should emails be sent for non-Taylor users? Currently all emails go from `RESEND_FROM_EMAIL` (Taylor's personal address). Options discussed:
+- **A (recommended):** Shared "Reply-To" approach — send from a StageReach domain address (e.g. `bookings@stagereach.com`), Reply-To set to the artist's real email so venues reply directly to them. Requires Taylor to own and set up a domain with Resend once.
+- **B:** Each user connects their own email (OAuth) — too complex for beta.
+- **C:** Per-user domain verification with Resend — too much setup for users.
+
+Taylor needs to decide on Option A and whether they have/want a domain for StageReach before implementation begins.

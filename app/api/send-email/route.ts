@@ -20,9 +20,10 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { to, subject, body: emailBody, venue_id, user_id } = body;
 
-  if (!to || !subject || !emailBody || !venue_id) {
+  const missing = [!to && "to", !subject && "subject", !emailBody && "body", !venue_id && "venue_id"].filter(Boolean);
+  if (missing.length > 0) {
     return NextResponse.json(
-      { error: "to, subject, body, and venue_id are required" },
+      { error: `Missing required fields: ${missing.join(", ")}` },
       { status: 400 }
     );
   }

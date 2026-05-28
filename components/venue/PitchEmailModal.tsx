@@ -74,7 +74,11 @@ export default function PitchEmailModal({ venue, onClose, onSuccess, followUp = 
   const [profile, setProfile] = useState<ArtistProfile | null>(null);
   const [to, setTo] = useState(venue.contact_email ?? "");
   const [subject, setSubject] = useState(followUp ? buildFollowUpSubject(venue.name) : buildSubject(venue.name));
-  const [body, setBody] = useState("");
+  const [body, setBody] = useState(() =>
+    followUp
+      ? buildFollowUpBody(venue.name, null, venue.contact_name)
+      : buildBody(venue.name, null, venue.contact_name)
+  );
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -101,6 +105,11 @@ export default function PitchEmailModal({ venue, onClose, onSuccess, followUp = 
   async function handleSend() {
     if (!to.trim()) {
       setErrorMessage("Please enter a recipient email address.");
+      setStatus("error");
+      return;
+    }
+    if (!body.trim()) {
+      setErrorMessage("Email body is empty. Please wait a moment for the template to load.");
       setStatus("error");
       return;
     }
