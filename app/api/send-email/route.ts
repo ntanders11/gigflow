@@ -32,11 +32,12 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   const fromEmail = (process.env.RESEND_FROM_EMAIL ?? "").trim();
+  if (!fromEmail) {
+    return NextResponse.json({ error: "RESEND_FROM_EMAIL is not configured" }, { status: 500 });
+  }
   const artistName = (artistProfile?.display_name ?? "StageReach Artist").replace(/[<>"]/g, "").trim();
   const replyToEmail = (artistProfile?.contact_email ?? user.email ?? "").trim();
-  const fromAddress = artistName && fromEmail
-    ? `${artistName} <${fromEmail}>`
-    : fromEmail;
+  const fromAddress = artistName ? `${artistName} <${fromEmail}>` : fromEmail;
 
   // Send via Resend
   // Convert plain text to HTML, making the YouTube link clickable
