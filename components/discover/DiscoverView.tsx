@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const VENUE_TYPES = [
   { key: "bar",        label: "Bar",          color: "#d4a853" },
@@ -27,7 +27,7 @@ type DiscoverResult = {
 };
 
 export default function DiscoverView() {
-  const [city, setCity]       = useState("Newberg, OR");
+  const [city, setCity]       = useState("");
   const [radius, setRadius]   = useState(25);
   const [results, setResults] = useState<DiscoverResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,6 +35,18 @@ export default function DiscoverView() {
   const [searched, setSearched] = useState(false);
   const [adding, setAdding]   = useState<Set<string>>(new Set());
   const [added, setAdded]     = useState<Set<string>>(new Set());
+
+  // Pre-fill city from the user's home zone
+  useEffect(() => {
+    fetch("/api/zones")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.zones?.[0]?.name) {
+          setCity(data.zones[0].name);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleSearch() {
     if (!city.trim()) return;
