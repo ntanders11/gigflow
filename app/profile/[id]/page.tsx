@@ -62,7 +62,7 @@ export default async function PublicProfilePage({
             {p.photo_url ? (
               <img
                 src={p.photo_url}
-                alt="Taylor Anderson"
+                alt={p.display_name || "Artist"}
                 className="w-28 h-28 rounded-full object-cover mx-auto mb-4"
               />
             ) : (
@@ -70,13 +70,15 @@ export default async function PublicProfilePage({
                 className="w-28 h-28 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4"
                 style={{ background: "linear-gradient(135deg, #d4a853 0%, #8b5cf6 100%)", color: "#fff" }}
               >
-                TA
+                {p.display_name ? p.display_name.charAt(0).toUpperCase() : "?"}
               </div>
             )}
             <h1 style={{ color: "#f0ede8", fontSize: "18px", fontWeight: 700, marginBottom: "2px" }}>
-              Taylor Anderson
+              {p.display_name || "Artist"}
             </h1>
-            <p style={{ color: "#9a9591", fontSize: "12px", marginBottom: "12px" }}>Newberg, OR</p>
+            {p.phone && (
+              <p style={{ color: "#9a9591", fontSize: "12px", marginBottom: "12px" }}>{p.phone}</p>
+            )}
 
             {/* Genre tags */}
             {genres.length > 0 && (
@@ -136,7 +138,7 @@ export default async function PublicProfilePage({
 
           {/* Book button */}
           <a
-            href={`mailto:?subject=Booking Inquiry — Taylor Anderson`}
+            href={`mailto:${p.contact_email || ""}?subject=Booking Inquiry — ${p.display_name || "Artist"}`}
             className="block w-full text-center rounded-lg py-2.5 text-sm font-bold transition-all hover:brightness-110"
             style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
           >

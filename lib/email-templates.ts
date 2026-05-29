@@ -14,31 +14,27 @@ export function buildBody(
   contactName?: string | null
 ): string {
   const greeting = contactName ? `Hi ${contactName},` : `Hi there,`;
-  const name = profile?.display_name ?? "Taylor Anderson";
-  const phone = profile?.phone ?? "(503) 997-3586";
-  const website = profile?.social_links?.website ?? "taylorandersonmusic.com";
+  const name = profile?.display_name ?? "";
+  const phone = profile?.phone ?? "";
+  const website = profile?.social_links?.website ?? "";
   const youtube =
     profile?.social_links?.youtube ??
     profile?.video_samples?.[0]?.url ??
-    "https://youtu.be/JaPOuz1R0HI?si=lo5JhEbgowL2g5JU";
-  const bio = profile?.bio?.trim()
-    ? profile.bio.trim()
-    : `For over a decade, I ran my own music business — booking and performing at resorts, wineries, and venues throughout the Scottsdale and Phoenix area. What makes my show unique: using a live looper, I build guitar, bass, keys, and drums on the spot — a full-band sound with just one performer. My sets blend Top 40, '60s–'00s classics, and a touch of country.`;
+    "";
+  const bio = profile?.bio?.trim() ?? "";
+
+  const bioSection = bio ? `\n${bio}\n` : "";
+  const youtubeSection = youtube ? `\nHear it for yourself: ${youtube}\n` : "";
+  const signature = [name, phone, website].filter(Boolean).join("\n");
 
   return `${greeting}
 
-I'm ${name} — a full-time musician with over a decade of live performance experience. I recently relocated to the Newberg area and would love to play at ${venueName}.
-
-${bio}
-
-Hear it for yourself: ${youtube}
-
+I'm ${name} — a musician who'd love to play at ${venueName}.
+${bioSection}${youtubeSection}
 I'm booking upcoming dates now and would love to find a time that works for ${venueName}. Would you be open to a quick call this week?
 
 Thanks so much,
-${name}
-${phone}
-${website}`;
+${signature}`;
 }
 
 export function buildFollowUpBody(
@@ -47,25 +43,23 @@ export function buildFollowUpBody(
   contactName?: string | null
 ): string {
   const greeting = contactName ? `Hi ${contactName},` : `Hi there,`;
-  const name = profile?.display_name ?? "Taylor Anderson";
-  const phone = profile?.phone ?? "(503) 997-3586";
-  const website = profile?.social_links?.website ?? "taylorandersonmusic.com";
+  const name = profile?.display_name ?? "";
+  const phone = profile?.phone ?? "";
+  const website = profile?.social_links?.website ?? "";
   const youtube =
     profile?.social_links?.youtube ??
     profile?.video_samples?.[0]?.url ??
-    "https://youtu.be/JaPOuz1R0HI?si=lo5JhEbgowL2g5JU";
+    "";
+  const youtubeSection = youtube ? `\nHear it for yourself: ${youtube}\n` : "";
+  const signature = [name, phone, website].filter(Boolean).join("\n");
 
   return `${greeting}
 
 I wanted to follow up on my email from last week about playing at ${venueName}.
 
 I know inboxes get busy — just wanted to make sure my note didn't get buried. I'd love to find a time to connect and see if there's a fit.
-
-Hear it for yourself: ${youtube}
-
+${youtubeSection}
 Happy to work around your schedule. Thanks for your time!
 
-${name}
-${phone}
-${website}`;
+${signature}`;
 }

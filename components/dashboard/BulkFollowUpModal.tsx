@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ArtistProfile } from "@/types";
+import { buildFollowUpSubject, buildFollowUpBody } from "@/lib/email-templates";
 
 interface VenueRow {
   id: string;
@@ -15,30 +16,10 @@ interface VenueRow {
 }
 
 function buildFollowUpEmail(venueName: string, profile: ArtistProfile | null, contactName?: string | null) {
-  const greeting = contactName ? `Hi ${contactName},` : `Hi there,`;
-  const name = profile?.display_name ?? "Taylor Anderson";
-  const phone = profile?.phone ?? "(503) 997-3586";
-  const website = profile?.social_links?.website ?? "taylorandersonmusic.com";
-  const youtube = profile?.social_links?.youtube
-    ?? profile?.video_samples?.[0]?.url
-    ?? "https://youtu.be/JaPOuz1R0HI?si=lo5JhEbgowL2g5JU";
-
-  const subject = `Following up — live music inquiry for ${venueName}`;
-  const body = `${greeting}
-
-I wanted to follow up on my email from last week about playing at ${venueName}.
-
-I know inboxes get busy — just wanted to make sure my note didn't get buried. I'd love to find a time to connect and see if there's a fit.
-
-Hear it for yourself: ${youtube}
-
-Happy to work around your schedule. Thanks for your time!
-
-${name}
-${phone}
-${website}`;
-
-  return { subject, body };
+  return {
+    subject: buildFollowUpSubject(venueName),
+    body: buildFollowUpBody(venueName, profile, contactName),
+  };
 }
 
 function daysAgo(dateStr: string | null) {

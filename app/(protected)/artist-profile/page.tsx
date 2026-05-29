@@ -240,15 +240,15 @@ export default function ArtistProfilePage() {
                   className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold"
                   style={{ background: "linear-gradient(135deg, #d4a853 0%, #8b5cf6 100%)", color: "#fff" }}
                 >
-                  TA
+                  {profile?.display_name ? profile.display_name.charAt(0).toUpperCase() : "?"}
                 </div>
               )}
             </div>
             <div style={{ color: "#f0ede8", fontSize: "13px", fontWeight: 700, marginBottom: "2px" }}>
-              Taylor Anderson
+              {profile?.display_name || "Your Name"}
             </div>
             <div style={{ color: "#9a9591", fontSize: "10px", marginBottom: "12px" }}>
-              Newberg, OR
+              Artist
             </div>
             <input
               ref={fileInputRef}

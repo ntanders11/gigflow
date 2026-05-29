@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const mainLinks = [
@@ -20,6 +21,20 @@ const profileLinks = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/artist-profile")
+      .then((r) => r.ok ? r.json() : null)
+      .then((p) => {
+        if (p) {
+          setDisplayName(p.display_name ?? null);
+          setPhotoUrl(p.photo_url ?? null);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -180,23 +195,32 @@ export default function Sidebar() {
         style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
       >
         <div className="flex items-center gap-3">
-          <img
-            src="https://rqwlsxjdwuqizkacrtmb.supabase.co/storage/v1/object/public/artist-photos/d002fe32-fd2b-48a8-9874-60d2c2380bbf/avatar.JPG"
-            alt="Taylor Anderson"
-            className="w-8 h-8 rounded-full shrink-0 object-cover"
-          />
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt={displayName ?? "Artist"}
+              className="w-8 h-8 rounded-full shrink-0 object-cover"
+            />
+          ) : (
+            <div
+              className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold"
+              style={{ background: "linear-gradient(135deg, #d4a853 0%, #8b5cf6 100%)", color: "#fff" }}
+            >
+              {displayName ? displayName.charAt(0).toUpperCase() : "?"}
+            </div>
+          )}
           <div className="min-w-0">
             <div
               className="text-sm font-medium truncate"
               style={{ color: "#f0ede8", lineHeight: 1.3 }}
             >
-              Taylor Anderson
+              {displayName ?? "Your Profile"}
             </div>
             <div
               className="text-xs truncate"
               style={{ color: "#5e5c58", lineHeight: 1.3 }}
             >
-              Solo Artist
+              Artist
             </div>
           </div>
         </div>
