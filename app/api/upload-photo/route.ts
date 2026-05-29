@@ -4,6 +4,11 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("upload-photo: missing Supabase env vars");
+      return NextResponse.json({ error: "Storage not configured" }, { status: 500 });
+    }
+
     const supabase = await createClient();
     const {
       data: { user },

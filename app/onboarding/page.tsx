@@ -103,7 +103,8 @@ export default function OnboardingPage() {
       await doFinish();
     } catch (err) {
       console.error("Onboarding finish error:", err);
-      setError("Something went wrong — please try again.");
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setError(`Something went wrong (${msg}) — please try again.`);
       setSaving(false);
     }
   }
@@ -118,27 +119,37 @@ export default function OnboardingPage() {
     }
 
     // ── 1. Upload photo via service-role API route ─────────────────────────
+    // Photo upload is non-blocking: if it fails for any reason, we show a
+    // warning and continue so the user isn't stuck on a broken photo upload.
     let photoUrl: string | null = null;
     if (form.photoFile) {
-      const res = await fetch("/api/upload-photo", {
-        method: "POST",
-        headers: {
-          "Content-Type": "image/jpeg",
-          "x-file-name": "avatar.jpg",
-        },
-        body: form.photoFile,
-        signal: AbortSignal.timeout(20000), // 20 s max — don't hang forever
-      });
+      try {
+        const res = await fetch("/api/upload-photo", {
+          method: "POST",
+          headers: {
+            "Content-Type": "image/jpeg",
+            "x-file-name": "avatar.jpg",
+          },
+          body: form.photoFile,
+          signal: AbortSignal.timeout(20000), // 20 s max — don't hang forever
+        });
 
-      let uploadData: { url?: string; error?: string } = {};
-      try { uploadData = await res.json(); } catch { /* ignore */ }
+        let uploadData: { url?: string; error?: string } = {};
+        try { uploadData = await res.json(); } catch { /* ignore */ }
 
-      if (!res.ok || !uploadData.url) {
-        setError("Photo upload failed — please try again or skip the photo for now.");
-        setSaving(false);
-        return;
+        if (res.ok && uploadData.url) {
+          photoUrl = uploadData.url;
+        } else {
+          // Non-fatal: log and continue — user can add photo from profile later
+          console.warn("Photo upload failed:", uploadData.error ?? `HTTP ${res.status}`);
+          setError("Photo couldn't be saved right now — you can add it from your profile later. Continuing…");
+        }
+      } catch (photoErr) {
+        // Network error or timeout — non-fatal
+        const msg = photoErr instanceof Error ? photoErr.message : String(photoErr);
+        console.warn("Photo upload error:", msg);
+        setError("Photo couldn't be saved right now — you can add it from your profile later. Continuing…");
       }
-      photoUrl = uploadData.url;
     }
 
     // ── 2. Save artist profile via API route ─────────────────────────────
