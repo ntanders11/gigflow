@@ -82,10 +82,14 @@ export async function PATCH(request: Request) {
 
   const body = await request.json();
 
+  // Use upsert so this works even for brand-new users who have no row yet.
+  // onConflict:"user_id" means: INSERT if no row, UPDATE if one already exists.
   const { data, error } = await supabase
     .from("artist_profiles")
-    .update({ ...body, updated_at: new Date().toISOString() })
-    .eq("user_id", user.id)
+    .upsert(
+      { user_id: user.id, ...body, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" }
+    )
     .select()
     .single();
 

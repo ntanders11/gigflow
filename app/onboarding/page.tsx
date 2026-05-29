@@ -107,8 +107,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    // Upload photo via API route (uses service role key — bypasses RLS,
-    // avoids relying on bucket policies being configured for new users)
+    // ── 1. Upload photo via service-role API route ─────────────────────────
     let photoUrl: string | null = null;
     if (form.photoFile) {
       const res = await fetch("/api/upload-photo", {
@@ -120,56 +119,77 @@ export default function OnboardingPage() {
         body: form.photoFile,
       });
 
-      let data: { url?: string; error?: string } = {};
-      try { data = await res.json(); } catch { /* ignore */ }
+      let uploadData: { url?: string; error?: string } = {};
+      try { uploadData = await res.json(); } catch { /* ignore */ }
 
-      if (!res.ok || !data.url) {
-        setError("Photo upload failed" + (data.error ? `: ${data.error}` : ". Please try again."));
+      if (!res.ok || !uploadData.url) {
+        setError("Photo upload failed" + (uploadData.error ? `: ${uploadData.error}` : ". Please try again."));
         setSaving(false);
         return;
       }
-      photoUrl = data.url;
+      photoUrl = uploadData.url;
     }
 
-    // Upsert artist_profiles
+    // ── 2. Save artist profile via API route (handles new users correctly) ─
+    // Using PATCH /api/artist-profile which now does an upsert, so it works
+    // even when no artist_profiles row exists yet for this user.
     const socialLinks: Record<string, string> = {};
     if (form.website)   socialLinks.website   = form.website;
     if (form.youtube)   socialLinks.youtube   = form.youtube;
     if (form.instagram) socialLinks.instagram = form.instagram;
 
-    const { error: profileError } = await supabase
-      .from("artist_profiles")
-      .upsert({
-        user_id:      user.id,
+    const profileRes = await fetch("/api/artist-profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         display_name: form.displayName.trim(),
         phone:        form.phone.trim() || null,
         bio:          form.bio.trim()   || null,
         social_links: socialLinks,
         ...(photoUrl ? { photo_url: photoUrl } : {}),
-      }, { onConflict: "user_id" });
+      }),
+    });
 
-    if (profileError) {
-      setError("Failed to save profile: " + profileError.message);
+    if (!profileRes.ok) {
+      const d = await profileRes.json().catch(() => ({})) as { error?: string };
+      setError("Failed to save profile: " + (d.error ?? "Please try again."));
       setSaving(false);
       return;
     }
 
-    // Upsert zone — the unique(user_id, name) constraint lets us safely
-    // insert or update based on the city name. Existing zones with different
-    // names are preserved, so re-submitting onboarding never deletes venue data.
-    const { error: zoneError } = await supabase
+    // ── 3. Save zone (no unique-constraint dependency) ─────────────────────
+    // Check if the user already has a zone; update it if so, insert if not.
+    // Avoids relying on a UNIQUE(user_id, name) constraint in the DB.
+    const { data: existingZone } = await supabase
       .from("zones")
-      .upsert({
-        user_id:   user.id,
-        name:      form.city.trim(),
-        zip_code:  form.zipCode.trim() || null,
-        radius_mi: form.radiusMi,
-      }, { onConflict: "user_id,name" });
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    if (zoneError) {
-      setError("Failed to save region: " + zoneError.message);
-      setSaving(false);
-      return;
+    if (existingZone?.id) {
+      await supabase
+        .from("zones")
+        .update({
+          name:      form.city.trim(),
+          zip_code:  form.zipCode.trim() || null,
+          radius_mi: form.radiusMi,
+        })
+        .eq("id", existingZone.id);
+    } else {
+      const { error: zoneError } = await supabase
+        .from("zones")
+        .insert({
+          user_id:   user.id,
+          name:      form.city.trim(),
+          zip_code:  form.zipCode.trim() || null,
+          radius_mi: form.radiusMi,
+        });
+
+      if (zoneError) {
+        setError("Failed to save region: " + zoneError.message);
+        setSaving(false);
+        return;
+      }
     }
 
     router.push("/dashboard");
