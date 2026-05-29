@@ -1,5 +1,56 @@
 # StageReach - Session Log
 
+## Session: 2026-05-28 (2) — Beta Tester Bug Fixes
+
+### What Was Fixed
+
+**Names showing as "Taylor Anderson" for all users:**
+- Removed hardcoded fallback name/phone/website from `lib/email-templates.ts` — all fields now empty string if no profile
+- Removed "TA" initials and "Newberg, OR" from `app/(protected)/artist-profile/page.tsx`
+- Same fix on the public profile page `app/profile/[id]/page.tsx`
+- Removed local `buildFollowUpEmail` function in `BulkFollowUpModal.tsx` that had Taylor's info baked in — replaced with shared template functions
+
+**Venue discovery returning zero results:**
+- Root cause: Overpass API (OpenStreetMap) only surfaces venues tagged `live_music=yes`, which is almost nothing in US cities
+- Switched `app/api/venues/discover/route.ts` to Google Places Nearby Search API (key was already configured, just unused here)
+- Two passes: live music venues first, then bars/breweries; both with 8-second AbortSignal timeouts
+- Kept Overpass as fallback
+- Added `/api/zones` route to expose the user's home region
+- Discover page now fetches the user's zone and pre-fills the city field
+
+**Photo uploads failing:**
+- Cropped canvas was generating full-resolution output (4000px+) → files exceeding Vercel's 4.5MB limit
+- Added 800px cap in `PhotoCropModal.tsx`
+- Fixed content-type mismatch: canvas always outputs JPEG but file was labeled as original type
+- Onboarding was using the browser Supabase client directly (subject to RLS) — switched to `/api/upload-photo` which uses the service role key
+
+**Onboarding "Skip for now" infinite redirect:**
+- `artist_profiles` INSERT was failing silently because required columns (`genres`, `video_samples`, `packages`) weren't included
+- `zones` upsert was using `onConflict: "user_id,name"` which requires a UNIQUE constraint that doesn't exist in the DB
+- Fixed both: PATCH route now does update-then-insert with safe defaults; zones uses check-then-insert-or-update
+- The middleware checks `display_name`; until it was saved, the redirect loop was permanent
+
+**Onboarding "Saving…" frozen:**
+- No try/catch around the async `finish()` logic — any exception left `saving=true` forever
+- Added try/catch with `setSaving(false)` in the catch handler
+- Added `AbortSignal.timeout()` on all fetch calls so genuine network hangs surface as errors
+
+**Photo upload still failing (latest fix):**
+- Made photo upload non-blocking — if it fails for any reason, onboarding continues with a warning
+- Added actual error message to the generic catch fallback for better diagnosis
+- Added env var guard in `/api/upload-photo` to log clearly if `SUPABASE_SERVICE_ROLE_KEY` is missing
+
+### Key Technical Decisions
+- Google Places used over Overpass for US venue discovery (much better coverage)
+- Photo upload failure is non-fatal in onboarding — users can always add photo from profile settings later
+- Update-then-insert pattern used instead of upsert (avoids UNIQUE constraint dependency in the DB)
+
+### Left Open
+- Confirm beta testers can now complete onboarding end-to-end
+- If photo upload is still failing in production, check Vercel env vars for `SUPABASE_SERVICE_ROLE_KEY` and verify the `artist-photos` bucket exists in Supabase with public access enabled
+
+---
+
 ## Session: 2026-05-28 — Batch Email, Domain, Branding
 
 ### What Was Built

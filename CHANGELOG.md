@@ -1,5 +1,15 @@
 # StageReach Changelog
 
+## 2026-05-28 (beta tester bug fixes — session 2)
+- [Fix] Beta testers no longer see "Taylor Anderson" as their name — all hardcoded fallback names removed from email templates, profile page, public profile, and sidebar
+- [Fix] Venue discovery now uses Google Places Nearby Search (2-pass: music venues, then bars/breweries) — previously only used OpenStreetMap which returns near-zero results in US cities
+- [Fix] Discover page now auto-fills the search city from the user's own home region instead of defaulting to empty
+- [Fix] Photo uploads no longer fail silently — added canvas size cap (800px) to keep files under Vercel's 4.5MB limit, and fixed JPEG content-type mismatch
+- [Fix] Onboarding "Skip for now" button now works — was caught in an infinite redirect loop because the profile save was silently failing; fixed the update-then-insert logic and added proper error defaults
+- [Fix] Onboarding "Saving…" button no longer freezes permanently — added try/catch so errors surface to the user, and AbortSignal timeouts on all API calls
+- [Fix] Photo upload during onboarding is now non-blocking — if the photo fails for any reason, onboarding continues and the user can add a photo from their profile page later
+- [Fix] Upload route now logs a clear error if the Supabase service role key is missing from environment variables
+
 ## 2026-05-28
 - [Feature] Batch Pitch Email — "Send Batch Pitch" button on the Discovered column lets you select multiple venues, preview the email, and send to all of them at once; successfully sent venues automatically advance to Contacted
 - [Feature] Batch Follow-up Email — "Send Follow-up" button on the Contacted column works the same way; venues already followed up are greyed out and skipped
