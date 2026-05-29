@@ -123,26 +123,25 @@ export default function OnboardingPage() {
       const res = await fetch("/api/upload-photo", {
         method: "POST",
         headers: {
-          "Content-Type": form.photoFile.type || "image/jpeg",
-          "x-file-name": form.photoFile.name,
+          "Content-Type": "image/jpeg",
+          "x-file-name": "avatar.jpg",
         },
         body: form.photoFile,
+        signal: AbortSignal.timeout(20000), // 20 s max — don't hang forever
       });
 
       let uploadData: { url?: string; error?: string } = {};
       try { uploadData = await res.json(); } catch { /* ignore */ }
 
       if (!res.ok || !uploadData.url) {
-        setError("Photo upload failed" + (uploadData.error ? `: ${uploadData.error}` : ". Please try again."));
+        setError("Photo upload failed — please try again or skip the photo for now.");
         setSaving(false);
         return;
       }
       photoUrl = uploadData.url;
     }
 
-    // ── 2. Save artist profile via API route (handles new users correctly) ─
-    // Using PATCH /api/artist-profile which now does an upsert, so it works
-    // even when no artist_profiles row exists yet for this user.
+    // ── 2. Save artist profile via API route ─────────────────────────────
     const socialLinks: Record<string, string> = {};
     if (form.website)   socialLinks.website   = form.website;
     if (form.youtube)   socialLinks.youtube   = form.youtube;
@@ -158,6 +157,7 @@ export default function OnboardingPage() {
         social_links: socialLinks,
         ...(photoUrl ? { photo_url: photoUrl } : {}),
       }),
+      signal: AbortSignal.timeout(15000), // 15 s max
     });
 
     if (!profileRes.ok) {

@@ -71,8 +71,10 @@ export default function PhotoCropModal({ imageSrc, fileName, fileType, onSave, o
   async function handleSave() {
     if (!croppedAreaPixels) return;
     setSaving(true);
+    // getCroppedBlob always produces a JPEG regardless of the source type,
+    // so create the File as JPEG to match the actual content.
     const blob = await getCroppedBlob(imageSrc, croppedAreaPixels, fileType);
-    const file = new File([blob], fileName, { type: fileType });
+    const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
     onSave(file);
   }
 

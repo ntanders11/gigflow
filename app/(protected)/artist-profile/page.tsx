@@ -128,10 +128,11 @@ export default function ArtistProfilePage() {
     const res = await fetch("/api/upload-photo", {
       method: "POST",
       headers: {
-        "Content-Type": croppedFile.type || "image/jpeg",
-        "x-file-name": croppedFile.name,
+        "Content-Type": "image/jpeg",
+        "x-file-name": "avatar.jpg",
       },
       body: croppedFile,
+      signal: AbortSignal.timeout(20000),
     });
 
     let data: { url?: string; error?: string } = {};
