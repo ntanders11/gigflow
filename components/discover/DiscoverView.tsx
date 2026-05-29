@@ -27,42 +27,36 @@ type DiscoverResult = {
 };
 
 export default function DiscoverView() {
-  const [city, setCity]       = useState("");
-  const [radius, setRadius]   = useState(25);
-  const [results, setResults] = useState<DiscoverResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [city, setCity]         = useState("");
+  const [radius, setRadius]     = useState(30);
+  const [results, setResults]   = useState<DiscoverResult[]>([]);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState("");
   const [searched, setSearched] = useState(false);
-  const [adding, setAdding]   = useState<Set<string>>(new Set());
-  const [added, setAdded]     = useState<Set<string>>(new Set());
+  const [adding, setAdding]     = useState<Set<string>>(new Set());
+  const [added, setAdded]       = useState<Set<string>>(new Set());
 
-  // Pre-fill city from the user's home zone
-  useEffect(() => {
-    fetch("/api/zones")
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data?.zones?.[0]?.name) {
-          setCity(data.zones[0].name);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  async function handleSearch() {
-    if (!city.trim()) return;
+  // Core search function — accepts city/radius directly so it can be called
+  // both from the Search button (uses state) and from the auto-search on mount.
+  async function doSearch(searchCity: string, searchRadius: number) {
+    if (!searchCity.trim()) return;
     setLoading(true);
     setError("");
     setSearched(false);
 
-    // Geocode in the browser so our API only needs to call Overpass
+    // Geocode in the browser so our API only needs lat/lon
     let lat: number, lon: number;
     try {
       const geoRes = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city.trim())}&format=json&limit=1`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchCity.trim())}&format=json&limit=1`,
         { headers: { "User-Agent": "StageReach/1.0" } }
       );
       const geoData = await geoRes.json();
-      if (!geoData.length) { setError("Location not found — try a different city or zip."); setLoading(false); return; }
+      if (!geoData.length) {
+        setError("Location not found — try a different city or zip.");
+        setLoading(false);
+        return;
+      }
       lat = parseFloat(geoData[0].lat);
       lon = parseFloat(geoData[0].lon);
     } catch {
@@ -74,7 +68,7 @@ export default function DiscoverView() {
     const params = new URLSearchParams({
       lat: String(lat),
       lon: String(lon),
-      radius: String(radius),
+      radius: String(searchRadius),
     });
 
     const res = await fetch(`/api/venues/discover?${params}`);
@@ -85,6 +79,26 @@ export default function DiscoverView() {
     if (!res.ok) { setError(data.error ?? "Search failed"); return; }
     setResults(data.results ?? []);
   }
+
+  function handleSearch() {
+    doSearch(city, radius);
+  }
+
+  // On mount: load the user's home zone, sync the controls, and auto-search.
+  // This means a new user sees their local venues immediately — no button click needed.
+  useEffect(() => {
+    fetch("/api/zones")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const zone = data?.zones?.[0];
+        if (!zone?.name) return;
+        const r = Math.min(zone.radius_mi ?? 30, 50); // slider max is 50
+        setCity(zone.name);
+        setRadius(r);
+        doSearch(zone.name, r);
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleAdd(venue: DiscoverResult) {
     setAdding((prev) => new Set(prev).add(venue.osm_id));
@@ -198,7 +212,7 @@ export default function DiscoverView() {
       {/* Results */}
       {loading && (
         <div className="text-center py-16">
-          <p className="text-sm" style={{ color: "#5e5c58" }}>Searching OpenStreetMap…</p>
+          <p className="text-sm" style={{ color: "#5e5c58" }}>Searching for venues…</p>
         </div>
       )}
 
