@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import PhotoCropModal from "@/components/profile/PhotoCropModal";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -58,11 +59,16 @@ const labelStyle = { color: "#9a9591" };
 
 export default function OnboardingPage() {
   const router  = useRouter();
-  const [step, setStep]   = useState<Step>(1);
-  const [form, setForm]   = useState<FormData>(INITIAL);
+  const [step, setStep]     = useState<Step>(1);
+  const [form, setForm]     = useState<FormData>(INITIAL);
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Crop modal state
+  const [cropSrc, setCropSrc]         = useState<string | null>(null);
+  const [cropFileName, setCropFileName] = useState("");
+  const [cropFileType, setCropFileType] = useState("");
 
   function update(fields: Partial<FormData>) {
     setForm((prev) => ({ ...prev, ...fields }));
@@ -71,16 +77,22 @@ export default function OnboardingPage() {
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Photo must be under 5MB.");
-      return;
-    }
-    if (form.photoPreview) {
-      URL.revokeObjectURL(form.photoPreview);
-    }
+    setError(null);
+    // Open crop modal instead of uploading directly
+    const objectUrl = URL.createObjectURL(file);
+    setCropSrc(objectUrl);
+    setCropFileName(file.name);
+    setCropFileType(file.type || "image/jpeg");
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  }
+
+  function handleCropSave(croppedFile: File) {
+    setCropSrc(null);
+    if (form.photoPreview) URL.revokeObjectURL(form.photoPreview);
     update({
-      photoFile: file,
-      photoPreview: URL.createObjectURL(file),
+      photoFile: croppedFile,
+      photoPreview: URL.createObjectURL(croppedFile),
     });
   }
 
@@ -95,26 +107,28 @@ export default function OnboardingPage() {
       return;
     }
 
-    // Upload photo if provided
+    // Upload photo via API route (uses service role key — bypasses RLS,
+    // avoids relying on bucket policies being configured for new users)
     let photoUrl: string | null = null;
     if (form.photoFile) {
-      const mimeToExt: Record<string, string> = {
-        "image/jpeg": "jpg",
-        "image/png": "png",
-        "image/webp": "webp",
-      };
-      const ext = mimeToExt[form.photoFile.type] ?? "jpg";
-      const path = `${user.id}/avatar.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("artist-photos")
-        .upload(path, form.photoFile, { upsert: true });
-      if (uploadError) {
-        setError("Photo upload failed: " + uploadError.message);
+      const res = await fetch("/api/upload-photo", {
+        method: "POST",
+        headers: {
+          "Content-Type": form.photoFile.type || "image/jpeg",
+          "x-file-name": form.photoFile.name,
+        },
+        body: form.photoFile,
+      });
+
+      let data: { url?: string; error?: string } = {};
+      try { data = await res.json(); } catch { /* ignore */ }
+
+      if (!res.ok || !data.url) {
+        setError("Photo upload failed" + (data.error ? `: ${data.error}` : ". Please try again."));
         setSaving(false);
         return;
       }
-      const { data: urlData } = supabase.storage.from("artist-photos").getPublicUrl(path);
-      photoUrl = urlData.publicUrl;
+      photoUrl = data.url;
     }
 
     // Upsert artist_profiles
@@ -178,6 +192,17 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#0e0f11" }}>
+      {/* Crop modal — shown when user picks a photo */}
+      {cropSrc && (
+        <PhotoCropModal
+          imageSrc={cropSrc}
+          fileName={cropFileName}
+          fileType={cropFileType}
+          onSave={handleCropSave}
+          onCancel={() => setCropSrc(null)}
+        />
+      )}
+
       <div className="rounded-xl p-8 w-full max-w-sm" style={card}>
         <div className="mb-6">
           <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.5rem", color: "#d4a853" }}>
@@ -341,7 +366,7 @@ export default function OnboardingPage() {
                   >
                     {form.photoFile ? "Change photo" : "Upload photo"}
                   </button>
-                  <p className="text-xs mt-1" style={{ color: "#5e5c58" }}>JPG or PNG, up to 5MB</p>
+                  <p className="text-xs mt-1" style={{ color: "#5e5c58" }}>Any size — we&apos;ll crop it</p>
                 </div>
               </div>
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handlePhotoChange} />

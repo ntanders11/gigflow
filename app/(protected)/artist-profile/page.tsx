@@ -138,7 +138,7 @@ export default function ArtistProfilePage() {
     try {
       data = await res.json();
     } catch {
-      setPhotoError("Server error — check that the dev server is running");
+      setPhotoError("Upload failed — the photo may be too large. Try a smaller image.");
       return;
     }
 

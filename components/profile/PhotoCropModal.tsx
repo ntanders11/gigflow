@@ -12,6 +12,10 @@ interface Props {
   onCancel: () => void;
 }
 
+// Avatar images never need to be bigger than 800px.
+// Capping here keeps the upload well under Vercel's 4.5 MB serverless limit.
+const MAX_OUTPUT_PX = 800;
+
 async function getCroppedBlob(
   imageSrc: string,
   croppedAreaPixels: Area,
@@ -25,7 +29,8 @@ async function getCroppedBlob(
   });
 
   const canvas = document.createElement("canvas");
-  const size = Math.min(croppedAreaPixels.width, croppedAreaPixels.height);
+  // Cap at MAX_OUTPUT_PX so a 4000px phone photo never produces a 4 MB upload
+  const size = Math.min(croppedAreaPixels.width, croppedAreaPixels.height, MAX_OUTPUT_PX);
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d")!;
@@ -35,6 +40,7 @@ async function getCroppedBlob(
   ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
   ctx.clip();
 
+  // Source rect → output rect (scales down if needed)
   ctx.drawImage(
     image,
     croppedAreaPixels.x,
@@ -48,7 +54,7 @@ async function getCroppedBlob(
   );
 
   return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob!), fileType || "image/jpeg", 0.92);
+    canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.88);
   });
 }
 
