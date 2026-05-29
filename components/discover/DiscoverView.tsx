@@ -38,36 +38,16 @@ export default function DiscoverView() {
 
   // Core search function — accepts city/radius directly so it can be called
   // both from the Search button (uses state) and from the auto-search on mount.
+  // Geocoding now happens server-side so the Google API key can be used —
+  // much more reliable than client-side Nominatim which can return wrong cities.
   async function doSearch(searchCity: string, searchRadius: number) {
     if (!searchCity.trim()) return;
     setLoading(true);
     setError("");
     setSearched(false);
 
-    // Geocode in the browser so our API only needs lat/lon
-    let lat: number, lon: number;
-    try {
-      const geoRes = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchCity.trim())}&format=json&limit=1`,
-        { headers: { "User-Agent": "StageReach/1.0" } }
-      );
-      const geoData = await geoRes.json();
-      if (!geoData.length) {
-        setError("Location not found — try a different city or zip.");
-        setLoading(false);
-        return;
-      }
-      lat = parseFloat(geoData[0].lat);
-      lon = parseFloat(geoData[0].lon);
-    } catch {
-      setError("Could not find that location — check your connection and try again.");
-      setLoading(false);
-      return;
-    }
-
     const params = new URLSearchParams({
-      lat: String(lat),
-      lon: String(lon),
+      city:   searchCity.trim(),
       radius: String(searchRadius),
     });
 

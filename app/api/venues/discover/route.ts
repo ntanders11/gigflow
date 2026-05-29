@@ -38,19 +38,71 @@ type DiscoverResult = {
   already_in_pipeline: boolean;
 };
 
+// Geocode a city/zip string using Google Geocoding API (most reliable).
+// Falls back to Nominatim restricted to the US if no Google key.
+async function geocodeCity(
+  city: string,
+  googleKey: string | undefined
+): Promise<{ lat: number; lon: number } | null> {
+  if (googleKey) {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city)}&region=us&key=${googleKey}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      if (res.ok) {
+        const data = await res.json();
+        const loc = data.results?.[0]?.geometry?.location;
+        if (loc) return { lat: loc.lat, lon: loc.lng };
+      }
+    } catch { /* fall through to Nominatim */ }
+  }
+
+  // Nominatim fallback — countrycodes=us keeps it from matching
+  // small localities in unexpected countries/states.
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&countrycodes=us`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "StageReach/1.0" },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data[0]) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    }
+  } catch { /* give up */ }
+
+  return null;
+}
+
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = req.nextUrl;
-  const lat    = parseFloat(searchParams.get("lat") ?? "");
-  const lon    = parseFloat(searchParams.get("lon") ?? "");
-  const miles  = parseInt(searchParams.get("radius") ?? "25");
+  const cityParam = searchParams.get("city");
+  const miles     = parseInt(searchParams.get("radius") ?? "25");
   const radiusMeters = Math.min(miles * 1609, 50000); // Google Places max 50 km
 
-  if (isNaN(lat) || isNaN(lon)) {
-    return NextResponse.json({ error: "lat and lon are required" }, { status: 400 });
+  const googleKey = process.env.GOOGLE_PLACES_API_KEY;
+
+  // Support legacy lat/lon params so old clients don't break,
+  // but prefer the new city-based approach (geocoding server-side).
+  let lat: number, lon: number;
+  const latParam = parseFloat(searchParams.get("lat") ?? "");
+  const lonParam = parseFloat(searchParams.get("lon") ?? "");
+
+  if (!isNaN(latParam) && !isNaN(lonParam)) {
+    lat = latParam;
+    lon = lonParam;
+  } else if (cityParam) {
+    const coords = await geocodeCity(cityParam, googleKey);
+    if (!coords) {
+      return NextResponse.json({ error: "Location not found — try a different city or zip." }, { status: 400 });
+    }
+    lat = coords.lat;
+    lon = coords.lon;
+  } else {
+    return NextResponse.json({ error: "city or lat/lon is required" }, { status: 400 });
   }
 
   // Load existing venue names for de-dupe
@@ -59,8 +111,6 @@ export async function GET(req: NextRequest) {
     .select("name")
     .eq("user_id", user.id);
   const existingNames = new Set((existingVenues ?? []).map((v: { name: string }) => v.name.toLowerCase().trim()));
-
-  const googleKey = process.env.GOOGLE_PLACES_API_KEY;
 
   // ── 1. Try Google Places ───────────────────────────────────────────────────
   if (googleKey) {
