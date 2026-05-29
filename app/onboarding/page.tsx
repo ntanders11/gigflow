@@ -99,6 +99,16 @@ export default function OnboardingPage() {
   async function finish() {
     setSaving(true);
     setError(null);
+    try {
+      await doFinish();
+    } catch (err) {
+      console.error("Onboarding finish error:", err);
+      setError("Something went wrong — please try again.");
+      setSaving(false);
+    }
+  }
+
+  async function doFinish() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

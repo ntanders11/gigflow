@@ -81,18 +81,36 @@ export async function PATCH(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
+  const ts = new Date().toISOString();
 
-  // Use upsert so this works even for brand-new users who have no row yet.
-  // onConflict:"user_id" means: INSERT if no row, UPDATE if one already exists.
-  const { data, error } = await supabase
+  // Try UPDATE first (works for all existing users, Taylor included).
+  const { data: updated } = await supabase
     .from("artist_profiles")
-    .upsert(
-      { user_id: user.id, ...body, updated_at: new Date().toISOString() },
-      { onConflict: "user_id" }
-    )
+    .update({ ...body, updated_at: ts })
+    .eq("user_id", user.id)
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  if (updated) return NextResponse.json(updated);
+
+  // No existing row — this is a brand-new user. INSERT with safe defaults so
+  // any NOT NULL columns without DB defaults are satisfied.
+  const { data: inserted, error: insertError } = await supabase
+    .from("artist_profiles")
+    .insert({
+      user_id:       user.id,
+      bio:           "",
+      genres:        [],
+      photo_url:     null,
+      social_links:  { instagram: "", spotify: "", youtube: "", website: "" },
+      video_samples: [],
+      packages:      [],
+      ...body,
+      updated_at:    ts,
+    })
+    .select()
+    .single();
+
+  if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+  return NextResponse.json(inserted);
 }
