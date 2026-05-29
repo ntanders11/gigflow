@@ -71,7 +71,14 @@ function SignupForm() {
     }
 
     const supabase = createClient();
-    const { error: signUpError } = await supabase.auth.signUp({ email, password });
+    // emailRedirectTo ensures the confirmation link in the email always points
+    // to the correct production URL, not localhost. Also needs Site URL set in
+    // the Supabase dashboard (Authentication → URL Configuration → stagereach.app).
+    const { error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/onboarding` },
+    });
 
     if (signUpError) {
       setError(signUpError.message);
