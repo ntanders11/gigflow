@@ -52,21 +52,30 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
               ? "1px solid rgba(255,255,255,0.12)"
               : "1px solid rgba(255,255,255,0.07)",
             boxShadow: snapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.4)" : "none",
-            opacity: batchDisabled ? 0.35 : 1,
-            cursor: batchActive ? (batchDisabled ? "not-allowed" : "pointer") : "grab",
+            opacity: batchDisabled ? 0.55 : 1,
+            cursor: batchActive ? (batchDisabled ? "default" : "pointer") : "grab",
           }}
         >
-          {/* Checkbox indicator in batch mode */}
+          {/* Batch mode indicator — checkbox if selectable, "No email" badge if not */}
           {batchActive && (
-            <div
-              className="absolute top-2 right-2 w-4 h-4 rounded flex items-center justify-center"
-              style={{
-                backgroundColor: batchSelected ? "#d4a853" : "transparent",
-                border: `1px solid ${batchSelected ? "#d4a853" : "rgba(255,255,255,0.2)"}`,
-              }}
-            >
-              {batchSelected && <span style={{ color: "#0e0f11", fontSize: "9px", fontWeight: 700 }}>✓</span>}
-            </div>
+            batchDisabled ? (
+              <span
+                className="absolute top-2 right-2 text-xs px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: "#1e2128", color: "#5e5c58", fontSize: "10px", border: "1px solid rgba(255,255,255,0.07)" }}
+              >
+                No email
+              </span>
+            ) : (
+              <div
+                className="absolute top-2 right-2 w-4 h-4 rounded flex items-center justify-center"
+                style={{
+                  backgroundColor: batchSelected ? "#d4a853" : "transparent",
+                  border: `1px solid ${batchSelected ? "#d4a853" : "rgba(255,255,255,0.2)"}`,
+                }}
+              >
+                {batchSelected && <span style={{ color: "#0e0f11", fontSize: "9px", fontWeight: 700 }}>✓</span>}
+              </div>
+            )
           )}
           <Link href={`/venues/${venue.id}`} onClick={(e) => { e.stopPropagation(); if (batchActive) e.preventDefault(); }}>
             <p
