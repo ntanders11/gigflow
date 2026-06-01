@@ -2,7 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Venue, ArtistProfile } from "@/types";
-import { buildSubject, buildFollowUpSubject, buildBody, buildFollowUpBody } from "@/lib/email-templates";
+import {
+  buildSubjectTemplate,
+  buildBodyTemplate,
+  buildFollowUpBodyTemplate,
+  applyTemplate,
+} from "@/lib/email-templates";
 
 export interface SendResult {
   venueId: string;
@@ -19,31 +24,42 @@ interface Props {
 }
 
 export default function BatchEmailModal({ venues, mode, onClose, onComplete }: Props) {
-  const [profile, setProfile] = useState<ArtistProfile | null>(null);
-  const [step, setStep] = useState<"confirm" | "sending" | "results">("confirm");
-  const [progress, setProgress] = useState(0);
-  const [results, setResults] = useState<SendResult[]>([]);
+  const [profile, setProfile]           = useState<ArtistProfile | null>(null);
+  const [step, setStep]                 = useState<"confirm" | "sending" | "results">("confirm");
+  const [progress, setProgress]         = useState(0);
+  const [results, setResults]           = useState<SendResult[]>([]);
+  const [subjectTemplate, setSubjectTemplate] = useState(buildSubjectTemplate(mode));
+  const [bodyTemplate, setBodyTemplate]       = useState("");
 
   const previewVenue = venues[0];
 
+  // Preview shows what the email will actually look like for the first venue
   const previewSubject = previewVenue
-    ? mode === "pitch"
-      ? buildSubject(previewVenue.name)
-      : buildFollowUpSubject(previewVenue.name)
-    : "";
-
-  const previewBody = previewVenue
-    ? mode === "pitch"
-      ? buildBody(previewVenue.name, profile, previewVenue.contact_name)
-      : buildFollowUpBody(previewVenue.name, profile, previewVenue.contact_name)
-    : "";
+    ? applyTemplate(subjectTemplate, previewVenue.name, previewVenue.contact_name)
+    : subjectTemplate;
+  const previewBody = previewVenue && bodyTemplate
+    ? applyTemplate(bodyTemplate, previewVenue.name, previewVenue.contact_name)
+    : bodyTemplate;
 
   useEffect(() => {
     fetch("/api/artist-profile")
       .then((r) => r.json())
-      .then((p: ArtistProfile) => setProfile(p))
-      .catch(() => {/* fall back to null profile defaults */});
-  }, []);
+      .then((p: ArtistProfile) => {
+        setProfile(p);
+        setBodyTemplate(
+          mode === "pitch"
+            ? buildBodyTemplate(p)
+            : buildFollowUpBodyTemplate(p)
+        );
+      })
+      .catch(() => {
+        setBodyTemplate(
+          mode === "pitch"
+            ? buildBodyTemplate(null)
+            : buildFollowUpBodyTemplate(null)
+        );
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSend() {
     setStep("sending");
@@ -54,14 +70,8 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
       setProgress(i);
 
       try {
-        const subject =
-          mode === "pitch"
-            ? buildSubject(venue.name)
-            : buildFollowUpSubject(venue.name);
-        const emailBody =
-          mode === "pitch"
-            ? buildBody(venue.name, profile, venue.contact_name)
-            : buildFollowUpBody(venue.name, profile, venue.contact_name);
+        const subject   = applyTemplate(subjectTemplate, venue.name, venue.contact_name);
+        const emailBody = applyTemplate(bodyTemplate,    venue.name, venue.contact_name);
 
         const res = await fetch("/api/send-email", {
           method: "POST",
@@ -137,50 +147,91 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
         {/* Confirm step */}
         {step === "confirm" && (
           <>
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-              <p className="text-sm" style={{ color: "#9a9591" }}>
-                {mode === "pitch"
-                  ? `Sending a personalized pitch email to ${venues.length} discovered venue${venues.length !== 1 ? "s" : ""}. Each email is personalized with your artist profile.`
-                  : `Sending a follow-up email to ${venues.length} contacted venue${venues.length !== 1 ? "s" : ""}.`}
-              </p>
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
               {/* Venue list */}
-              <div className="space-y-1 max-h-28 overflow-y-auto">
-                {venues.map((v) => (
-                  <div
-                    key={v.id}
-                    className="flex items-center justify-between text-xs px-2 py-1.5 rounded"
-                    style={{ backgroundColor: "#1e2128", color: "#f0ede8" }}
-                  >
-                    <span>{v.name}</span>
-                    <span style={{ color: "#5e5c58" }}>{v.contact_email}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Email preview */}
               <div>
-                <p
-                  className="text-xs font-semibold uppercase tracking-widest mb-2"
-                  style={{ color: "#5e5c58" }}
-                >
-                  Preview — {previewVenue?.name ?? "first venue"}
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>
+                  Sending to {venues.length} venue{venues.length !== 1 ? "s" : ""}
                 </p>
-                <div
-                  className="rounded-lg px-4 py-3 space-y-2"
-                  style={{ backgroundColor: "#0e0f11", border: "1px solid rgba(255,255,255,0.05)" }}
-                >
-                  <p className="text-xs font-medium" style={{ color: "#9a9591" }}>
-                    Subject: <span style={{ color: "#f0ede8" }}>{previewSubject}</span>
-                  </p>
-                  <pre
-                    className="text-xs whitespace-pre-wrap max-h-40 overflow-y-auto"
-                    style={{ color: "#9a9591", fontFamily: "inherit", lineHeight: 1.6 }}
-                  >
-                    {previewBody}
-                  </pre>
+                <div className="space-y-1 max-h-24 overflow-y-auto">
+                  {venues.map((v) => (
+                    <div
+                      key={v.id}
+                      className="flex items-center justify-between text-xs px-2 py-1.5 rounded"
+                      style={{ backgroundColor: "#1e2128", color: "#f0ede8" }}
+                    >
+                      <span>{v.name}</span>
+                      <span style={{ color: "#5e5c58" }}>{v.contact_email}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
+
+              {/* Editable email */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#5e5c58" }}>
+                    Edit your email
+                  </p>
+                  <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: "#1e2128", color: "#9a9591" }}>
+                    <span style={{ color: accentColor }}>{"{{venue}}"}</span> and <span style={{ color: accentColor }}>{"{{contact}}"}</span> personalize per venue
+                  </span>
+                </div>
+
+                {/* Subject */}
+                <div className="mb-2">
+                  <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Subject</label>
+                  <input
+                    type="text"
+                    value={subjectTemplate}
+                    onChange={(e) => setSubjectTemplate(e.target.value)}
+                    className="w-full rounded-lg px-3 py-2 text-xs outline-none"
+                    style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(255,255,255,0.08)" }}
+                  />
+                </div>
+
+                {/* Body */}
+                <div>
+                  <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Body</label>
+                  <textarea
+                    value={bodyTemplate}
+                    onChange={(e) => setBodyTemplate(e.target.value)}
+                    rows={10}
+                    className="w-full rounded-lg px-3 py-2 text-xs outline-none resize-none"
+                    style={{
+                      backgroundColor: "#1e2128",
+                      color: "#f0ede8",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      lineHeight: 1.6,
+                      fontFamily: "inherit",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Live preview for first venue */}
+              {previewVenue && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>
+                    Preview — {previewVenue.name}
+                  </p>
+                  <div
+                    className="rounded-lg px-4 py-3 space-y-2"
+                    style={{ backgroundColor: "#0e0f11", border: "1px solid rgba(255,255,255,0.05)" }}
+                  >
+                    <p className="text-xs" style={{ color: "#9a9591" }}>
+                      Subject: <span style={{ color: "#f0ede8" }}>{previewSubject}</span>
+                    </p>
+                    <pre
+                      className="text-xs whitespace-pre-wrap max-h-32 overflow-y-auto"
+                      style={{ color: "#9a9591", fontFamily: "inherit", lineHeight: 1.6 }}
+                    >
+                      {previewBody}
+                    </pre>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div
@@ -196,7 +247,8 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
               </button>
               <button
                 onClick={handleSend}
-                className="text-sm px-4 py-2 rounded-lg font-semibold transition-all hover:brightness-110"
+                disabled={!bodyTemplate.trim()}
+                className="text-sm px-4 py-2 rounded-lg font-semibold transition-all hover:brightness-110 disabled:opacity-40"
                 style={{ backgroundColor: accentColor, color: "#0e0f11" }}
               >
                 Send to {venues.length} venue{venues.length !== 1 ? "s" : ""} →
