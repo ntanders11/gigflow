@@ -198,9 +198,11 @@ export default function DiscoverView() {
 
       {searched && !loading && (
         <>
-          {newVenues.length === 0 && inPipeline.length === 0 ? (
+          {newVenues.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>No live music venues found</p>
+              <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>
+                {inPipeline.length > 0 ? "All venues in this area are already in your pipeline" : "No live music venues found"}
+              </p>
               <p className="text-xs" style={{ color: "#5e5c58" }}>Try a larger radius or a nearby bigger city.</p>
             </div>
           ) : (
@@ -208,7 +210,7 @@ export default function DiscoverView() {
               {newVenues.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#9a9591" }}>
-                    {newVenues.length} venue{newVenues.length !== 1 ? "s" : ""} found
+                    {newVenues.length} new venue{newVenues.length !== 1 ? "s" : ""} found
                   </h3>
                   <div className="grid grid-cols-3 gap-3">
                     {newVenues.map((venue) => {
@@ -277,26 +279,7 @@ export default function DiscoverView() {
                 </div>
               )}
 
-              {inPipeline.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#5e5c58" }}>
-                    Already in your pipeline ({inPipeline.length})
-                  </h3>
-                  <div className="grid grid-cols-3 gap-3">
-                    {inPipeline.map((venue) => (
-                      <div
-                        key={venue.osm_id}
-                        className="rounded-xl p-4"
-                        style={{ backgroundColor: "#13141700", border: "1px solid rgba(255,255,255,0.04)", opacity: 0.5 }}
-                      >
-                        <p className="text-sm font-medium" style={{ color: "#9a9591" }}>{venue.name}</p>
-                        {venue.city && <p className="text-xs mt-0.5" style={{ color: "#5e5c58" }}>{venue.city}</p>}
-                        <p className="text-xs mt-2" style={{ color: "#5e5c58" }}>✓ In pipeline</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Venues already in the pipeline are silently excluded — no duplicates, no visual clutter */}
             </>
           )}
         </>
