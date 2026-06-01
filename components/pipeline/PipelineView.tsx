@@ -64,9 +64,9 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
   }
 
   async function enrichDiscoveredVenues() {
-    // Target: discovered venues missing email (with or without address)
+    // Target: any venue missing an email, across all pipeline stages
     const targets = venues.filter(
-      (v) => v.stage === "discovered" && !v.contact_email?.trim()
+      (v) => !v.contact_email?.trim()
     );
     if (targets.length === 0) return;
 
@@ -237,11 +237,13 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
             <button
               onClick={enrichDiscoveredVenues}
               disabled={!!enrichProgress || !!fillProgress}
-              className="hidden md:block text-sm px-3 py-1.5 rounded-lg shrink-0 transition-all hover:brightness-110 disabled:opacity-50"
+              className="text-sm px-3 py-1.5 rounded-lg shrink-0 transition-all hover:brightness-110 disabled:opacity-50"
               style={{ backgroundColor: "#1e2128", color: "#9a9591", border: "1px solid rgba(255,255,255,0.1)" }}
-              title="Find missing emails and addresses for Discovered venues"
+              title="Search for missing email addresses across all your venues"
             >
-              {enrichProgress ? `${enrichProgress.done}/${enrichProgress.total}…` : "🔍 Find contacts"}
+              {enrichProgress
+                ? `${enrichProgress.done}/${enrichProgress.total}…`
+                : "🔍 Find emails"}
             </button>
             <button
               onClick={fillMissingAddresses}
