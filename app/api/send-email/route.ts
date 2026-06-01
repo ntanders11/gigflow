@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 
-// Initialized per-request so env var updates take effect without redeploy
-function getResend() {
-  return new Resend(process.env.RESEND_API_KEY);
-}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -35,13 +31,27 @@ export async function POST(request: NextRequest) {
     .eq("user_id", user.id)
     .maybeSingle();
 
+  // Guard: both env vars must be present or emails can never work
+  const apiKey   = (process.env.RESEND_API_KEY ?? "").trim();
   const fromEmail = (process.env.RESEND_FROM_EMAIL ?? "").trim();
-  if (!fromEmail) {
-    return NextResponse.json({ error: "RESEND_FROM_EMAIL is not configured" }, { status: 500 });
+  if (!apiKey) {
+    console.error("send-email: RESEND_API_KEY is not set in environment variables");
+    return NextResponse.json({ error: "Email service not configured (missing API key)" }, { status: 500 });
   }
-  const artistName = (artistProfile?.display_name ?? "StageReach Artist").replace(/[<>"]/g, "").trim();
-  const replyToEmail = (artistProfile?.contact_email ?? user.email ?? "").trim();
-  const fromAddress = artistName ? `${artistName} <${fromEmail}>` : fromEmail;
+  if (!fromEmail) {
+    console.error("send-email: RESEND_FROM_EMAIL is not set in environment variables");
+    return NextResponse.json({ error: "Email service not configured (missing from address)" }, { status: 500 });
+  }
+
+  const artistName   = (artistProfile?.display_name ?? "StageReach Artist").replace(/[<>"]/g, "").trim();
+  const replyToRaw   = (artistProfile?.contact_email ?? user.email ?? "").trim();
+  const fromAddress  = artistName ? `${artistName} <${fromEmail}>` : fromEmail;
+
+  // Only include replyTo when we have a real address — passing an empty
+  // string to Resend causes the send to fail silently.
+  const replyTo = replyToRaw || undefined;
+
+  console.log(`send-email: from="${fromAddress}" replyTo="${replyTo ?? "(none)"}" to="${to}" subject="${subject}"`);
 
   // Send via Resend
   // Convert plain text to HTML, making the YouTube link clickable
@@ -55,10 +65,10 @@ export async function POST(request: NextRequest) {
     )
     .replace(/\n/g, "<br>");
 
-  const resend = getResend();
+  const resend = new Resend(apiKey);
   const { data: sendData, error: sendError } = await resend.emails.send({
     from: fromAddress,
-    replyTo: replyToEmail,
+    ...(replyTo ? { replyTo } : {}),
     to,
     subject,
     text: emailBody,
@@ -66,8 +76,11 @@ export async function POST(request: NextRequest) {
   });
 
   if (sendError) {
+    console.error("send-email: Resend error:", sendError.message);
     return NextResponse.json({ error: sendError.message }, { status: 500 });
   }
+
+  console.log(`send-email: Resend accepted → id=${sendData?.id}`);
 
   // Log the interaction
   const { data: interaction, error: interactionError } = await supabase
