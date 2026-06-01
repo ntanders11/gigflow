@@ -38,10 +38,30 @@ export default function ImportPage() {
 
   return (
     <div className="p-8 max-w-lg">
-      <h1 className="text-2xl font-bold text-slate-900 mb-1">Import Venues</h1>
-      <p className="text-slate-500 text-sm mb-8">
-        Upload the venues CSV from your research. All venues will start in the{" "}
-        <strong>Discovered</strong> stage.
+      <h1 className="text-2xl font-bold text-slate-900 mb-1">Import / Export Venues</h1>
+      <p className="text-slate-500 text-sm mb-6">
+        Share your venue list with another artist, or upload a CSV to add venues to your pipeline.
+      </p>
+
+      {/* ── Export ── */}
+      <div className="rounded-xl border border-slate-200 p-5 mb-8">
+        <h2 className="text-sm font-semibold text-slate-800 mb-1">Export your venues</h2>
+        <p className="text-xs text-slate-500 mb-4">
+          Downloads all your venues as a CSV file. Another artist can upload it directly on this page.
+        </p>
+        <a
+          href="/api/venues/export"
+          download="stagereach-venues.csv"
+          className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+          style={{ backgroundColor: "#1e2128", color: "#f0ede8" }}
+        >
+          ↓ Download Venue CSV
+        </a>
+      </div>
+
+      <h2 className="text-sm font-semibold text-slate-800 mb-1">Import venues</h2>
+      <p className="text-slate-500 text-sm mb-4">
+        Upload a venues CSV. All venues will start in the <strong>Discovered</strong> stage.
       </p>
 
       <div
