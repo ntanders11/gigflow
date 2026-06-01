@@ -90,12 +90,31 @@ export async function POST(request: NextRequest) {
     console.error("Failed to log interaction:", interactionError.message);
   }
 
-  // Update last_contacted_at on the venue
+  // Update last_contacted_at, and advance stage discovered → contacted
+  const { data: venueNow } = await supabase
+    .from("venues")
+    .select("stage")
+    .eq("id", venue_id)
+    .eq("user_id", user.id)
+    .single();
+
+  const stageUpdate: Record<string, string> = {
+    last_contacted_at: new Date().toISOString(),
+  };
+  if (venueNow?.stage === "discovered") {
+    stageUpdate.stage = "contacted";
+  }
+
   await supabase
     .from("venues")
-    .update({ last_contacted_at: new Date().toISOString() })
+    .update(stageUpdate)
     .eq("id", venue_id)
     .eq("user_id", user.id);
 
-  return NextResponse.json({ success: true, resend_id: sendData?.id, interaction });
+  return NextResponse.json({
+    success: true,
+    resend_id: sendData?.id,
+    interaction,
+    stage: stageUpdate.stage ?? venueNow?.stage ?? null,
+  });
 }

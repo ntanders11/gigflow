@@ -192,7 +192,15 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
         <PitchEmailModal
           venue={emailVenue}
           onClose={() => setEmailVenue(null)}
-          onSuccess={() => setEmailVenue(null)}
+          onSuccess={() => {
+            // Advance the card from Discovered → Contacted immediately in the UI
+            if (emailVenue.stage === "discovered") {
+              setVenues((prev) =>
+                prev.map((v) => v.id === emailVenue.id ? { ...v, stage: "contacted" as const } : v)
+              );
+            }
+            setEmailVenue(null);
+          }}
         />
       )}
 
