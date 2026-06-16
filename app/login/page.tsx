@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -41,16 +42,25 @@ export default function LoginPage() {
         }}
       >
         <div className="mb-8">
-          <h1
-            style={{
-              fontFamily: "'DM Serif Display', serif",
-              fontSize: "1.75rem",
-              color: "#d4a853",
-              lineHeight: 1.2,
-            }}
-          >
-            StageReach
-          </h1>
+          <div className="flex items-center gap-3 mb-2">
+            <Image
+              src="/stagereach-icon.svg"
+              alt="StageReach"
+              width={44}
+              height={44}
+              className="rounded-xl"
+            />
+            <h1
+              style={{
+                fontFamily: "'DM Serif Display', serif",
+                fontSize: "1.75rem",
+                color: "#d4a853",
+                lineHeight: 1.2,
+              }}
+            >
+              StageReach
+            </h1>
+          </div>
           <p className="mt-1 text-sm" style={{ color: "#9a9591" }}>
             Sign in to your account
           </p>

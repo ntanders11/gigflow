@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -50,30 +51,39 @@ export default function Sidebar() {
     >
       {/* Logo area */}
       <div
-        className="px-4 pt-5 pb-4"
+        className="px-4 pt-5 pb-4 flex items-center gap-3"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
       >
-        <div
-          style={{
-            fontFamily: "'DM Serif Display', serif",
-            fontSize: "1.25rem",
-            color: "#d4a853",
-            letterSpacing: "-0.01em",
-            lineHeight: 1.2,
-          }}
-        >
-          StageReach
-        </div>
-        <div
-          style={{
-            fontSize: "9px",
-            color: "#5e5c58",
-            textTransform: "uppercase",
-            letterSpacing: "0.12em",
-            marginTop: "3px",
-          }}
-        >
-          Musician Dashboard
+        <Image
+          src="/stagereach-icon.svg"
+          alt="StageReach"
+          width={36}
+          height={36}
+          className="shrink-0 rounded-lg"
+        />
+        <div>
+          <div
+            style={{
+              fontFamily: "'DM Serif Display', serif",
+              fontSize: "1.25rem",
+              color: "#d4a853",
+              letterSpacing: "-0.01em",
+              lineHeight: 1.2,
+            }}
+          >
+            StageReach
+          </div>
+          <div
+            style={{
+              fontSize: "9px",
+              color: "#5e5c58",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              marginTop: "3px",
+            }}
+          >
+            Musician Dashboard
+          </div>
         </div>
       </div>
 
