@@ -42,26 +42,17 @@ export default function LoginPage() {
         }}
       >
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex justify-center mb-5">
             <Image
-              src="/stagereach-icon.svg"
+              src="/stagereach-logo.png"
               alt="StageReach"
-              width={44}
-              height={44}
-              className="rounded-xl"
+              width={300}
+              height={100}
+              className="rounded-lg"
+              style={{ objectFit: "contain" }}
             />
-            <h1
-              style={{
-                fontFamily: "'DM Serif Display', serif",
-                fontSize: "1.75rem",
-                color: "#d4a853",
-                lineHeight: 1.2,
-              }}
-            >
-              StageReach
-            </h1>
           </div>
-          <p className="mt-1 text-sm" style={{ color: "#9a9591" }}>
+          <p className="text-sm text-center" style={{ color: "#9a9591" }}>
             Sign in to your account
           </p>
         </div>
