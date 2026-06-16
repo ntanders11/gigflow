@@ -40,13 +40,13 @@ export default async function PublicProfilePage({
   const hasSocialLinks = Object.values(social).some(Boolean);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
       {/* Top bar */}
       <div
         className="px-6 py-3 flex items-center justify-between"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", backgroundColor: "#16181c" }}
       >
-        <div style={{ fontFamily: "serif", fontSize: "1rem", color: "#d4a853", fontWeight: 600 }}>
+        <div style={{ fontFamily: "serif", fontSize: "1rem", color: "#D4A64F", fontWeight: 600 }}>
           StageReach
         </div>
         <div style={{ color: "#5e5c58", fontSize: "11px" }}>Booking Profile</div>
@@ -68,12 +68,12 @@ export default async function PublicProfilePage({
             ) : (
               <div
                 className="w-28 h-28 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4"
-                style={{ background: "linear-gradient(135deg, #d4a853 0%, #8b5cf6 100%)", color: "#fff" }}
+                style={{ background: "linear-gradient(135deg, #D4A64F 0%, #6C5CE7 100%)", color: "#fff" }}
               >
                 {p.display_name ? p.display_name.charAt(0).toUpperCase() : "?"}
               </div>
             )}
-            <h1 style={{ color: "#f0ede8", fontSize: "18px", fontWeight: 700, marginBottom: "2px" }}>
+            <h1 style={{ color: "#F4E8D2", fontSize: "18px", fontWeight: 700, marginBottom: "2px" }}>
               {p.display_name || "Artist"}
             </h1>
             {p.phone && (
@@ -140,7 +140,7 @@ export default async function PublicProfilePage({
           <a
             href={`mailto:${p.contact_email || ""}?subject=Booking Inquiry — ${p.display_name || "Artist"}`}
             className="block w-full text-center rounded-lg py-2.5 text-sm font-bold transition-all hover:brightness-110"
-            style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
+            style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
           >
             Send Booking Inquiry
           </a>
@@ -203,7 +203,7 @@ export default async function PublicProfilePage({
                         {platformIcon}
                       </div>
                       <div>
-                        <div className="text-sm font-medium" style={{ color: "#f0ede8" }}>
+                        <div className="text-sm font-medium" style={{ color: "#F4E8D2" }}>
                           {v.title || "Watch / Listen"}
                         </div>
                         <div style={{ color: "#5e5c58", fontSize: "10px" }}>Open ↗</div>
@@ -239,7 +239,7 @@ export default async function PublicProfilePage({
                     <div style={{ color: pkg.color, fontSize: "12px", fontWeight: 700, marginBottom: "6px" }}>
                       {pkg.label}
                     </div>
-                    <div style={{ color: "#f0ede8", fontSize: "20px", fontWeight: 700, lineHeight: 1, marginBottom: "6px" }}>
+                    <div style={{ color: "#F4E8D2", fontSize: "20px", fontWeight: 700, lineHeight: 1, marginBottom: "6px" }}>
                       {formatPrice(pkg.price_min, pkg.price_max)}
                     </div>
                     {pkg.duration && (

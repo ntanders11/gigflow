@@ -98,7 +98,7 @@ export default function PhotoCropModal({ imageSrc, fileName, fileType, onSave, o
           style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
         >
           <div>
-            <div style={{ color: "#f0ede8", fontSize: "14px", fontWeight: 600 }}>
+            <div style={{ color: "#F4E8D2", fontSize: "14px", fontWeight: 600 }}>
               Adjust your photo
             </div>
             <div style={{ color: "#5e5c58", fontSize: "11px", marginTop: "2px" }}>
@@ -109,7 +109,7 @@ export default function PhotoCropModal({ imageSrc, fileName, fileType, onSave, o
         </div>
 
         {/* Cropper */}
-        <div style={{ position: "relative", width: "100%", height: "320px", backgroundColor: "#0e0f11" }}>
+        <div style={{ position: "relative", width: "100%", height: "320px", backgroundColor: "#0E0E10" }}>
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -155,7 +155,7 @@ export default function PhotoCropModal({ imageSrc, fileName, fileType, onSave, o
             onClick={handleSave}
             disabled={saving}
             className="flex-1 rounded-lg py-2 text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-50"
-            style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
+            style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
           >
             {saving ? "Saving…" : "Save Photo"}
           </button>

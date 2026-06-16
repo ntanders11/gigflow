@@ -7,7 +7,7 @@ import { Venue, OutreachInfo } from "@/types";
 // Dark-theme confidence colors using inline styles
 const CONFIDENCE_DARK: Record<string, { bg: string; color: string; border: string; label: string }> = {
   HIGH: { bg: "rgba(76,175,125,0.1)", color: "#4caf7d", border: "rgba(76,175,125,0.3)", label: "HIGH" },
-  MEDIUM: { bg: "rgba(212,168,83,0.1)", color: "#d4a853", border: "rgba(212,168,83,0.3)", label: "MEDIUM" },
+  MEDIUM: { bg: "rgba(212,166,79,0.1)", color: "#D4A64F", border: "rgba(212,166,79,0.3)", label: "MEDIUM" },
   LOW: { bg: "rgba(226,92,92,0.1)", color: "#e25c5c", border: "rgba(226,92,92,0.3)", label: "LOW" },
 };
 
@@ -45,9 +45,9 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
           onClick={batchActive && !batchDisabled ? onBatchToggle : undefined}
           style={{
             ...provided.draggableProps.style,
-            backgroundColor: batchSelected ? "rgba(212,168,83,0.08)" : "#16181c",
+            backgroundColor: batchSelected ? "rgba(212,166,79,0.08)" : "#16181c",
             border: batchSelected
-              ? "1px solid rgba(212,168,83,0.4)"
+              ? "1px solid rgba(212,166,79,0.4)"
               : snapshot.isDragging
               ? "1px solid rgba(255,255,255,0.12)"
               : "1px solid rgba(255,255,255,0.07)",
@@ -69,11 +69,11 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
               <div
                 className="absolute top-2 right-2 w-4 h-4 rounded flex items-center justify-center"
                 style={{
-                  backgroundColor: batchSelected ? "#d4a853" : "transparent",
-                  border: `1px solid ${batchSelected ? "#d4a853" : "rgba(255,255,255,0.2)"}`,
+                  backgroundColor: batchSelected ? "#D4A64F" : "transparent",
+                  border: `1px solid ${batchSelected ? "#D4A64F" : "rgba(255,255,255,0.2)"}`,
                 }}
               >
-                {batchSelected && <span style={{ color: "#0e0f11", fontSize: "9px", fontWeight: 700 }}>✓</span>}
+                {batchSelected && <span style={{ color: "#0E0E10", fontSize: "9px", fontWeight: 700 }}>✓</span>}
               </div>
             )
           )}
@@ -140,9 +140,9 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
                 }}
                 className="text-xs px-1.5 py-0.5 rounded font-medium transition-all hover:brightness-125"
                 style={{
-                  backgroundColor: "rgba(212,168,83,0.12)",
-                  color: "#d4a853",
-                  border: "1px solid rgba(212,168,83,0.25)",
+                  backgroundColor: "rgba(212,166,79,0.12)",
+                  color: "#D4A64F",
+                  border: "1px solid rgba(212,166,79,0.25)",
                 }}
                 title="Send email"
               >

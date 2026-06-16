@@ -8,10 +8,10 @@ export default async function DiscoverPage() {
   if (!user) redirect("/login");
 
   return (
-    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
+    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
       <div className="max-w-5xl">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#f0ede8" }}>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>
             Discover Venues
           </h1>
         </div>

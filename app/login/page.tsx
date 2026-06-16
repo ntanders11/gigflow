@@ -32,7 +32,7 @@ export default function LoginPage() {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{ backgroundColor: "#0e0f11" }}
+      style={{ backgroundColor: "#0E0E10" }}
     >
       <div
         className="rounded-xl p-8 w-full max-w-sm"
@@ -74,12 +74,12 @@ export default function LoginPage() {
               style={{
                 backgroundColor: "#1e2128",
                 border: "1px solid rgba(255,255,255,0.07)",
-                color: "#f0ede8",
+                color: "#F4E8D2",
               }}
               placeholder="you@example.com"
               onFocus={(e) => {
                 (e.target as HTMLInputElement).style.borderColor =
-                  "rgba(212,168,83,0.5)";
+                  "rgba(212,166,79,0.5)";
               }}
               onBlur={(e) => {
                 (e.target as HTMLInputElement).style.borderColor =
@@ -104,12 +104,12 @@ export default function LoginPage() {
               style={{
                 backgroundColor: "#1e2128",
                 border: "1px solid rgba(255,255,255,0.07)",
-                color: "#f0ede8",
+                color: "#F4E8D2",
               }}
               placeholder="••••••••"
               onFocus={(e) => {
                 (e.target as HTMLInputElement).style.borderColor =
-                  "rgba(212,168,83,0.5)";
+                  "rgba(212,166,79,0.5)";
               }}
               onBlur={(e) => {
                 (e.target as HTMLInputElement).style.borderColor =
@@ -136,8 +136,8 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
             style={{
-              backgroundColor: "#d4a853",
-              color: "#0e0f11",
+              backgroundColor: "#D4A64F",
+              color: "#0E0E10",
             }}
             onMouseEnter={(e) => {
               if (!loading)
@@ -145,7 +145,7 @@ export default function LoginPage() {
                   "#c49840";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = "#d4a853";
+              (e.currentTarget as HTMLElement).style.backgroundColor = "#D4A64F";
             }}
           >
             {loading ? "Signing in..." : "Sign in"}
@@ -154,7 +154,7 @@ export default function LoginPage() {
 
         <p className="text-center mt-6 text-sm" style={{ color: "#5e5c58" }}>
           Don&apos;t have an account?{" "}
-          <Link href="/signup" style={{ color: "#d4a853", textDecoration: "underline" }}>
+          <Link href="/signup" style={{ color: "#D4A64F", textDecoration: "underline" }}>
             Create one
           </Link>
         </p>

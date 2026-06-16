@@ -18,7 +18,7 @@ interface VenueSummary {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  bar:        "#d4a853",
+  bar:        "#D4A64F",
   brewery:    "#e09b50",
   restaurant: "#4caf7d",
   cafe:       "#5b9bd5",
@@ -70,7 +70,7 @@ export default function NeedsAttentionSection({ venues }: { venues: VenueSummary
           <button
             onClick={() => setShowBulk(true)}
             className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:brightness-110"
-            style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
+            style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
           >
             ✉ Send all follow-ups ({list.length})
           </button>
@@ -120,7 +120,7 @@ export default function NeedsAttentionSection({ venues }: { venues: VenueSummary
                 </div>
 
                 <Link href={`/venues/${venue.id}`} className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: "#f0ede8" }}>
+                  <p className="text-sm font-medium truncate" style={{ color: "#F4E8D2" }}>
                     {venue.name}
                   </p>
                   <p className="text-xs truncate" style={{ color: "#9a9591" }}>
@@ -136,9 +136,9 @@ export default function NeedsAttentionSection({ venues }: { venues: VenueSummary
                     onClick={() => setEmailVenue(venue)}
                     className="text-xs px-2.5 py-1 rounded-lg font-medium transition-all hover:brightness-125"
                     style={{
-                      backgroundColor: "rgba(212,168,83,0.12)",
-                      color: "#d4a853",
-                      border: "1px solid rgba(212,168,83,0.25)",
+                      backgroundColor: "rgba(212,166,79,0.12)",
+                      color: "#D4A64F",
+                      border: "1px solid rgba(212,166,79,0.25)",
                     }}
                   >
                     ✉ Follow up

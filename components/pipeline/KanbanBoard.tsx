@@ -80,7 +80,7 @@ export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail, b
         <Link
           href="/venues/import"
           className="mt-3 text-sm font-medium underline"
-          style={{ color: "#d4a853" }}
+          style={{ color: "#D4A64F" }}
         >
           Import your venues CSV to get started
         </Link>

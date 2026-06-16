@@ -222,7 +222,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
       >
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: "#f0ede8" }}>
+            <h1 className="text-2xl font-bold" style={{ color: "#F4E8D2" }}>
               Pipeline
             </h1>
             <p className="text-sm mt-1" style={{ color: "#9a9591" }}>
@@ -239,7 +239,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
               style={{
                 background: "#262b33",
                 border: "1px solid rgba(255,255,255,0.1)",
-                color: "#f0ede8",
+                color: "#F4E8D2",
               }}
             />
             <button
@@ -265,7 +265,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
             <button
               onClick={() => setShowAddModal(true)}
               className="text-sm px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all hover:brightness-110"
-              style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
+              style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
             >
               + Add
             </button>
@@ -278,14 +278,14 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
               key={key}
               className="flex-1 min-w-36 flex items-center justify-between pb-3"
             >
-              <h2 className="text-sm font-semibold" style={{ color: "#f0ede8" }}>
+              <h2 className="text-sm font-semibold" style={{ color: "#F4E8D2" }}>
                 {label}
               </h2>
               <span
                 className="text-xs rounded-full px-2 py-0.5 font-medium"
                 style={{
                   backgroundColor: "#262b33",
-                  color: "#d4a853",
+                  color: "#D4A64F",
                 }}
               >
                 {stageCounts[key]}
@@ -327,11 +327,11 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
         <div className="px-4 md:px-8 pt-4">
           <div
             className="rounded-lg px-4 py-3 flex items-center gap-4"
-            style={{ backgroundColor: "rgba(212,168,83,0.1)", border: "1px solid rgba(212,168,83,0.25)" }}
+            style={{ backgroundColor: "rgba(212,166,79,0.1)", border: "1px solid rgba(212,166,79,0.25)" }}
           >
             <div className="flex-1">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium" style={{ color: "#d4a853" }}>
+                <span className="text-xs font-medium" style={{ color: "#D4A64F" }}>
                   {fillProgress.done < fillProgress.total
                     ? `Looking up addresses… ${fillProgress.done} of ${fillProgress.total}`
                     : `Done — found ${fillProgress.found} of ${fillProgress.total} addresses`}
@@ -343,7 +343,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
               <div className="w-full rounded-full overflow-hidden" style={{ backgroundColor: "#262b33", height: "4px" }}>
                 <div
                   className="h-full rounded-full transition-all duration-300"
-                  style={{ width: `${Math.round((fillProgress.done / fillProgress.total) * 100)}%`, backgroundColor: "#d4a853" }}
+                  style={{ width: `${Math.round((fillProgress.done / fillProgress.total) * 100)}%`, backgroundColor: "#D4A64F" }}
                 />
               </div>
             </div>

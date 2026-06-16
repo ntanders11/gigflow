@@ -10,7 +10,7 @@ const DEFAULT_PACKAGES: Package[] = [
     price_max: null,
     description: "",
     duration: "",
-    color: "#d4a853",
+    color: "#D4A64F",
   },
   {
     id: "trio",

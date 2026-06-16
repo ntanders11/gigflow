@@ -101,7 +101,7 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
   const inputStyle = {
     background: "#262b33",
     border: "1px solid rgba(255,255,255,0.08)",
-    color: "#f0ede8",
+    color: "#F4E8D2",
     borderRadius: "8px",
     padding: "6px 10px",
     fontSize: "13px",
@@ -117,7 +117,7 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
         <button
           onClick={() => setShowForm(!showForm)}
           className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all hover:brightness-110"
-          style={{ background: "#d4a853", color: "#0e0f11" }}
+          style={{ background: "#D4A64F", color: "#0E0E10" }}
         >
           + Add Gig Date
         </button>
@@ -151,7 +151,7 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
               onClick={addGig}
               disabled={!date || saving}
               className="text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
-              style={{ background: "#d4a853", color: "#0e0f11" }}
+              style={{ background: "#D4A64F", color: "#0E0E10" }}
             >
               {saving ? "Saving…" : "Save Gig"}
             </button>
@@ -194,7 +194,7 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
                 {/* Main row */}
                 <div className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium" style={{ color: "#f0ede8" }}>
+                    <p className="text-sm font-medium" style={{ color: "#F4E8D2" }}>
                       {fmtDate(gig.date)}
                     </p>
                     <p className="text-xs mt-0.5" style={{ color: "#9a9591" }}>

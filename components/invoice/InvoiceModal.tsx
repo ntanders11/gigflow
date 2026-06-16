@@ -87,7 +87,7 @@ export default function InvoiceModal({ venue, onClose, onInvoiceCreated }: Props
   const inputStyle = {
     backgroundColor: "#1e2128",
     border: "1px solid rgba(255,255,255,0.1)",
-    color: "#f0ede8",
+    color: "#F4E8D2",
     borderRadius: "8px",
     padding: "8px 12px",
     fontSize: "13px",
@@ -109,7 +109,7 @@ export default function InvoiceModal({ venue, onClose, onInvoiceCreated }: Props
       <div style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", width: "420px", maxWidth: "95vw" }}>
 
         <div style={{ padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ color: "#f0ede8", fontWeight: 600, fontSize: "14px" }}>
+          <div style={{ color: "#F4E8D2", fontWeight: 600, fontSize: "14px" }}>
             {step === "create" ? "Create Invoice" : step === "send" ? "Send Invoice" : "Invoice Sent"}
           </div>
           <button onClick={onClose} style={{ color: "#5e5c58", fontSize: "20px", cursor: "pointer", background: "none", border: "none" }}>×</button>
@@ -133,8 +133,8 @@ export default function InvoiceModal({ venue, onClose, onInvoiceCreated }: Props
                   {(["full", "deposit"] as PaymentType[]).map(t => (
                     <button key={t} onClick={() => setPaymentType(t)}
                       style={{ flex: 1, padding: "8px", borderRadius: "8px", fontSize: "12px", fontWeight: 600, cursor: "pointer",
-                        backgroundColor: paymentType === t ? "#d4a853" : "#1e2128",
-                        color: paymentType === t ? "#0e0f11" : "#9a9591",
+                        backgroundColor: paymentType === t ? "#D4A64F" : "#1e2128",
+                        color: paymentType === t ? "#0E0E10" : "#9a9591",
                         border: paymentType === t ? "none" : "1px solid rgba(255,255,255,0.1)" }}>
                       {t === "full" ? "Full Payment" : "Deposit"}
                     </button>
@@ -162,7 +162,7 @@ export default function InvoiceModal({ venue, onClose, onInvoiceCreated }: Props
               {error && <p style={{ color: "#e25c5c", fontSize: "12px" }}>{error}</p>}
 
               <button onClick={handleCreate} disabled={creating}
-                style={{ backgroundColor: "#d4a853", color: "#0e0f11", borderRadius: "8px", padding: "10px", fontWeight: 700, fontSize: "13px", cursor: "pointer", opacity: creating ? 0.6 : 1, border: "none" }}>
+                style={{ backgroundColor: "#D4A64F", color: "#0E0E10", borderRadius: "8px", padding: "10px", fontWeight: 700, fontSize: "13px", cursor: "pointer", opacity: creating ? 0.6 : 1, border: "none" }}>
                 {creating ? "Creating…" : "Create Invoice →"}
               </button>
             </div>
@@ -172,7 +172,7 @@ export default function InvoiceModal({ venue, onClose, onInvoiceCreated }: Props
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div style={{ backgroundColor: "#1e2128", borderRadius: "10px", padding: "14px" }}>
                 <div style={{ color: "#5e5c58", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "8px" }}>Invoice Summary</div>
-                <div style={{ color: "#f0ede8", fontSize: "20px", fontWeight: 700 }}>${(invoice.amount_cents / 100).toFixed(2)}</div>
+                <div style={{ color: "#F4E8D2", fontSize: "20px", fontWeight: 700 }}>${(invoice.amount_cents / 100).toFixed(2)}</div>
                 <div style={{ color: "#9a9591", fontSize: "12px", marginTop: "4px" }}>
                   {invoice.package_label} · {invoice.payment_type === "deposit" ? "Deposit" : "Full Payment"}
                   {invoice.event_date ? ` · ${invoice.event_date}` : ""}
@@ -203,7 +203,7 @@ export default function InvoiceModal({ venue, onClose, onInvoiceCreated }: Props
           {step === "done" && invoice && (
             <div style={{ textAlign: "center", padding: "10px 0" }}>
               <div style={{ fontSize: "32px", marginBottom: "12px" }}>✉️</div>
-              <div style={{ color: "#f0ede8", fontWeight: 600, fontSize: "14px", marginBottom: "6px" }}>Invoice sent!</div>
+              <div style={{ color: "#F4E8D2", fontWeight: 600, fontSize: "14px", marginBottom: "6px" }}>Invoice sent!</div>
               <div style={{ color: "#9a9591", fontSize: "12px", marginBottom: "16px" }}>{venue.name} will receive it via email through Stripe.</div>
               <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                 {invoice.stripe_invoice_url && (
@@ -217,7 +217,7 @@ export default function InvoiceModal({ venue, onClose, onInvoiceCreated }: Props
                   {invoice.status === "paid" ? "✓ Marked Paid" : "Mark as Paid"}
                 </button>
                 <button onClick={onClose}
-                  style={{ backgroundColor: "#d4a853", color: "#0e0f11", borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer", border: "none" }}>
+                  style={{ backgroundColor: "#D4A64F", color: "#0E0E10", borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: 700, cursor: "pointer", border: "none" }}>
                   Done
                 </button>
               </div>

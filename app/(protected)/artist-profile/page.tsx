@@ -6,7 +6,7 @@ import { ArtistProfile, Package, VideoSample, SocialLinks } from "@/types";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 
 const DEFAULT_PACKAGES: Package[] = [
-  { id: "solo", label: "Solo", price_min: null, price_max: null, description: "", duration: "", color: "#d4a853" },
+  { id: "solo", label: "Solo", price_min: null, price_max: null, description: "", duration: "", color: "#D4A64F" },
   { id: "trio", label: "Trio", price_min: null, price_max: null, description: "", duration: "", color: "#9b7fe8" },
   { id: "five_piece", label: "Five Piece Band", price_min: null, price_max: null, description: "", duration: "", color: "#4caf7d" },
 ];
@@ -183,7 +183,7 @@ export default function ArtistProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#0e0f11" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#0E0E10" }}>
         <div style={{ color: "#5e5c58", fontSize: "13px" }}>Loading…</div>
       </div>
     );
@@ -195,7 +195,7 @@ export default function ArtistProfilePage() {
   const social = profile?.social_links || DEFAULT_SOCIAL;
 
   return (
-    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
+    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
       {cropSrc && (
         <PhotoCropModal
           imageSrc={cropSrc}
@@ -208,7 +208,7 @@ export default function ArtistProfilePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 max-w-5xl">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#f0ede8" }}>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>
             My Artist Profile
           </h1>
           <p className="text-xs mt-1" style={{ color: "#5e5c58" }}>
@@ -239,13 +239,13 @@ export default function ArtistProfilePage() {
               ) : (
                 <div
                   className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold"
-                  style={{ background: "linear-gradient(135deg, #d4a853 0%, #8b5cf6 100%)", color: "#fff" }}
+                  style={{ background: "linear-gradient(135deg, #D4A64F 0%, #6C5CE7 100%)", color: "#fff" }}
                 >
                   {profile?.display_name ? profile.display_name.charAt(0).toUpperCase() : "?"}
                 </div>
               )}
             </div>
-            <div style={{ color: "#f0ede8", fontSize: "13px", fontWeight: 700, marginBottom: "2px" }}>
+            <div style={{ color: "#F4E8D2", fontSize: "13px", fontWeight: 700, marginBottom: "2px" }}>
               {profile?.display_name || "Your Name"}
             </div>
             <div style={{ color: "#9a9591", fontSize: "10px", marginBottom: "12px" }}>
@@ -262,9 +262,9 @@ export default function ArtistProfilePage() {
               onClick={() => fileInputRef.current?.click()}
               className="rounded-md px-3 py-1 text-xs font-medium transition-all hover:brightness-125"
               style={{
-                backgroundColor: "rgba(212,168,83,0.12)",
-                border: "1px solid rgba(212,168,83,0.3)",
-                color: "#d4a853",
+                backgroundColor: "rgba(212,166,79,0.12)",
+                border: "1px solid rgba(212,166,79,0.3)",
+                color: "#D4A64F",
               }}
             >
               {profile?.photo_url ? "Change photo" : "Upload photo"}
@@ -331,16 +331,16 @@ export default function ArtistProfilePage() {
                 }}
                 placeholder="e.g. Folk"
                 className="w-full rounded px-2 py-1 text-xs outline-none"
-                style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(212,168,83,0.3)" }}
+                style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(212,166,79,0.3)" }}
               />
             ) : (
               <button
                 onClick={() => setShowGenreInput(true)}
                 className="rounded-full px-2 py-0.5 text-xs transition-all hover:brightness-125"
                 style={{
-                  backgroundColor: "rgba(212,168,83,0.1)",
-                  color: "#d4a853",
-                  border: "1px dashed rgba(212,168,83,0.4)",
+                  backgroundColor: "rgba(212,166,79,0.1)",
+                  color: "#D4A64F",
+                  border: "1px dashed rgba(212,166,79,0.4)",
                 }}
               >
                 + Add
@@ -364,7 +364,7 @@ export default function ArtistProfilePage() {
               {!editingSocial && (
                 <button
                   onClick={() => { setSocialEdits(social); setEditingSocial(true); }}
-                  style={{ color: "#d4a853", fontSize: "10px", cursor: "pointer" }}
+                  style={{ color: "#D4A64F", fontSize: "10px", cursor: "pointer" }}
                 >
                   Edit
                 </button>
@@ -383,7 +383,7 @@ export default function ArtistProfilePage() {
                       onChange={(e) => setSocialEdits((s) => ({ ...s, [p.key]: e.target.value }))}
                       placeholder={p.label}
                       className="flex-1 rounded px-2 py-1 text-xs outline-none"
-                      style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(255,255,255,0.1)" }}
+                      style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
                     />
                   </div>
                 ))}
@@ -391,7 +391,7 @@ export default function ArtistProfilePage() {
                   <button
                     onClick={() => { save({ social_links: socialEdits }); setEditingSocial(false); }}
                     className="flex-1 rounded py-1 text-xs font-semibold transition-all hover:brightness-110"
-                    style={{ backgroundColor: "#d4a853", color: "#0e0f11", cursor: "pointer" }}
+                    style={{ backgroundColor: "#D4A64F", color: "#0E0E10", cursor: "pointer" }}
                   >
                     Save
                   </button>
@@ -440,7 +440,7 @@ export default function ArtistProfilePage() {
           <button
             onClick={copyShareLink}
             className="w-full rounded-lg py-2 text-xs font-bold transition-all hover:brightness-110"
-            style={{ backgroundColor: "#d4a853", color: "#0e0f11", cursor: "pointer" }}
+            style={{ backgroundColor: "#D4A64F", color: "#0E0E10", cursor: "pointer" }}
           >
             {copied ? "Link copied! ✓" : "Share Public Profile ↗"}
           </button>
@@ -463,7 +463,7 @@ export default function ArtistProfilePage() {
                   <button
                     onClick={() => { save({ display_name: nameText, phone: phoneText, contact_email: emailText }); setEditingContact(false); }}
                     className="text-xs px-2.5 py-0.5 rounded font-semibold transition-all hover:brightness-110"
-                    style={{ backgroundColor: "#d4a853", color: "#0e0f11", cursor: "pointer" }}
+                    style={{ backgroundColor: "#D4A64F", color: "#0E0E10", cursor: "pointer" }}
                   >
                     Save
                   </button>
@@ -476,7 +476,7 @@ export default function ArtistProfilePage() {
                   </button>
                 </div>
               ) : (
-                <button onClick={() => setEditingContact(true)} style={{ color: "#d4a853", fontSize: "11px", cursor: "pointer" }}>
+                <button onClick={() => setEditingContact(true)} style={{ color: "#D4A64F", fontSize: "11px", cursor: "pointer" }}>
                   Edit
                 </button>
               )}
@@ -489,14 +489,14 @@ export default function ArtistProfilePage() {
                   onChange={(e) => setNameText(e.target.value)}
                   placeholder="Your name"
                   className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(212,168,83,0.3)" }}
+                  style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(212,166,79,0.3)" }}
                 />
                 <input
                   value={phoneText}
                   onChange={(e) => setPhoneText(e.target.value)}
                   placeholder="Phone number"
                   className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(212,168,83,0.3)" }}
+                  style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(212,166,79,0.3)" }}
                 />
                 <input
                   type="email"
@@ -504,12 +504,12 @@ export default function ArtistProfilePage() {
                   onChange={(e) => setEmailText(e.target.value)}
                   placeholder="Booking email address"
                   className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(212,168,83,0.3)" }}
+                  style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(212,166,79,0.3)" }}
                 />
               </div>
             ) : (
               <div className="flex flex-col gap-1 cursor-text" onClick={() => setEditingContact(true)}>
-                <p style={{ color: profile?.display_name ? "#f0ede8" : "#5e5c58", fontSize: "13px", fontWeight: 500 }}>
+                <p style={{ color: profile?.display_name ? "#F4E8D2" : "#5e5c58", fontSize: "13px", fontWeight: 500 }}>
                   {profile?.display_name || "Add your name"}
                 </p>
                 <p style={{ color: profile?.phone ? "#9a9591" : "#5e5c58", fontSize: "12px" }}>
@@ -536,7 +536,7 @@ export default function ArtistProfilePage() {
                   <button
                     onClick={() => { save({ bio: bioText }); setEditingBio(false); }}
                     className="text-xs px-2.5 py-0.5 rounded font-semibold transition-all hover:brightness-110"
-                    style={{ backgroundColor: "#d4a853", color: "#0e0f11", cursor: "pointer" }}
+                    style={{ backgroundColor: "#D4A64F", color: "#0E0E10", cursor: "pointer" }}
                   >
                     Save
                   </button>
@@ -551,7 +551,7 @@ export default function ArtistProfilePage() {
               ) : (
                 <button
                   onClick={() => setEditingBio(true)}
-                  style={{ color: "#d4a853", fontSize: "11px", cursor: "pointer" }}
+                  style={{ color: "#D4A64F", fontSize: "11px", cursor: "pointer" }}
                 >
                   Edit
                 </button>
@@ -566,8 +566,8 @@ export default function ArtistProfilePage() {
                 className="w-full rounded-lg px-3 py-2.5 text-sm outline-none resize-none"
                 style={{
                   backgroundColor: "#1e2128",
-                  color: "#f0ede8",
-                  border: "1px solid rgba(212,168,83,0.3)",
+                  color: "#F4E8D2",
+                  border: "1px solid rgba(212,166,79,0.3)",
                   lineHeight: 1.6,
                 }}
                 placeholder="Tell venues who you are, what you play, and what makes your performances special…"
@@ -600,7 +600,7 @@ export default function ArtistProfilePage() {
               {!showVideoForm && (
                 <button
                   onClick={() => setShowVideoForm(true)}
-                  style={{ color: "#d4a853", fontSize: "11px", cursor: "pointer" }}
+                  style={{ color: "#D4A64F", fontSize: "11px", cursor: "pointer" }}
                 >
                   + Add
                 </button>
@@ -628,7 +628,7 @@ export default function ArtistProfilePage() {
                         {platformIcon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium truncate" style={{ color: "#f0ede8" }}>
+                        <div className="text-xs font-medium truncate" style={{ color: "#F4E8D2" }}>
                           {v.title || "Untitled"}
                         </div>
                         <a
@@ -664,14 +664,14 @@ export default function ArtistProfilePage() {
                   onChange={(e) => setNewVideoUrl(e.target.value)}
                   placeholder="Paste a YouTube or Spotify URL"
                   className="rounded px-3 py-2 text-sm outline-none"
-                  style={{ backgroundColor: "#16181c", color: "#f0ede8", border: "1px solid rgba(255,255,255,0.1)" }}
+                  style={{ backgroundColor: "#16181c", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
                 />
                 <input
                   value={newVideoTitle}
                   onChange={(e) => setNewVideoTitle(e.target.value)}
                   placeholder='Label (e.g. "Live at Stoller Winery")'
                   className="rounded px-3 py-2 text-sm outline-none"
-                  style={{ backgroundColor: "#16181c", color: "#f0ede8", border: "1px solid rgba(255,255,255,0.1)" }}
+                  style={{ backgroundColor: "#16181c", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
                 />
                 <div className="flex gap-2">
                   <button
@@ -689,7 +689,7 @@ export default function ArtistProfilePage() {
                       setShowVideoForm(false);
                     }}
                     className="flex-1 rounded py-1.5 text-xs font-semibold transition-all hover:brightness-110"
-                    style={{ backgroundColor: "#d4a853", color: "#0e0f11", cursor: "pointer" }}
+                    style={{ backgroundColor: "#D4A64F", color: "#0E0E10", cursor: "pointer" }}
                   >
                     Add Sample
                   </button>
@@ -755,7 +755,7 @@ export default function ArtistProfilePage() {
                             }
                             placeholder="Min"
                             className="w-16 rounded px-2 py-1 text-xs outline-none"
-                            style={{ backgroundColor: "#16181c", color: "#f0ede8", border: "1px solid rgba(255,255,255,0.1)" }}
+                            style={{ backgroundColor: "#16181c", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
                           />
                           <span style={{ color: "#5e5c58", fontSize: "11px" }}>– $</span>
                           <input
@@ -769,7 +769,7 @@ export default function ArtistProfilePage() {
                             }
                             placeholder="Max"
                             className="w-16 rounded px-2 py-1 text-xs outline-none"
-                            style={{ backgroundColor: "#16181c", color: "#f0ede8", border: "1px solid rgba(255,255,255,0.1)" }}
+                            style={{ backgroundColor: "#16181c", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
                           />
                         </div>
                         <input
@@ -777,7 +777,7 @@ export default function ArtistProfilePage() {
                           onChange={(e) => setPackageEdits((p) => ({ ...p, duration: e.target.value }))}
                           placeholder="Duration (e.g. 2hr set)"
                           className="rounded px-2 py-1 text-xs outline-none"
-                          style={{ backgroundColor: "#16181c", color: "#f0ede8", border: "1px solid rgba(255,255,255,0.1)" }}
+                          style={{ backgroundColor: "#16181c", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
                         />
                         <textarea
                           value={(packageEdits.description as string) ?? ""}
@@ -785,13 +785,13 @@ export default function ArtistProfilePage() {
                           placeholder="Describe what's included…"
                           rows={3}
                           className="rounded px-2 py-1.5 text-xs outline-none resize-none"
-                          style={{ backgroundColor: "#16181c", color: "#f0ede8", border: "1px solid rgba(255,255,255,0.1)" }}
+                          style={{ backgroundColor: "#16181c", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
                         />
                         <div className="flex gap-1.5 mt-1">
                           <button
                             onClick={() => savePackage(pkg.id)}
                             className="flex-1 rounded py-1 text-xs font-semibold transition-all hover:brightness-110"
-                            style={{ backgroundColor: "#d4a853", color: "#0e0f11", cursor: "pointer" }}
+                            style={{ backgroundColor: "#D4A64F", color: "#0E0E10", cursor: "pointer" }}
                           >
                             Save
                           </button>
@@ -806,7 +806,7 @@ export default function ArtistProfilePage() {
                       </>
                     ) : (
                       <>
-                        <div style={{ color: "#f0ede8", fontSize: "18px", fontWeight: 700, lineHeight: 1 }}>
+                        <div style={{ color: "#F4E8D2", fontSize: "18px", fontWeight: 700, lineHeight: 1 }}>
                           {formatPrice(current.price_min, current.price_max) || (
                             <span style={{ color: "#5e5c58", fontSize: "12px", fontStyle: "italic" }}>
                               Set a price

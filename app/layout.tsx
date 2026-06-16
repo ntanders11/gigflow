@@ -15,8 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geist.variable} antialiased`} style={{ backgroundColor: "#0e0f11" }}>
-      <body style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>{children}</body>
+    <html lang="en" className={`${geist.variable} antialiased`} style={{ backgroundColor: "#0E0E10" }}>
+      <body style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>{children}</body>
     </html>
   );
 }

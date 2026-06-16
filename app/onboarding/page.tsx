@@ -52,7 +52,7 @@ function ProgressBar({ step }: { step: Step }) {
 const inputStyle = {
   background: "#1e2128",
   border: "1px solid rgba(255,255,255,0.07)",
-  color: "#f0ede8",
+  color: "#F4E8D2",
 };
 
 const labelStyle = { color: "#9a9591" };
@@ -232,7 +232,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#0e0f11" }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#0E0E10" }}>
       {/* Crop modal — shown when user picks a photo */}
       {cropSrc && (
         <PhotoCropModal
@@ -246,7 +246,7 @@ export default function OnboardingPage() {
 
       <div className="rounded-xl p-8 w-full max-w-sm" style={card}>
         <div className="mb-6">
-          <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.5rem", color: "#d4a853" }}>
+          <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.5rem", color: "#D4A64F" }}>
             StageReach
           </h1>
         </div>
@@ -256,7 +256,7 @@ export default function OnboardingPage() {
         {/* ── Step 1 ── */}
         {step === 1 && (
           <div>
-            <h2 className="text-base font-semibold mb-1" style={{ color: "#f0ede8" }}>Tell us about you</h2>
+            <h2 className="text-base font-semibold mb-1" style={{ color: "#F4E8D2" }}>Tell us about you</h2>
             <p className="text-xs mb-5" style={{ color: "#9a9591" }}>This shows up in your pitch emails.</p>
             <div className="space-y-4">
               <div>
@@ -296,7 +296,7 @@ export default function OnboardingPage() {
         {/* ── Step 2 ── */}
         {step === 2 && (
           <div>
-            <h2 className="text-base font-semibold mb-1" style={{ color: "#f0ede8" }}>Where are you based?</h2>
+            <h2 className="text-base font-semibold mb-1" style={{ color: "#F4E8D2" }}>Where are you based?</h2>
             <p className="text-xs mb-5" style={{ color: "#9a9591" }}>We&apos;ll use this to find venues near you.</p>
             <div className="space-y-4">
               <div>
@@ -354,7 +354,7 @@ export default function OnboardingPage() {
         {/* ── Step 3 ── */}
         {step === 3 && (
           <div>
-            <h2 className="text-base font-semibold mb-1" style={{ color: "#f0ede8" }}>Your links</h2>
+            <h2 className="text-base font-semibold mb-1" style={{ color: "#F4E8D2" }}>Your links</h2>
             <p className="text-xs mb-5" style={{ color: "#9a9591" }}>Added to your pitch emails automatically. All optional.</p>
             <div className="space-y-4">
               <div>
@@ -381,7 +381,7 @@ export default function OnboardingPage() {
         {/* ── Step 4 ── */}
         {step === 4 && (
           <div>
-            <h2 className="text-base font-semibold mb-1" style={{ color: "#f0ede8" }}>Almost there — bio &amp; photo</h2>
+            <h2 className="text-base font-semibold mb-1" style={{ color: "#F4E8D2" }}>Almost there — bio &amp; photo</h2>
             <p className="text-xs mb-5" style={{ color: "#9a9591" }}>Shows on your public profile page. Both optional.</p>
 
             {/* Photo upload */}
@@ -438,7 +438,7 @@ export default function OnboardingPage() {
                 onClick={finish}
                 disabled={saving}
                 className="flex-[2] rounded-lg py-2 text-sm font-semibold disabled:opacity-50"
-                style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
+                style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
               >
                 {saving ? "Saving…" : "Let's go! 🎸"}
               </button>

@@ -168,7 +168,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
     {showDeleteConfirm && (
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
         <div className="rounded-xl p-6 w-80" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
-          <p className="font-semibold mb-1" style={{ color: "#f0ede8" }}>Delete {venue.name}?</p>
+          <p className="font-semibold mb-1" style={{ color: "#F4E8D2" }}>Delete {venue.name}?</p>
           <p className="text-sm mb-5" style={{ color: "#9a9591" }}>
             This permanently removes the venue and all its interactions. This cannot be undone.
           </p>
@@ -270,7 +270,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
                 onBlur={saveContact}
                 placeholder={placeholder}
                 className="w-full text-sm rounded-lg px-2 py-1.5 focus:outline-none"
-                style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#f0ede8" }}
+                style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#F4E8D2" }}
               />
             </div>
           ))}
@@ -285,7 +285,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
               value={venue.stage}
               onChange={(e) => updateStage(e.target.value as VenueStage)}
               className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-full"
-              style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#f0ede8" }}
+              style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#F4E8D2" }}
             >
               {STAGES.map((s) => (
                 <option key={s.key} value={s.key}>{s.label}</option>
@@ -299,7 +299,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
                 onClick={lookUpAddress}
                 disabled={lookingUpAddress}
                 className="text-xs transition-all hover:brightness-125"
-                style={{ color: "#d4a853", opacity: lookingUpAddress ? 0.5 : 1 }}
+                style={{ color: "#D4A64F", opacity: lookingUpAddress ? 0.5 : 1 }}
               >
                 {lookingUpAddress ? "Looking up…" : "Look up ↗"}
               </button>
@@ -311,7 +311,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
               onBlur={(e) => saveAddress(e.target.value)}
               placeholder="123 Main St, McMinnville, OR"
               className="text-sm rounded-lg px-2 py-1.5 focus:outline-none w-full"
-              style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#f0ede8" }}
+              style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#F4E8D2" }}
             />
             {addressLookupMsg && (
               <p className="text-xs mt-1" style={{ color: "#e09b50" }}>{addressLookupMsg}</p>
@@ -343,7 +343,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
           rows={4}
           placeholder="Add notes about this venue..."
           className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
-          style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#f0ede8" }}
+          style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#F4E8D2" }}
         />
         {savingNotes && <p className="text-xs mt-1" style={{ color: "#5e5c58" }}>Saving...</p>}
       </div>
@@ -356,7 +356,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
             <button
               onClick={() => setShowInvoiceModal(true)}
               className="text-xs px-3 py-1.5 rounded-lg transition-colors font-medium"
-              style={{ background: "#d4a853", color: "#0e0f11" }}
+              style={{ background: "#D4A64F", color: "#0E0E10" }}
             >
               Create Invoice
             </button>
@@ -370,7 +370,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
             <button
               onClick={() => setShowLogForm(!showLogForm)}
               className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-              style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#f0ede8" }}
+              style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#F4E8D2" }}
             >
               + Log interaction
             </button>
@@ -399,7 +399,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
               rows={3}
               placeholder="What happened?"
               className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
-              style={{ background: "#262b33", border: "1px solid rgba(255,255,255,0.08)", color: "#f0ede8" }}
+              style={{ background: "#262b33", border: "1px solid rgba(255,255,255,0.08)", color: "#F4E8D2" }}
             />
             <div className="flex gap-2">
               <button
@@ -442,7 +442,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
                   </div>
                   <div className="flex-1 min-w-0">
                     {interaction.notes && (
-                      <p className="text-sm" style={{ color: isReply ? "#f0ede8" : "#f0ede8" }}>{interaction.notes}</p>
+                      <p className="text-sm" style={{ color: isReply ? "#F4E8D2" : "#F4E8D2" }}>{interaction.notes}</p>
                     )}
                     {interaction.email_subject && (
                       <p className="text-xs font-medium mt-0.5" style={{ color: "#9a9591" }}>{interaction.email_subject}</p>
@@ -469,7 +469,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
             {invoices.map(inv => (
               <div key={inv.id} className="flex items-center justify-between rounded-lg px-4 py-3" style={{ background: "#1e2128" }}>
                 <div>
-                  <span style={{ color: "#f0ede8", fontSize: "13px", fontWeight: 500 }}>${(inv.amount_cents / 100).toFixed(2)}</span>
+                  <span style={{ color: "#F4E8D2", fontSize: "13px", fontWeight: 500 }}>${(inv.amount_cents / 100).toFixed(2)}</span>
                   <span style={{ color: "#5e5c58", fontSize: "11px", marginLeft: "8px" }}>{inv.package_label} · {inv.payment_type === "deposit" ? "Deposit" : "Full"}</span>
                 </div>
                 <div className="flex items-center gap-2">

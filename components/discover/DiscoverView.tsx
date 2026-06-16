@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 const VENUE_TYPES = [
-  { key: "bar",        label: "Bar",          color: "#d4a853" },
+  { key: "bar",        label: "Bar",          color: "#D4A64F" },
   { key: "brewery",    label: "Brewery",      color: "#e09b50" },
   { key: "winery",     label: "Winery",       color: "#c06080" },
   { key: "restaurant", label: "Restaurant",   color: "#4caf7d" },
@@ -158,7 +158,7 @@ export default function DiscoverView() {
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="City, state or zip code"
               className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
-              style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(255,255,255,0.1)" }}
+              style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
             />
           </div>
           <div style={{ width: "130px" }}>
@@ -172,7 +172,7 @@ export default function DiscoverView() {
               value={radius}
               onChange={(e) => setRadius(Number(e.target.value))}
               className="w-full mt-1"
-              style={{ accentColor: "#d4a853", marginTop: "10px" }}
+              style={{ accentColor: "#D4A64F", marginTop: "10px" }}
             />
           </div>
         </div>
@@ -181,7 +181,7 @@ export default function DiscoverView() {
           onClick={handleSearch}
           disabled={loading}
           className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
-          style={{ backgroundColor: "#d4a853", color: "#0e0f11", opacity: loading ? 0.7 : 1 }}
+          style={{ backgroundColor: "#D4A64F", color: "#0E0E10", opacity: loading ? 0.7 : 1 }}
         >
           {loading ? "Searching…" : "Search Venues"}
         </button>
@@ -224,7 +224,7 @@ export default function DiscoverView() {
                           style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-semibold leading-snug" style={{ color: "#f0ede8" }}>
+                            <p className="text-sm font-semibold leading-snug" style={{ color: "#F4E8D2" }}>
                               {venue.name}
                             </p>
                             <span
@@ -236,7 +236,7 @@ export default function DiscoverView() {
                           </div>
 
                           {venue.rating && (
-                            <p className="text-xs" style={{ color: "#d4a853" }}>
+                            <p className="text-xs" style={{ color: "#D4A64F" }}>
                               {"★".repeat(Math.round(venue.rating))}{"☆".repeat(5 - Math.round(venue.rating))} {venue.rating} · {venue.review_count} reviews
                             </p>
                           )}
@@ -264,9 +264,9 @@ export default function DiscoverView() {
                             disabled={isAdding || isAdded}
                             className="mt-1 w-full py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
                             style={{
-                              backgroundColor: isAdded ? "rgba(76,175,125,0.15)" : "rgba(212,168,83,0.15)",
-                              color: isAdded ? "#4caf7d" : "#d4a853",
-                              border: `1px solid ${isAdded ? "#4caf7d44" : "#d4a85344"}`,
+                              backgroundColor: isAdded ? "rgba(76,175,125,0.15)" : "rgba(212,166,79,0.15)",
+                              color: isAdded ? "#4caf7d" : "#D4A64F",
+                              border: `1px solid ${isAdded ? "#4caf7d44" : "#D4A64F44"}`,
                               cursor: isAdded ? "default" : "pointer",
                             }}
                           >

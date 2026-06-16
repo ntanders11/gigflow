@@ -117,7 +117,7 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
   const successCount = sentVenueIds.length;
   const failCount = results.length - successCount;
 
-  const accentColor = mode === "pitch" ? "#d4a853" : "#9b7fe8";
+  const accentColor = mode === "pitch" ? "#D4A64F" : "#9b7fe8";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -130,7 +130,7 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
           className="flex items-center justify-between px-6 py-4 shrink-0"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
         >
-          <h2 className="text-base font-semibold" style={{ color: "#f0ede8" }}>
+          <h2 className="text-base font-semibold" style={{ color: "#F4E8D2" }}>
             {mode === "pitch" ? "Send Batch Pitch" : "Send Follow-up"} — {venues.length} venue{venues.length !== 1 ? "s" : ""}
           </h2>
           {step !== "sending" && (
@@ -159,7 +159,7 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
                     <div
                       key={v.id}
                       className="flex items-center justify-between text-xs px-2 py-1.5 rounded"
-                      style={{ backgroundColor: "#1e2128", color: "#f0ede8" }}
+                      style={{ backgroundColor: "#1e2128", color: "#F4E8D2" }}
                     >
                       <span>{v.name}</span>
                       <span style={{ color: "#5e5c58" }}>{v.contact_email}</span>
@@ -187,7 +187,7 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
                     value={subjectTemplate}
                     onChange={(e) => setSubjectTemplate(e.target.value)}
                     className="w-full rounded-lg px-3 py-2 text-xs outline-none"
-                    style={{ backgroundColor: "#1e2128", color: "#f0ede8", border: "1px solid rgba(255,255,255,0.08)" }}
+                    style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.08)" }}
                   />
                 </div>
 
@@ -201,7 +201,7 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
                     className="w-full rounded-lg px-3 py-2 text-xs outline-none resize-none"
                     style={{
                       backgroundColor: "#1e2128",
-                      color: "#f0ede8",
+                      color: "#F4E8D2",
                       border: "1px solid rgba(255,255,255,0.08)",
                       lineHeight: 1.6,
                       fontFamily: "inherit",
@@ -218,10 +218,10 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
                   </p>
                   <div
                     className="rounded-lg px-4 py-3 space-y-2"
-                    style={{ backgroundColor: "#0e0f11", border: "1px solid rgba(255,255,255,0.05)" }}
+                    style={{ backgroundColor: "#0E0E10", border: "1px solid rgba(255,255,255,0.05)" }}
                   >
                     <p className="text-xs" style={{ color: "#9a9591" }}>
-                      Subject: <span style={{ color: "#f0ede8" }}>{previewSubject}</span>
+                      Subject: <span style={{ color: "#F4E8D2" }}>{previewSubject}</span>
                     </p>
                     <pre
                       className="text-xs whitespace-pre-wrap max-h-32 overflow-y-auto"
@@ -249,7 +249,7 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
                 onClick={handleSend}
                 disabled={!bodyTemplate.trim()}
                 className="text-sm px-4 py-2 rounded-lg font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                style={{ backgroundColor: accentColor, color: "#0e0f11" }}
+                style={{ backgroundColor: accentColor, color: "#0E0E10" }}
               >
                 Send to {venues.length} venue{venues.length !== 1 ? "s" : ""} →
               </button>
@@ -295,7 +295,7 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
                   {successCount > 0 ? "✓" : "✗"}
                 </div>
                 <div>
-                  <p className="text-sm font-medium" style={{ color: "#f0ede8" }}>
+                  <p className="text-sm font-medium" style={{ color: "#F4E8D2" }}>
                     {successCount} of {results.length} sent successfully
                   </p>
                   {failCount > 0 && (
@@ -334,7 +334,7 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
               <button
                 onClick={() => onComplete(results, sentVenueIds)}
                 className="text-sm px-4 py-2 rounded-lg font-semibold transition-all hover:brightness-110"
-                style={{ backgroundColor: accentColor, color: "#0e0f11" }}
+                style={{ backgroundColor: accentColor, color: "#0E0E10" }}
               >
                 Done
               </button>

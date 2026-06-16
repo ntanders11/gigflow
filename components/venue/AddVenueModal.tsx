@@ -11,7 +11,7 @@ interface Props {
 const inputStyle = {
   backgroundColor: "#1e2128",
   border: "1px solid rgba(255,255,255,0.1)",
-  color: "#f0ede8",
+  color: "#F4E8D2",
   borderRadius: "8px",
   padding: "8px 12px",
   fontSize: "13px",
@@ -89,7 +89,7 @@ export default function AddVenueModal({ onClose, onAdded }: Props) {
           className="flex items-center justify-between shrink-0"
           style={{ padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
         >
-          <span style={{ color: "#f0ede8", fontWeight: 600, fontSize: "14px" }}>Add Venue</span>
+          <span style={{ color: "#F4E8D2", fontWeight: 600, fontSize: "14px" }}>Add Venue</span>
           <button onClick={onClose} style={{ color: "#5e5c58", fontSize: "20px", background: "none", border: "none", cursor: "pointer" }}>×</button>
         </div>
 
@@ -160,7 +160,7 @@ export default function AddVenueModal({ onClose, onAdded }: Props) {
           <button onClick={onClose} style={{ flex: 1, backgroundColor: "#1e2128", color: "#9a9591", borderRadius: "8px", padding: "10px", fontSize: "13px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.1)" }}>
             Cancel
           </button>
-          <button onClick={handleSave} disabled={saving} style={{ flex: 2, backgroundColor: "#d4a853", color: "#0e0f11", borderRadius: "8px", padding: "10px", fontWeight: 700, fontSize: "13px", cursor: "pointer", opacity: saving ? 0.6 : 1, border: "none" }}>
+          <button onClick={handleSave} disabled={saving} style={{ flex: 2, backgroundColor: "#D4A64F", color: "#0E0E10", borderRadius: "8px", padding: "10px", fontWeight: 700, fontSize: "13px", cursor: "pointer", opacity: saving ? 0.6 : 1, border: "none" }}>
             {saving ? "Adding…" : "Add Venue →"}
           </button>
         </div>

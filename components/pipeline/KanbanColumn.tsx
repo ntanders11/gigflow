@@ -49,7 +49,7 @@ export default function KanbanColumn({
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#9a9591" }}>
           {label}
         </span>
-        <span className="text-xs rounded-full px-2 py-0.5 font-medium" style={{ backgroundColor: "#262b33", color: "#d4a853" }}>
+        <span className="text-xs rounded-full px-2 py-0.5 font-medium" style={{ backgroundColor: "#262b33", color: "#D4A64F" }}>
           {venues.length}
         </span>
       </div>
@@ -61,7 +61,7 @@ export default function KanbanColumn({
           className="mb-2 w-full text-xs px-2 py-1.5 rounded-lg font-medium transition-all hover:brightness-110"
           style={
             columnBatchMode === "pitch"
-              ? { backgroundColor: "rgba(212,168,83,0.12)", color: "#d4a853", border: "1px solid rgba(212,168,83,0.25)" }
+              ? { backgroundColor: "rgba(212,166,79,0.12)", color: "#D4A64F", border: "1px solid rgba(212,166,79,0.25)" }
               : { backgroundColor: "rgba(155,127,232,0.12)", color: "#9b7fe8", border: "1px solid rgba(155,127,232,0.25)" }
           }
         >
@@ -130,8 +130,8 @@ export default function KanbanColumn({
             className="text-sm px-4 py-2 rounded-lg font-semibold transition-all hover:brightness-110"
             style={
               batchMode === "pitch"
-                ? { backgroundColor: "#d4a853", color: "#0e0f11" }
-                : { backgroundColor: "#9b7fe8", color: "#0e0f11" }
+                ? { backgroundColor: "#D4A64F", color: "#0E0E10" }
+                : { backgroundColor: "#9b7fe8", color: "#0E0E10" }
             }
           >
             {batchMode === "pitch"

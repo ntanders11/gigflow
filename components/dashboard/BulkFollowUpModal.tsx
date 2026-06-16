@@ -110,7 +110,7 @@ export default function BulkFollowUpModal({ onClose, onSent }: Props) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <h2 className="text-base font-semibold" style={{ color: "#f0ede8" }}>
+          <h2 className="text-base font-semibold" style={{ color: "#F4E8D2" }}>
             {phase === "loading" && "Loading…"}
             {phase === "confirm" && `Send follow-ups to ${venues.length} venue${venues.length !== 1 ? "s" : ""}`}
             {phase === "sending" && "Sending…"}
@@ -145,7 +145,7 @@ export default function BulkFollowUpModal({ onClose, onSent }: Props) {
                         style={{ backgroundColor: "#1e2128", border: "1px solid rgba(255,255,255,0.06)" }}
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate" style={{ color: "#f0ede8" }}>{v.name}</p>
+                          <p className="text-sm font-medium truncate" style={{ color: "#F4E8D2" }}>{v.name}</p>
                           <p className="text-xs truncate" style={{ color: "#9a9591" }}>{v.contact_email}</p>
                         </div>
                         <span className="text-xs ml-3 shrink-0" style={{ color: "#e25c5c" }}>
@@ -171,7 +171,7 @@ export default function BulkFollowUpModal({ onClose, onSent }: Props) {
                   <div className="w-full rounded-full overflow-hidden" style={{ backgroundColor: "#262b33", height: "5px" }}>
                     <div
                       className="h-full rounded-full transition-all duration-300"
-                      style={{ width: `${Math.round((progress.done / venues.length) * 100)}%`, backgroundColor: "#d4a853" }}
+                      style={{ width: `${Math.round((progress.done / venues.length) * 100)}%`, backgroundColor: "#D4A64F" }}
                     />
                   </div>
                 </div>
@@ -194,7 +194,7 @@ export default function BulkFollowUpModal({ onClose, onSent }: Props) {
                     className="flex items-center justify-between rounded-lg px-3 py-2"
                     style={{ backgroundColor: "#1e2128" }}
                   >
-                    <span className="text-sm" style={{ color: "#f0ede8" }}>{r.name}</span>
+                    <span className="text-sm" style={{ color: "#F4E8D2" }}>{r.name}</span>
                     <span className="text-xs font-medium" style={{ color: r.status === "sent" ? "#4caf7d" : "#e25c5c" }}>
                       {r.status === "sent" ? "✓ Sent" : "✕ Failed"}
                     </span>
@@ -219,7 +219,7 @@ export default function BulkFollowUpModal({ onClose, onSent }: Props) {
               <button
                 onClick={sendAll}
                 className="flex-1 text-sm py-2.5 rounded-lg font-semibold transition-all hover:brightness-110"
-                style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
+                style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
               >
                 Send {venues.length} email{venues.length !== 1 ? "s" : ""}
               </button>
@@ -229,7 +229,7 @@ export default function BulkFollowUpModal({ onClose, onSent }: Props) {
             <button
               onClick={onClose}
               className="flex-1 text-sm py-2.5 rounded-lg font-semibold"
-              style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
+              style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
             >
               Close
             </button>

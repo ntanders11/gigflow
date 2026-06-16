@@ -107,7 +107,7 @@ export default function CalendarView({
         >
           ← Prev
         </button>
-        <h2 className="text-lg font-semibold" style={{ color: "#f0ede8" }}>
+        <h2 className="text-lg font-semibold" style={{ color: "#F4E8D2" }}>
           {format(currentMonth, "MMMM yyyy")}
         </h2>
         <button
@@ -155,8 +155,8 @@ export default function CalendarView({
               <div
                 className="text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full"
                 style={{
-                  color: isToday ? "#0e0f11" : isCurrentMonth ? "#9a9591" : "#2e2c28",
-                  backgroundColor: isToday ? "#d4a853" : "transparent",
+                  color: isToday ? "#0E0E10" : isCurrentMonth ? "#9a9591" : "#2e2c28",
+                  backgroundColor: isToday ? "#D4A64F" : "transparent",
                   fontWeight: isToday ? 700 : 400,
                 }}
               >
@@ -211,7 +211,7 @@ export default function CalendarView({
                 >
                   <div className="flex-1 min-w-0">
                     <Link href={`/venues/${venue.id}`}>
-                      <p className="text-sm font-medium truncate" style={{ color: "#f0ede8" }}>
+                      <p className="text-sm font-medium truncate" style={{ color: "#F4E8D2" }}>
                         {venue.name}
                       </p>
                     </Link>
@@ -258,7 +258,7 @@ export default function CalendarView({
         <div className="flex items-center gap-2">
           <code
             className="flex-1 text-xs px-3 py-2 rounded-lg truncate"
-            style={{ backgroundColor: "#0e0f11", color: "#9b7fe8", border: "1px solid rgba(255,255,255,0.07)" }}
+            style={{ backgroundColor: "#0E0E10", color: "#9b7fe8", border: "1px solid rgba(255,255,255,0.07)" }}
           >
             {subscriptionUrl}
           </code>

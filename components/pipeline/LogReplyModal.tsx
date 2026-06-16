@@ -76,7 +76,7 @@ export default function LogReplyModal({ venue, onClose, onLogged }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold" style={{ color: "#f0ede8" }}>
+            <p className="text-sm font-semibold" style={{ color: "#F4E8D2" }}>
               Log Reply
             </p>
             <p className="text-xs mt-0.5" style={{ color: "#9a9591" }}>
@@ -129,7 +129,7 @@ export default function LogReplyModal({ venue, onClose, onLogged }: Props) {
             style={{
               backgroundColor: "#1e2128",
               border: "1px solid rgba(255,255,255,0.08)",
-              color: "#f0ede8",
+              color: "#F4E8D2",
             }}
           />
         </div>

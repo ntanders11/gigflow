@@ -110,7 +110,7 @@ function ScrollCol({
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                color: selected ? "#f0ede8" : "#5e5c58",
+                color: selected ? "#F4E8D2" : "#5e5c58",
                 fontSize: selected ? "20px" : "15px",
                 fontWeight: selected ? 600 : 400,
                 userSelect: "none",

@@ -90,8 +90,8 @@ export default function Sidebar() {
                 href={link.comingSoon ? "#" : link.href}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
                 style={{
-                  backgroundColor: isActive ? "rgba(212,168,83,0.12)" : "transparent",
-                  color: link.comingSoon ? "#5e5c58" : isActive ? "#d4a853" : "#9a9591",
+                  backgroundColor: isActive ? "rgba(212,166,79,0.12)" : "transparent",
+                  color: link.comingSoon ? "#5e5c58" : isActive ? "#D4A64F" : "#9a9591",
                   fontWeight: isActive ? 500 : 400,
                   cursor: link.comingSoon ? "default" : "pointer",
                   pointerEvents: link.comingSoon ? "none" : "auto",
@@ -104,8 +104,8 @@ export default function Sidebar() {
                 {link.badge && (
                   <span
                     style={{
-                      backgroundColor: "#d4a853",
-                      color: "#0e0f11",
+                      backgroundColor: "#D4A64F",
+                      color: "#0E0E10",
                       fontSize: "10px",
                       fontWeight: 700,
                       borderRadius: "999px",
@@ -161,8 +161,8 @@ export default function Sidebar() {
                 href={link.href}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
                 style={{
-                  backgroundColor: isActive ? "rgba(212,168,83,0.12)" : "transparent",
-                  color: isActive ? "#d4a853" : "#9a9591",
+                  backgroundColor: isActive ? "rgba(212,166,79,0.12)" : "transparent",
+                  color: isActive ? "#D4A64F" : "#9a9591",
                   fontWeight: isActive ? 500 : 400,
                 }}
               >
@@ -191,7 +191,7 @@ export default function Sidebar() {
           ) : (
             <div
               className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold"
-              style={{ background: "linear-gradient(135deg, #d4a853 0%, #8b5cf6 100%)", color: "#fff" }}
+              style={{ background: "linear-gradient(135deg, #D4A64F 0%, #6C5CE7 100%)", color: "#fff" }}
             >
               {displayName ? displayName.charAt(0).toUpperCase() : "?"}
             </div>
@@ -199,7 +199,7 @@ export default function Sidebar() {
           <div className="min-w-0">
             <div
               className="text-sm font-medium truncate"
-              style={{ color: "#f0ede8", lineHeight: 1.3 }}
+              style={{ color: "#F4E8D2", lineHeight: 1.3 }}
             >
               {displayName ?? "Your Profile"}
             </div>
@@ -255,7 +255,7 @@ export function MobileBottomNav() {
             key={link.href}
             href={link.href}
             className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all"
-            style={{ color: isActive ? "#d4a853" : "#5e5c58" }}
+            style={{ color: isActive ? "#D4A64F" : "#5e5c58" }}
           >
             <span style={{ fontSize: "16px" }}>{link.icon}</span>
             <span style={{ fontSize: "9px", fontWeight: isActive ? 600 : 400 }}>{link.label}</span>

@@ -53,7 +53,7 @@ export default function ImportPage() {
           href="/api/venues/export"
           download="stagereach-venues.csv"
           className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-          style={{ backgroundColor: "#1e2128", color: "#f0ede8" }}
+          style={{ backgroundColor: "#1e2128", color: "#F4E8D2" }}
         >
           ↓ Download Venue CSV
         </a>

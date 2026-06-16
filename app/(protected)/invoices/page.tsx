@@ -5,7 +5,7 @@ import { Invoice } from "@/types";
 
 const STATUS_STYLE: Record<string, { color: string; bg: string; label: string }> = {
   draft:  { color: "#9a9591", bg: "rgba(154,149,145,0.15)", label: "Draft"  },
-  sent:   { color: "#d4a853", bg: "rgba(212,168,83,0.15)",  label: "Sent"   },
+  sent:   { color: "#D4A64F", bg: "rgba(212,166,79,0.15)",  label: "Sent"   },
   paid:   { color: "#4caf7d", bg: "rgba(76,175,125,0.15)",  label: "Paid"   },
   void:   { color: "#5e5c58", bg: "rgba(94,92,88,0.15)",    label: "Void"   },
 };
@@ -42,10 +42,10 @@ export default async function InvoicesPage() {
     .reduce((sum, i) => sum + i.amount_cents, 0);
 
   return (
-    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
+    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-8 max-w-4xl">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#f0ede8" }}>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>
           Invoices
         </h1>
       </div>
@@ -89,7 +89,7 @@ export default async function InvoicesPage() {
           <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#9a9591" }}>
             Total Invoices
           </p>
-          <p className="text-4xl font-bold leading-none mb-1" style={{ color: "#f0ede8" }}>
+          <p className="text-4xl font-bold leading-none mb-1" style={{ color: "#F4E8D2" }}>
             {allInvoices.length}
           </p>
           <p className="text-xs" style={{ color: "#9a9591" }}>
@@ -129,7 +129,7 @@ export default async function InvoicesPage() {
                   {/* Venue + details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-sm font-medium truncate" style={{ color: "#f0ede8" }}>
+                      <p className="text-sm font-medium truncate" style={{ color: "#F4E8D2" }}>
                         {invoice.venues?.name ?? "Unknown venue"}
                       </p>
                       {invoice.package_label && (
@@ -150,7 +150,7 @@ export default async function InvoicesPage() {
                   </div>
 
                   {/* Amount */}
-                  <p className="text-sm font-semibold flex-shrink-0" style={{ color: "#f0ede8" }}>
+                  <p className="text-sm font-semibold flex-shrink-0" style={{ color: "#F4E8D2" }}>
                     {fmt(invoice.amount_cents)}
                   </p>
 
@@ -174,7 +174,7 @@ export default async function InvoicesPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs flex-shrink-0 transition-all hover:brightness-125"
-                      style={{ color: "#d4a853" }}
+                      style={{ color: "#D4A64F" }}
                     >
                       View ↗
                     </a>

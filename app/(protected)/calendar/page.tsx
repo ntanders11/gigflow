@@ -43,10 +43,10 @@ export default async function CalendarPage() {
   const subscriptionUrl = `${baseUrl}/api/calendar/ics?uid=${user.id}`;
 
   return (
-    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}>
+    <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6 max-w-5xl">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#f0ede8" }}>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>
           Booking Calendar
         </h1>
       </div>
@@ -57,7 +57,7 @@ export default async function CalendarPage() {
         style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
       >
         <div>
-          <p className="text-sm font-semibold mb-0.5" style={{ color: "#f0ede8" }}>
+          <p className="text-sm font-semibold mb-0.5" style={{ color: "#F4E8D2" }}>
             Sync with iCloud Calendar
           </p>
           <p className="text-xs" style={{ color: "#9a9591" }}>
@@ -67,7 +67,7 @@ export default async function CalendarPage() {
         <a
           href={`webcal://${subscriptionUrl.replace(/^https?:\/\//, "")}`}
           className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:brightness-110 shrink-0 ml-6"
-          style={{ backgroundColor: "#d4a853", color: "#0e0f11" }}
+          style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
         >
           Subscribe in iCloud →
         </a>

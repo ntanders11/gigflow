@@ -9,7 +9,7 @@ const STAGE_STYLE: Record<
   { color: string; bg: string; label: string }
 > = {
   discovered: { color: "#5b9bd5", bg: "rgba(91,155,213,0.15)", label: "Discovered" },
-  contacted:  { color: "#d4a853", bg: "rgba(212,168,83,0.15)",  label: "Contacted"  },
+  contacted:  { color: "#D4A64F", bg: "rgba(212,166,79,0.15)",  label: "Contacted"  },
   responded:  { color: "#9b7fe8", bg: "rgba(155,127,232,0.15)", label: "Responded"  },
   negotiating:{ color: "#e09b50", bg: "rgba(224,155,80,0.15)",  label: "Negotiating"},
   booked:     { color: "#4caf7d", bg: "rgba(76,175,125,0.15)",  label: "Booked"     },
@@ -18,7 +18,7 @@ const STAGE_STYLE: Record<
 
 // Icon box color per venue type (first letter shown)
 const TYPE_COLORS: Record<string, string> = {
-  bar:        "#d4a853",
+  bar:        "#D4A64F",
   brewery:    "#e09b50",
   restaurant: "#4caf7d",
   cafe:       "#5b9bd5",
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
   const totalActive  = activeVenues.length;
   const funnelStages = [
     { key: "discovered",  label: "Discovered",  color: "#5b9bd5", count: discoveredCount },
-    { key: "contacted",   label: "Contacted",   color: "#d4a853", count: contactedCount  },
+    { key: "contacted",   label: "Contacted",   color: "#D4A64F", count: contactedCount  },
     { key: "responded",   label: "Responded",   color: "#9b7fe8", count: respondedCount  },
     { key: "negotiating", label: "Negotiating", color: "#e09b50", count: negotiatingCount},
     { key: "booked",      label: "Booked",      color: "#4caf7d", count: bookedCount     },
@@ -154,7 +154,7 @@ export default async function DashboardPage() {
       label: "Total Venues",
       value: totalVenues,
       trend: "in your pipeline",
-      color: "#f0ede8",
+      color: "#F4E8D2",
       href: "/pipeline",
     },
     {
@@ -190,11 +190,11 @@ export default async function DashboardPage() {
   return (
     <div
       className="min-h-screen p-4 md:p-8"
-      style={{ backgroundColor: "#0e0f11", color: "#f0ede8" }}
+      style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}
     >
       {/* Top bar */}
       <div className="flex items-center justify-between mb-6 max-w-6xl">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#f0ede8" }}>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>
           Overview
         </h1>
         <div className="flex items-center gap-2">
@@ -202,7 +202,7 @@ export default async function DashboardPage() {
             href="/venues/import"
             className="hidden sm:block px-4 py-2 rounded-lg text-sm font-medium transition-all hover:brightness-125"
             style={{
-              color: "#f0ede8",
+              color: "#F4E8D2",
               border: "1px solid rgba(255,255,255,0.2)",
               backgroundColor: "transparent",
             }}
@@ -213,8 +213,8 @@ export default async function DashboardPage() {
             href="/pipeline"
             className="px-3 py-2 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
             style={{
-              backgroundColor: "#d4a853",
-              color: "#0e0f11",
+              backgroundColor: "#D4A64F",
+              color: "#0E0E10",
             }}
           >
             <span className="sm:hidden">Pipeline</span>
@@ -252,7 +252,7 @@ export default async function DashboardPage() {
                       className="text-xs px-3 py-1.5 rounded-full transition-all hover:brightness-125"
                       style={{
                         backgroundColor: "rgba(226,92,92,0.12)",
-                        color: "#f0ede8",
+                        color: "#F4E8D2",
                         border: "1px solid rgba(226,92,92,0.2)",
                       }}
                     >
@@ -313,7 +313,7 @@ export default async function DashboardPage() {
           <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#9a9591" }}>
             Upcoming Gigs
           </h2>
-          <Link href="/calendar" className="text-xs transition-all hover:brightness-125" style={{ color: "#d4a853" }}>
+          <Link href="/calendar" className="text-xs transition-all hover:brightness-125" style={{ color: "#D4A64F" }}>
             View calendar →
           </Link>
         </div>
@@ -354,7 +354,7 @@ export default async function DashboardPage() {
                 : `In ${daysUntil} days`;
 
               const countdownColor = isToday
-                ? "#d4a853"
+                ? "#D4A64F"
                 : isTomorrow
                 ? "#e09b50"
                 : daysUntil <= 7
@@ -369,16 +369,16 @@ export default async function DashboardPage() {
                   style={{
                     backgroundColor: "#16181c",
                     border: isToday
-                      ? "1px solid rgba(212,168,83,0.35)"
+                      ? "1px solid rgba(212,166,79,0.35)"
                       : "1px solid rgba(255,255,255,0.07)",
-                    borderLeft: `3px solid ${isToday ? "#d4a853" : "#4caf7d"}`,
+                    borderLeft: `3px solid ${isToday ? "#D4A64F" : "#4caf7d"}`,
                   }}
                 >
                   {/* Top row: countdown badge + venue name */}
                   <div className="flex items-start justify-between gap-2">
                     <p
                       className="text-sm font-semibold leading-snug"
-                      style={{ color: "#f0ede8", flex: 1 }}
+                      style={{ color: "#F4E8D2", flex: 1 }}
                     >
                       {venue?.name ?? "Unknown Venue"}
                     </p>
@@ -486,7 +486,7 @@ export default async function DashboardPage() {
         {/* Conversion rate cards */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Contact Rate", value: contactRate, desc: "venues reached out to", color: "#d4a853" },
+            { label: "Contact Rate", value: contactRate, desc: "venues reached out to", color: "#D4A64F" },
             { label: "Response Rate", value: responseRate, desc: "of contacted replied", color: "#9b7fe8" },
             { label: "Booking Rate", value: bookingRate, desc: "of replies turned to gigs", color: "#4caf7d" },
           ].map((stat) => (
@@ -501,7 +501,7 @@ export default async function DashboardPage() {
               >
                 {stat.value}%
               </p>
-              <p className="text-xs font-semibold mb-0.5" style={{ color: "#f0ede8" }}>
+              <p className="text-xs font-semibold mb-0.5" style={{ color: "#F4E8D2" }}>
                 {stat.label}
               </p>
               <p className="text-xs" style={{ color: "#5e5c58" }}>
@@ -523,7 +523,7 @@ export default async function DashboardPage() {
             <Link
               href="/pipeline"
               className="text-xs transition-all hover:brightness-125"
-              style={{ color: "#d4a853" }}
+              style={{ color: "#D4A64F" }}
             >
               View pipeline →
             </Link>
@@ -541,7 +541,7 @@ export default async function DashboardPage() {
             <Link
               href="/pipeline"
               className="text-xs transition-all hover:brightness-125"
-              style={{ color: "#d4a853" }}
+              style={{ color: "#D4A64F" }}
             >
               View pipeline →
             </Link>
@@ -575,11 +575,11 @@ export default async function DashboardPage() {
                       borderBottom: isLast
                         ? "none"
                         : "1px solid rgba(255,255,255,0.05)",
-                      borderLeft: "3px solid #d4a853",
+                      borderLeft: "3px solid #D4A64F",
                     }}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: "#f0ede8" }}>
+                      <p className="text-sm font-medium truncate" style={{ color: "#F4E8D2" }}>
                         {venue.name}
                       </p>
                       <p className="text-xs truncate" style={{ color: "#9a9591" }}>
