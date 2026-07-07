@@ -5,9 +5,9 @@
 - [Feature] "New Invoice" button on the Invoices page — previously invoices could only be started from a venue's own page; now you can search for a venue and start one directly from Invoices
 - [Feature] Delete an invoice — a Delete link (with a confirm step) is now available on both the Invoices page and a venue's own invoice list. If it was already sent and unpaid, it's also voided on Stripe's side so the venue can't pay a link you've removed
 - [Fix] Several mobile layout problems: Discover results were squeezed into unreadable columns, the Pipeline page's "+ Add" button was cut off the edge of the screen, Venue Detail's contact fields were cramped into two columns, and invoice rows overflowed off-screen — all now resized properly for phones
-- [Fix] Diagnosed and resolved email deliverability issue — pitch/follow-up emails were landing in spam because the stagereach.app domain wasn't verified with Resend (SPF/DKIM records added)
-- [Tool] Added /api/stripe-status, a diagnostic page (visit while logged in) confirming your Stripe account can accept payments and payouts are set up correctly — verified your live account is fully ready to receive real invoice payments
-- [Data] Confirmed a live bank account (Chase) is connected in Stripe and payouts are enabled — invoices sent from GigFlow can now be paid for real
+- [Tool] Added /api/email-status and /api/stripe-status, diagnostic pages (visit while logged in) that report in plain language whether email sending and Stripe payouts are correctly configured
+- [Data] Confirmed via /api/stripe-status that the live Stripe account (Chase bank account connected, payouts enabled) is fully ready to accept and receive real invoice payments
+- [Open issue] Pitch/follow-up emails are still landing in spam — /api/email-status confirms stagereach.app is not yet verified with Resend (SPF/DKIM records need to be added in GoDaddy). Not resolved yet.
 
 ## 2026-05-28 (beta tester bug fixes — session 2)
 - [Fix] Beta testers no longer see "Taylor Anderson" as their name — all hardcoded fallback names removed from email templates, profile page, public profile, and sidebar
