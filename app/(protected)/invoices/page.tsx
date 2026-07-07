@@ -129,7 +129,7 @@ export default async function InvoicesPage() {
               return (
                 <div
                   key={invoice.id}
-                  className="flex items-center gap-4 px-5 py-4"
+                  className="flex flex-col gap-2 px-5 py-4 md:flex-row md:items-center md:gap-4"
                   style={{
                     borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.05)",
                   }}
@@ -157,45 +157,48 @@ export default async function InvoicesPage() {
                     </p>
                   </div>
 
-                  {/* Amount */}
-                  <p className="text-sm font-semibold flex-shrink-0" style={{ color: "#F4E8D2" }}>
-                    {fmt(invoice.amount_cents)}
-                  </p>
+                  {/* Amount, date, status, links — wraps on mobile, inline on desktop */}
+                  <div className="flex items-center gap-3 flex-wrap md:flex-nowrap md:gap-4">
+                    {/* Amount */}
+                    <p className="text-sm font-semibold flex-shrink-0" style={{ color: "#F4E8D2" }}>
+                      {fmt(invoice.amount_cents)}
+                    </p>
 
-                  {/* Date */}
-                  <p className="text-xs flex-shrink-0 w-24 text-right" style={{ color: "#9a9591" }}>
-                    {fmtDate(invoice.created_at)}
-                  </p>
+                    {/* Date */}
+                    <p className="text-xs flex-shrink-0 md:w-24 md:text-right" style={{ color: "#9a9591" }}>
+                      {fmtDate(invoice.created_at)}
+                    </p>
 
-                  {/* Status badge */}
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 w-14 text-center"
-                    style={{ backgroundColor: style.bg, color: style.color }}
-                  >
-                    {style.label}
-                  </span>
-
-                  {/* Stripe link */}
-                  {invoice.stripe_invoice_url && (
-                    <a
-                      href={invoice.stripe_invoice_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs flex-shrink-0 transition-all hover:brightness-125"
-                      style={{ color: "#D4A64F" }}
+                    {/* Status badge */}
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 w-14 text-center"
+                      style={{ backgroundColor: style.bg, color: style.color }}
                     >
-                      View ↗
-                    </a>
-                  )}
+                      {style.label}
+                    </span>
 
-                  {/* Venue link */}
-                  <Link
-                    href={`/venues/${invoice.venue_id}`}
-                    className="text-xs flex-shrink-0 transition-all hover:brightness-125"
-                    style={{ color: "#9a9591" }}
-                  >
-                    Venue →
-                  </Link>
+                    {/* Stripe link */}
+                    {invoice.stripe_invoice_url && (
+                      <a
+                        href={invoice.stripe_invoice_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs flex-shrink-0 transition-all hover:brightness-125"
+                        style={{ color: "#D4A64F" }}
+                      >
+                        View ↗
+                      </a>
+                    )}
+
+                    {/* Venue link */}
+                    <Link
+                      href={`/venues/${invoice.venue_id}`}
+                      className="text-xs flex-shrink-0 transition-all hover:brightness-125"
+                      style={{ color: "#9a9591" }}
+                    >
+                      Venue →
+                    </Link>
+                  </div>
                 </div>
               );
             })
