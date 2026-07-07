@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Invoice } from "@/types";
+import { Invoice, Venue } from "@/types";
+import CreateInvoiceButton from "@/components/invoice/CreateInvoiceButton";
 
 const STATUS_STYLE: Record<string, { color: string; bg: string; label: string }> = {
   draft:  { color: "#9a9591", bg: "rgba(154,149,145,0.15)", label: "Draft"  },
@@ -35,6 +36,12 @@ export default async function InvoicesPage() {
 
   const allInvoices = (invoices ?? []) as (Invoice & { venues: { name: string; city: string | null } | null })[];
 
+  const { data: venues } = await supabase
+    .from("venues")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("name");
+
   const unpaid = allInvoices.filter((i) => i.status === "sent" || i.status === "draft");
   const unpaidTotal = unpaid.reduce((sum, i) => sum + i.amount_cents, 0);
   const paidTotal = allInvoices
@@ -48,6 +55,7 @@ export default async function InvoicesPage() {
         <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>
           Invoices
         </h1>
+        <CreateInvoiceButton venues={(venues ?? []) as Venue[]} />
       </div>
 
       {/* Summary cards */}
@@ -110,7 +118,7 @@ export default async function InvoicesPage() {
                 No invoices yet
               </p>
               <p className="text-xs" style={{ color: "#5e5c58" }}>
-                Invoices are created from a venue&apos;s detail page once a gig is booked.
+                Create your first invoice, or open a venue&apos;s detail page once a gig is booked.
               </p>
             </div>
           ) : (
