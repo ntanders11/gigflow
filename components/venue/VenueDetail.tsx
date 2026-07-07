@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import PitchEmailModal from "@/components/venue/PitchEmailModal";
 import InvoiceModal from "@/components/invoice/InvoiceModal";
 import InvoiceStatusBadge from "@/components/invoice/InvoiceStatusBadge";
+import DeleteInvoiceButton from "@/components/invoice/DeleteInvoiceButton";
 import GigsSection from "@/components/venue/GigsSection";
 import { Invoice } from "@/types";
 
@@ -472,11 +473,16 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
                   <span style={{ color: "#F4E8D2", fontSize: "13px", fontWeight: 500 }}>${(inv.amount_cents / 100).toFixed(2)}</span>
                   <span style={{ color: "#5e5c58", fontSize: "11px", marginLeft: "8px" }}>{inv.package_label} · {inv.payment_type === "deposit" ? "Deposit" : "Full"}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
                   {inv.stripe_invoice_url && (
                     <a href={inv.stripe_invoice_url} target="_blank" rel="noopener noreferrer" style={{ color: "#5b9bd5", fontSize: "11px" }}>View ↗</a>
                   )}
                   <InvoiceStatusBadge status={inv.status} />
+                  <DeleteInvoiceButton
+                    invoiceId={inv.id}
+                    status={inv.status}
+                    onDeleted={() => setInvoices((prev) => prev.filter((i) => i.id !== inv.id))}
+                  />
                 </div>
               </div>
             ))}

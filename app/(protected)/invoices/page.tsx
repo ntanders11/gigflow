@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Invoice, Venue } from "@/types";
 import CreateInvoiceButton from "@/components/invoice/CreateInvoiceButton";
+import DeleteInvoiceButton from "@/components/invoice/DeleteInvoiceButton";
 
 const STATUS_STYLE: Record<string, { color: string; bg: string; label: string }> = {
   draft:  { color: "#9a9591", bg: "rgba(154,149,145,0.15)", label: "Draft"  },
@@ -198,6 +199,9 @@ export default async function InvoicesPage() {
                     >
                       Venue →
                     </Link>
+
+                    {/* Delete */}
+                    <DeleteInvoiceButton invoiceId={invoice.id} status={invoice.status} />
                   </div>
                 </div>
               );
