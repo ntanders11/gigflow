@@ -229,7 +229,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
               {filtered.length} venues
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
             <input
               type="text"
               placeholder="Search…"
@@ -264,7 +264,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
             </button>
             <button
               onClick={() => setShowAddModal(true)}
-              className="text-sm px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all hover:brightness-110"
+              className="text-sm px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all hover:brightness-110 ml-auto md:ml-0"
               style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
             >
               + Add
