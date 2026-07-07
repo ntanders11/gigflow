@@ -1,5 +1,14 @@
 # StageReach Changelog
 
+## 2026-07-07
+- [Feature] Full StageReach brand look applied everywhere — new color palette (Midnight Black, Warm Ivory, Vintage Gold, Electric Violet) and the new microphone logo, both in the sidebar and on the login page
+- [Feature] "New Invoice" button on the Invoices page — previously invoices could only be started from a venue's own page; now you can search for a venue and start one directly from Invoices
+- [Feature] Delete an invoice — a Delete link (with a confirm step) is now available on both the Invoices page and a venue's own invoice list. If it was already sent and unpaid, it's also voided on Stripe's side so the venue can't pay a link you've removed
+- [Fix] Several mobile layout problems: Discover results were squeezed into unreadable columns, the Pipeline page's "+ Add" button was cut off the edge of the screen, Venue Detail's contact fields were cramped into two columns, and invoice rows overflowed off-screen — all now resized properly for phones
+- [Fix] Diagnosed and resolved email deliverability issue — pitch/follow-up emails were landing in spam because the stagereach.app domain wasn't verified with Resend (SPF/DKIM records added)
+- [Tool] Added /api/stripe-status, a diagnostic page (visit while logged in) confirming your Stripe account can accept payments and payouts are set up correctly — verified your live account is fully ready to receive real invoice payments
+- [Data] Confirmed a live bank account (Chase) is connected in Stripe and payouts are enabled — invoices sent from GigFlow can now be paid for real
+
 ## 2026-05-28 (beta tester bug fixes — session 2)
 - [Fix] Beta testers no longer see "Taylor Anderson" as their name — all hardcoded fallback names removed from email templates, profile page, public profile, and sidebar
 - [Fix] Venue discovery now uses Google Places Nearby Search (2-pass: music venues, then bars/breweries) — previously only used OpenStreetMap which returns near-zero results in US cities
