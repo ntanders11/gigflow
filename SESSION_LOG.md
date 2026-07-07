@@ -323,3 +323,31 @@ How should emails be sent for non-Taylor users? Currently all emails go from `RE
 - **C:** Per-user domain verification with Resend — too much setup for users.
 
 Taylor needs to decide on Option A and whether they have/want a domain for StageReach before implementation begins.
+
+## 2026-07-07 (continued) — Email deliverability fix, in progress
+
+**Goal:** Fix pitch/follow-up emails landing in spam. Root cause confirmed via `/api/email-status`: `stagereach.app` is not verified with Resend (SPF/DKIM missing).
+
+**Key discovery this session:** The domain has been stuck "Pending" in Resend for about a month. Investigated why — GoDaddy's own DNS Management page states *"Your domain is registered at GoDaddy, but its DNS is currently managed elsewhere"* → **DNS Provider: Vercel**. This means any DNS records added in GoDaddy would never take effect, because GoDaddy is not authoritative for this domain's DNS — Vercel is (this happens automatically when a custom domain is connected to a Vercel project). This is almost certainly why verification never completed.
+
+**Corrected plan:** Add the 5 Resend-required DNS records in **Vercel's domain DNS records page** instead of GoDaddy.
+
+Records needed (exact values are in Resend → Domains → stagereach.app → DNS Records; use the copy button on each value field, don't retype — they're truncated on screen):
+| Type | Name/Host | Value | Priority |
+|------|-----------|-------|----------|
+| TXT | `resend._domainkey` | (DKIM value, starts `p=MIGfMA0GCSqG...`) | — |
+| MX | `send` | (starts `feedback-smtp...amazonses.com`) | 10 |
+| TXT | `send` | (starts `v=spf1 include:...`) | — |
+| TXT | `_dmarc` | `v=DMARC1; p=none;` (optional but recommended) | — |
+| MX | `@` | (starts `inbound-smtp...amazonaws.com`) | 10 |
+
+**Where we left off:** Navigated Vercel dashboard → Project → Settings → Domains → clicked "Edit" on `stagereach.app` → found a link "View DNS Records & More for stagereach.app →". Taylor was about to click that link to reach the actual DNS records editor when we paused.
+
+### Pick Up Here Next Session
+1. Click "View DNS Records & More for stagereach.app" in Vercel (Project → Settings → Domains → Edit on stagereach.app)
+2. Add the 5 records from the table above (copy exact values from Resend, don't retype)
+3. Back in Resend → Domains → stagereach.app, click the check/verify icon to trigger re-verification
+4. Wait for propagation (minutes to hours), then confirm via `/api/email-status` that `stagereach.app` shows as verified
+5. Once verified, have someone send a real test pitch email and confirm it lands in the inbox, not spam
+
+Also still open from earlier: confirm whether `013_add_stagereach_codes.sql` invite-code migration was ever run in Supabase SQL Editor.
