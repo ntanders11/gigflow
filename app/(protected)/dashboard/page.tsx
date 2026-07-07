@@ -484,7 +484,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Conversion rate cards */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { label: "Contact Rate", value: contactRate, desc: "venues reached out to", color: "#D4A64F" },
             { label: "Response Rate", value: responseRate, desc: "of contacted replied", color: "#9b7fe8" },

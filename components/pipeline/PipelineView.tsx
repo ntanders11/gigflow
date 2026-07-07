@@ -220,7 +220,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
           borderBottom: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: "#F4E8D2" }}>
               Pipeline
@@ -229,7 +229,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
               {filtered.length} venues
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto md:overflow-visible pb-1 md:pb-0">
             <input
               type="text"
               placeholder="Search…"

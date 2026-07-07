@@ -212,7 +212,7 @@ export default function DiscoverView() {
                   <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#9a9591" }}>
                     {newVenues.length} new venue{newVenues.length !== 1 ? "s" : ""} found
                   </h3>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                     {newVenues.map((venue) => {
                       const isAdding = adding.has(venue.osm_id);
                       const isAdded  = added.has(venue.osm_id);
