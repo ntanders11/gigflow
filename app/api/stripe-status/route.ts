@@ -21,7 +21,7 @@ export async function GET() {
 
   if (secretKey) {
     try {
-      const account = await stripe.accounts.retrieve();
+      const account = await stripe.accounts.retrieve({ expand: ["external_accounts"] });
       report.account_id = account.id;
       report.bank_account_connected = account.external_accounts?.data?.length
         ? `✅ yes (${account.external_accounts.data.length} on file)`
