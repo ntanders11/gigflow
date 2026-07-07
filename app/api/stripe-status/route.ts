@@ -21,17 +21,22 @@ export async function GET() {
 
   if (secretKey) {
     try {
-      const account = await stripe.accounts.retrieve({ expand: ["external_accounts"] });
+      // Note: the bank-account list on the Account object (external_accounts)
+      // and the listExternalAccounts() call are both built for Stripe Connect
+      // platforms checking OTHER accounts' bank details — they're unreliable
+      // (or outright blocked) when checking your own account. The fields
+      // below are the ones Stripe documents as authoritative for your own
+      // account's payout readiness.
+      const account = await stripe.accounts.retrieve();
       report.account_id = account.id;
-      report.bank_account_connected = account.external_accounts?.data?.length
-        ? `✅ yes (${account.external_accounts.data.length} on file)`
-        : "❌ no bank account on file — payments have nowhere to deposit";
       report.charges_enabled = account.charges_enabled ? "✅ yes" : "❌ no — cannot accept payments yet";
-      report.payouts_enabled = account.payouts_enabled ? "✅ yes — money will reach your bank" : "❌ no — Stripe is blocking payouts until setup is finished";
+      report.payouts_enabled = account.payouts_enabled ? "✅ yes — Stripe confirms a valid payout destination is on file" : "❌ no — Stripe is blocking payouts until setup is finished";
       report.details_submitted = account.details_submitted ? "✅ yes" : "❌ no — Stripe account setup is incomplete";
 
       if (account.requirements?.currently_due?.length) {
         report.action_needed = `⚠️ Stripe still needs: ${account.requirements.currently_due.join(", ")}`;
+      } else if (account.payouts_enabled) {
+        report.summary = "✅ Everything checks out — invoices you send can be paid and the money will reach your bank.";
       }
     } catch (e) {
       report.stripe_check_error = `Exception: ${e instanceof Error ? e.message : String(e)}`;
