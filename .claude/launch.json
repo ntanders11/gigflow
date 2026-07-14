@@ -8,6 +8,13 @@
       "port": 3000,
     "autoPort": true,
       "cwd": "/Users/tayloranderson/gigflow"
+    },
+    {
+      "name": "site-dev",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "cd /Users/tayloranderson/taylor-music-site && PATH=/usr/local/bin:$PATH npm run dev"],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }

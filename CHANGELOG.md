@@ -77,3 +77,7 @@
   - Dashboard now shows "Unpaid Invoices" count and total outstanding amount
   - Stripe webhook auto-marks invoices as paid when venues pay online
   - Manual "Mark Paid" option for cash/check payments
+
+## 2026-07-14
+- [Change] Started the taylorandersonmusic.com website rebuild in its own project (taylor-music-site) — built, tested, and pushed to GitHub; awaiting Vercel setup and domain switch.
+- [Fix in progress] Found why emails have deliverability problems: no domain is verified in the Resend account. Will be fixed alongside the website's domain switch.

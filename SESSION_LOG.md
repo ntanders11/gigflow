@@ -351,3 +351,8 @@ Records needed (exact values are in Resend → Domains → stagereach.app → DN
 5. Once verified, have someone send a real test pitch email and confirm it lands in the inbox, not spam
 
 Also still open from earlier: confirm whether `013_add_stagereach_codes.sql` invite-code migration was ever run in Supabase SQL Editor.
+
+## 2026-07-14 — Website rebuild (new project: ~/taylor-music-site)
+Taylor asked to replace the Squarespace site (taylorandersonmusic.com) to stop paying for it. Decided: rebuild as a free Vercel-hosted Next.js site; design refresh keeping current pages/content; bio influences updated to Beach Boys, Prince, Amy Winehouse; new booking-inquiry form on Private Events (Resend). Built and verified the whole site locally; code pushed to github.com/ntanders11/taylor-music-site.
+Key discoveries: (1) Taylor's email is Microsoft 365 via GoDaddy, NOT Squarespace — cancelling Squarespace is safe for email; DNS cutover must never touch MX/TXT. (2) The Resend account has NO verified domain — this is the root cause of GigFlow's unresolved email-deliverability issue. Plan: verify taylorandersonmusic.com in Resend during the DNS cutover, then fix GigFlow's RESEND_FROM_EMAIL too.
+Open: Taylor imports the repo in Vercel, reviews the preview URL, then DNS cutover + Squarespace cancellation.
