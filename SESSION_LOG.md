@@ -356,3 +356,15 @@ Also still open from earlier: confirm whether `013_add_stagereach_codes.sql` inv
 Taylor asked to replace the Squarespace site (taylorandersonmusic.com) to stop paying for it. Decided: rebuild as a free Vercel-hosted Next.js site; design refresh keeping current pages/content; bio influences updated to Beach Boys, Prince, Amy Winehouse; new booking-inquiry form on Private Events (Resend). Built and verified the whole site locally; code pushed to github.com/ntanders11/taylor-music-site.
 Key discoveries: (1) Taylor's email is Microsoft 365 via GoDaddy, NOT Squarespace — cancelling Squarespace is safe for email; DNS cutover must never touch MX/TXT. (2) The Resend account has NO verified domain — this is the root cause of GigFlow's unresolved email-deliverability issue. Plan: verify taylorandersonmusic.com in Resend during the DNS cutover, then fix GigFlow's RESEND_FROM_EMAIL too.
 Open: Taylor imports the repo in Vercel, reviews the preview URL, then DNS cutover + Squarespace cancellation.
+
+## 2026-07-15 — Email deliverability fix, resolved
+
+**Resolved:** The spam issue tracked since 2026-07-07 (and root-caused during the 2026-07-14 website session) is fixed.
+
+What happened: Taylor's original Resend account was shared/broken, and `stagereach.app` had never been properly DNS-verified there — this was the root cause of both the website's booking form failing and GigFlow's emails landing in spam. While rebuilding the personal website, Taylor moved Resend to a new dedicated account under `booking@taylorandersonmusic.com` and fixed the website's email there. That work also (accidentally) deleted the old `stagereach.app` domain entry from Resend.
+
+This session: re-added `stagereach.app` to the new Resend account, walked through adding all 5 DNS records (DKIM TXT, SPF MX, SPF TXT, DMARC TXT, receiving MX) into **Vercel's DNS records page** (not GoDaddy — GoDaddy is only the registrar; Vercel manages this domain's actual DNS since it's connected to the Vercel project). Domain now shows fully **Verified** in Resend (all sub-records green).
+
+Also generated a new Resend API key and updated it in both `.env.local` (local dev) and Vercel's production Environment Variables (`RESEND_API_KEY` for the `gigflow` project) — the old key was still pointed at the broken/old account. Vercel auto-redeployed after the env var change.
+
+**Still open / worth confirming next session:** Send a real pitch or follow-up email from the live app and confirm it lands in an inbox, not spam — this hasn't been end-to-end tested since the fix. Also still unconfirmed from earlier: whether `013_add_stagereach_codes.sql` invite-code migration was ever run in Supabase SQL Editor.

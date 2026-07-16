@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-07-15
+- [Fix] Pitch/follow-up/invoice emails landing in spam — finally resolved. Root cause: the old Resend account's shared setup broke, and the domain was never properly verified. Moved to a new dedicated Resend account (booking@taylorandersonmusic.com), re-verified stagereach.app there (DKIM, SPF, DMARC, and receiving MX all confirmed "Verified"), generated a new API key, and updated it in both local dev and Vercel production. Next real pitch/follow-up email sent should land in the inbox, not spam.
+
 ## 2026-07-07
 - [Feature] Full StageReach brand look applied everywhere — new color palette (Midnight Black, Warm Ivory, Vintage Gold, Electric Violet) and the new microphone logo, both in the sidebar and on the login page
 - [Feature] "New Invoice" button on the Invoices page — previously invoices could only be started from a venue's own page; now you can search for a venue and start one directly from Invoices
