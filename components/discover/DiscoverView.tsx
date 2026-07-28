@@ -35,6 +35,8 @@ export default function DiscoverView() {
   const [searched, setSearched] = useState(false);
   const [adding, setAdding]     = useState<Set<string>>(new Set());
   const [added, setAdded]       = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   // Core search function — accepts city/radius directly so it can be called
   // both from the Search button (uses state) and from the auto-search on mount.
@@ -45,6 +47,7 @@ export default function DiscoverView() {
     setLoading(true);
     setError("");
     setSearched(false);
+    setSelected(new Set());
 
     const params = new URLSearchParams({
       city:   searchCity.trim(),
@@ -133,6 +136,33 @@ export default function DiscoverView() {
     setAdding((prev) => { const n = new Set(prev); n.delete(venue.osm_id); return n; });
   }
 
+  function toggleSelect(osmId: string) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(osmId)) n.delete(osmId); else n.add(osmId);
+      return n;
+    });
+  }
+
+  function toggleSelectAll(venues: DiscoverResult[]) {
+    const allIds = venues.map((v) => v.osm_id);
+    const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
+    setSelected(allSelected ? new Set() : new Set(allIds));
+  }
+
+  // Adds venues one at a time (reuses handleAdd, which also updates
+  // the per-venue "adding"/"added" state each button already relies on),
+  // tracking overall progress for the bulk action button.
+  async function handleBulkAdd(venues: DiscoverResult[]) {
+    setBulkProgress({ done: 0, total: venues.length });
+    for (let i = 0; i < venues.length; i++) {
+      await handleAdd(venues[i]);
+      setBulkProgress({ done: i + 1, total: venues.length });
+    }
+    setBulkProgress(null);
+    setSelected(new Set());
+  }
+
   const typeColor = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.color ?? "#9a9591";
   const typeLabel = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.label.replace(/s$/, "").replace(/ies$/, "y") ?? type;
 
@@ -209,9 +239,34 @@ export default function DiscoverView() {
             <>
               {newVenues.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#9a9591" }}>
-                    {newVenues.length} new venue{newVenues.length !== 1 ? "s" : ""} found
-                  </h3>
+                  <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#9a9591" }}>
+                      {newVenues.length} new venue{newVenues.length !== 1 ? "s" : ""} found
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleSelectAll(newVenues)}
+                        className="text-xs px-2 py-1 rounded font-medium transition-all hover:brightness-110"
+                        style={{ color: "#9a9591", border: "1px solid rgba(255,255,255,0.1)", background: "#1e2128" }}
+                      >
+                        {newVenues.every((v) => selected.has(v.osm_id)) ? "Deselect All" : "Select All"}
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleBulkAdd(selected.size > 0 ? newVenues.filter((v) => selected.has(v.osm_id)) : newVenues)
+                        }
+                        disabled={!!bulkProgress}
+                        className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#D4A64F", color: "#0E0E10", opacity: bulkProgress ? 0.7 : 1 }}
+                      >
+                        {bulkProgress
+                          ? `Adding ${bulkProgress.done}/${bulkProgress.total}…`
+                          : selected.size > 0
+                          ? `+ Add Selected Venues (${selected.size})`
+                          : `+ Add All Venues (${newVenues.length})`}
+                      </button>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                     {newVenues.map((venue) => {
                       const isAdding = adding.has(venue.osm_id);
@@ -224,9 +279,24 @@ export default function DiscoverView() {
                           style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-semibold leading-snug" style={{ color: "#F4E8D2" }}>
-                              {venue.name}
-                            </p>
+                            <div className="flex items-start gap-2 min-w-0">
+                              <button
+                                onClick={() => toggleSelect(venue.osm_id)}
+                                className="mt-0.5 w-4 h-4 rounded-sm flex items-center justify-center shrink-0 transition-all"
+                                style={{
+                                  backgroundColor: selected.has(venue.osm_id) ? "#D4A64F" : "transparent",
+                                  border: `1px solid ${selected.has(venue.osm_id) ? "#D4A64F" : "rgba(255,255,255,0.2)"}`,
+                                }}
+                                aria-label={selected.has(venue.osm_id) ? "Deselect venue" : "Select venue"}
+                              >
+                                {selected.has(venue.osm_id) && (
+                                  <span style={{ color: "#0E0E10", fontSize: "9px", fontWeight: 700 }}>✓</span>
+                                )}
+                              </button>
+                              <p className="text-sm font-semibold leading-snug" style={{ color: "#F4E8D2" }}>
+                                {venue.name}
+                              </p>
+                            </div>
                             <span
                               className="text-xs px-2 py-0.5 rounded-full shrink-0"
                               style={{ backgroundColor: `${color}22`, color, border: `1px solid ${color}44` }}
