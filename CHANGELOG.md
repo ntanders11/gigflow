@@ -1,5 +1,10 @@
 # StageReach Changelog
 
+## 2026-07-28 (continued)
+- [Change] Switched venue discovery back to Google Places as the primary search, now that billing is active on the Google Cloud project. Combined what used to be 2 search calls per user search into 1, halving the billable calls and doubling the free monthly search volume before any cost kicks in. Geoapify and OpenStreetMap remain as automatic backups if Google is ever unavailable.
+- [Feature] A hard daily request cap (200/day) was set on both the Places and Geocoding APIs in Google Cloud, so runaway or abusive traffic can never generate a surprise bill — worst case is capped around $32/month, and normal usage is expected to stay free.
+- [Feature] Venues Google explicitly tags as live music venues now show a "🎵 Live music confirmed" badge on the Discover Venues page — the first genuinely confirmed (not just guessed) live-music signal in the app.
+
 ## 2026-07-28
 - [Fix] Discover Venues search was completely broken ("Search unavailable — please try again.") for every location. Root cause: the Google Cloud project behind venue search and geocoding had its free trial expire, blocking both APIs — fixing it would have required adding a payment method. Switched venue discovery to Geoapify (a free service, no billing needed) for both geocoding and venue search; the free OpenStreetMap fallback stays in place as a last resort. Verified with real searches — dozens of bars, breweries, and wineries now return correctly.
 - [Feature] Select and bulk-add venues on the Discover Venues page — each result now has a checkbox, plus a Select All toggle. The "+ Add" button adapts: "Add All Venues" when nothing's checked, "Add Selected Venues" once you've picked some, with a live progress count while adding.
