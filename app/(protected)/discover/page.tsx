@@ -16,7 +16,7 @@ export default async function DiscoverPage() {
           </h1>
         </div>
         <p className="text-sm mb-8" style={{ color: "#5e5c58" }}>
-          Search for live music venues near any city and add them to your pipeline with one click.
+          Search bars, pubs, breweries, wineries, and nightlife venues near any city — places worth pitching for live music — and add them to your pipeline with one click.
         </p>
         <DiscoverView />
       </div>

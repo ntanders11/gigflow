@@ -231,7 +231,7 @@ export default function DiscoverView() {
           {newVenues.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>
-                {inPipeline.length > 0 ? "All venues in this area are already in your pipeline" : "No live music venues found"}
+                {inPipeline.length > 0 ? "All venues in this area are already in your pipeline" : "No venues found nearby"}
               </p>
               <p className="text-xs" style={{ color: "#5e5c58" }}>Try a larger radius or a nearby bigger city.</p>
             </div>
