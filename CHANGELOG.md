@@ -2,6 +2,7 @@
 
 ## 2026-07-28
 - [Fix] Discover Venues search was completely broken ("Search unavailable — please try again.") for every location. Root cause: the Google Cloud project behind venue search and geocoding had its free trial expire, blocking both APIs — fixing it would have required adding a payment method. Switched venue discovery to Geoapify (a free service, no billing needed) for both geocoding and venue search; the free OpenStreetMap fallback stays in place as a last resort. Verified with real searches — dozens of bars, breweries, and wineries now return correctly.
+- [Feature] Select and bulk-add venues on the Discover Venues page — each result now has a checkbox, plus a Select All toggle. The "+ Add" button adapts: "Add All Venues" when nothing's checked, "Add Selected Venues" once you've picked some, with a live progress count while adding.
 
 ## 2026-07-15
 - [Fix] Pitch/follow-up/invoice emails landing in spam — finally resolved. Root cause: the old Resend account's shared setup broke, and the domain was never properly verified. Moved to a new dedicated Resend account (booking@taylorandersonmusic.com), re-verified stagereach.app there (DKIM, SPF, DMARC, and receiving MX all confirmed "Verified"), generated a new API key, and updated it in both local dev and Vercel production. Next real pitch/follow-up email sent should land in the inbox, not spam.
