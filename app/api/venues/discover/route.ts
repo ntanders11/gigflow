@@ -8,8 +8,6 @@ const GEOAPIFY_TYPE_MAP: Record<string, string> = {
   "adult.nightclub": "club",
   "production.brewery": "brewery",
   "production.winery": "winery",
-  "entertainment.culture.theatre": "venue",
-  "entertainment.culture.arts_centre": "venue",
 };
 
 // Map legacy Overpass/OSM types
@@ -137,17 +135,16 @@ async function searchWithGeoapify(
   apiKey: string,
   existingNames: Set<string>,
 ): Promise<DiscoverResult[]> {
-  // Note: deliberately NOT using the generic "entertainment" parent category —
-  // it pulls in museums, cinemas, bowling alleys, and climbing gyms (verified
-  // against real API results). theatre/arts_centre are the specific
-  // subcategories that actually correspond to concert halls and performance
-  // venues worth pitching for live music.
+  // Deliberately scoped to small, informal venues — the kind a musician can
+  // walk into and pitch for a regular gig slot. Explicitly NOT the generic
+  // "entertainment" category (pulls in museums, cinemas, bowling alleys) and
+  // NOT theatre/arts_centre either — those surfaced university auditoriums
+  // and city park amphitheaters, which book through totally different
+  // channels than a bar or club does.
   const categories = [
     "catering.bar",
     "catering.pub",
     "adult.nightclub",
-    "entertainment.culture.theatre",
-    "entertainment.culture.arts_centre",
     "production.brewery",
     "production.winery",
   ].join(",");
