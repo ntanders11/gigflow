@@ -249,7 +249,7 @@ async function searchWithGoogle(
       phone: place.nationalPhoneNumber || null,
       rating: typeof place.rating === "number" ? place.rating : null,
       review_count: place.userRatingCount ?? 0,
-      live_music_tagged: false,
+      live_music_tagged: placeTypes.includes("live_music_venue"),
       already_in_pipeline: existingNames.has(name.toLowerCase().trim()),
     });
   }

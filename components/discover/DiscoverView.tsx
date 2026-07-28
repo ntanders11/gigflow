@@ -305,6 +305,15 @@ export default function DiscoverView() {
                             </span>
                           </div>
 
+                          {venue.live_music_tagged && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full self-start"
+                              style={{ backgroundColor: "rgba(76,175,125,0.15)", color: "#4caf7d", border: "1px solid #4caf7d44" }}
+                            >
+                              🎵 Live music confirmed
+                            </span>
+                          )}
+
                           {venue.rating && (
                             <p className="text-xs" style={{ color: "#D4A64F" }}>
                               {"★".repeat(Math.round(venue.rating))}{"☆".repeat(5 - Math.round(venue.rating))} {venue.rating} · {venue.review_count} reviews
