@@ -367,4 +367,6 @@ This session: re-added `stagereach.app` to the new Resend account, walked throug
 
 Also generated a new Resend API key and updated it in both `.env.local` (local dev) and Vercel's production Environment Variables (`RESEND_API_KEY` for the `gigflow` project) — the old key was still pointed at the broken/old account. Vercel auto-redeployed after the env var change.
 
-**Still open / worth confirming next session:** Send a real pitch or follow-up email from the live app and confirm it lands in an inbox, not spam — this hasn't been end-to-end tested since the fix. Also still unconfirmed from earlier: whether `013_add_stagereach_codes.sql` invite-code migration was ever run in Supabase SQL Editor.
+**Confirmed resolved same session:** Sent two real test pitch emails via the live app — both landed straight in the inbox (not spam), confirmed by searching Mail directly. The deliverability fix works end-to-end.
+
+**Confirmed resolved (no action needed):** Queried the `invite_codes` table directly via the Supabase REST API using the service role key — all 5 codes from `013_add_stagereach_codes.sql` (`STAGEREACH2026`, `STAGEREACH`, `BETA`, `MUSICIAN`, `GIGFLOW`) were already present and active, added back on 2026-05-28/29. The migration had already been run; this was just an unconfirmed item on the list, not an actual bug. The shareable signup link (`stagereach.app/signup?code=STAGEREACH2026`) has been working the whole time.
