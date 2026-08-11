@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
-
+import { sendArtistEmail } from "@/lib/email/send-artist-email";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -31,29 +30,10 @@ export async function POST(request: NextRequest) {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  // Guard: both env vars must be present or emails can never work
-  const apiKey   = (process.env.RESEND_API_KEY ?? "").trim();
-  const fromEmail = (process.env.RESEND_FROM_EMAIL ?? "").trim();
-  if (!apiKey) {
-    console.error("send-email: RESEND_API_KEY is not set in environment variables");
-    return NextResponse.json({ error: "Email service not configured (missing API key)" }, { status: 500 });
-  }
-  if (!fromEmail) {
-    console.error("send-email: RESEND_FROM_EMAIL is not set in environment variables");
-    return NextResponse.json({ error: "Email service not configured (missing from address)" }, { status: 500 });
-  }
-
-  const artistName   = (artistProfile?.display_name ?? "StageReach Artist").replace(/[<>"]/g, "").trim();
-  const replyToRaw   = (artistProfile?.contact_email ?? user.email ?? "").trim();
-  const fromAddress  = artistName ? `${artistName} <${fromEmail}>` : fromEmail;
-
-  // Only include replyTo when we have a real address — passing an empty
-  // string to Resend causes the send to fail silently.
+  const artistName = (artistProfile?.display_name ?? "StageReach Artist").replace(/[<>"]/g, "").trim();
+  const replyToRaw = (artistProfile?.contact_email ?? user.email ?? "").trim();
   const replyTo = replyToRaw || undefined;
 
-  console.log(`send-email: from="${fromAddress}" replyTo="${replyTo ?? "(none)"}" to="${to}" subject="${subject}"`);
-
-  // Send via Resend
   // Convert plain text to HTML, making the YouTube link clickable
   const htmlBody = emailBody
     .replace(/&/g, "&amp;")
@@ -65,22 +45,22 @@ export async function POST(request: NextRequest) {
     )
     .replace(/\n/g, "<br>");
 
-  const resend = new Resend(apiKey);
-  const { data: sendData, error: sendError } = await resend.emails.send({
-    from: fromAddress,
-    ...(replyTo ? { replyTo } : {}),
+  const sendResult = await sendArtistEmail({
+    userId: user.id,
     to,
     subject,
     text: emailBody,
     html: `<div style="font-family:sans-serif;font-size:14px;line-height:1.6;color:#333;max-width:600px">${htmlBody}</div>`,
+    fromName: artistName,
+    replyTo,
   });
 
-  if (sendError) {
-    console.error("send-email: Resend error:", sendError.message);
-    return NextResponse.json({ error: sendError.message }, { status: 500 });
+  if (!sendResult.success) {
+    console.error("send-email: send failed:", sendResult.error);
+    return NextResponse.json({ error: sendResult.error ?? "Failed to send email" }, { status: 500 });
   }
 
-  console.log(`send-email: Resend accepted → id=${sendData?.id}`);
+  console.log(`send-email: sent via ${sendResult.provider} → id=${sendResult.providerMessageId ?? "(none)"}`);
 
   // Log the interaction
   const { data: interaction, error: interactionError } = await supabase
@@ -92,7 +72,8 @@ export async function POST(request: NextRequest) {
       email_subject: subject,
       email_body: emailBody,
       email_sent: true,
-      resend_id: sendData?.id ?? null,
+      resend_id: sendResult.providerMessageId,
+      sent_via: sendResult.provider,
       occurred_at: new Date().toISOString(),
     })
     .select()
@@ -126,7 +107,8 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    resend_id: sendData?.id,
+    resend_id: sendResult.providerMessageId,
+    sent_via: sendResult.provider,
     interaction,
     stage: stageUpdate.stage ?? venueNow?.stage ?? null,
   });
