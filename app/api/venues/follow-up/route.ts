@@ -1,9 +1,7 @@
 // app/api/venues/follow-up/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendArtistEmail } from "@/lib/email/send-artist-email";
 
 interface ArtistInfo {
   name: string;
@@ -40,7 +38,6 @@ export async function POST(request: NextRequest) {
   const supabase = await createServiceClient();
   const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
 
-  // Get contacted venues last touched 5+ days ago with an email address
   const { data: venues, error: venueError } = await supabase
     .from("venues")
     .select("id, name, contact_email, user_id")
@@ -56,7 +53,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ sent: 0, message: "No venues need follow-up" });
   }
 
-  // Filter out venues that already received a follow-up
   const venueIds = venues.map((v) => v.id);
   const { data: existingFollowUps } = await supabase
     .from("interactions")
@@ -74,7 +70,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ sent: 0, message: "All contacted venues already received a follow-up" });
   }
 
-  // Batch-fetch artist profiles and emails for all unique users
   const uniqueUserIds = [...new Set(eligible.map((v) => v.user_id))];
 
   const { data: artistProfiles } = await supabase
@@ -113,32 +108,32 @@ export async function POST(request: NextRequest) {
       .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" style="color:#4a9d7a;">$1</a>')
       .replace(/\n/g, "<br>");
 
-    const { data: sendData, error: sendError } = await resend.emails.send({
-      from: `${artist.name} <${process.env.RESEND_FROM_EMAIL}>`,
-      replyTo: artist.email,
+    const sendResult = await sendArtistEmail({
+      userId: venue.user_id,
       to: venue.contact_email!,
       subject,
       text: body,
       html: `<div style="font-family:sans-serif;font-size:14px;line-height:1.6;color:#333;max-width:600px">${htmlBody}</div>`,
+      fromName: artist.name,
+      replyTo: artist.email || undefined,
     });
 
-    if (sendError) {
-      results.push({ venue: venue.name, status: `error: ${sendError.message}` });
+    if (!sendResult.success) {
+      results.push({ venue: venue.name, status: `error: ${sendResult.error}` });
       continue;
     }
 
-    // Log interaction
     await supabase.from("interactions").insert({
       venue_id: venue.id,
       user_id: venue.user_id,
       type: "follow_up",
       email_subject: subject,
       email_sent: true,
-      resend_id: sendData?.id ?? null,
+      resend_id: sendResult.providerMessageId,
+      sent_via: sendResult.provider,
       occurred_at: now,
     });
 
-    // Update last_contacted_at
     await supabase
       .from("venues")
       .update({ last_contacted_at: now })
