@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-07-28 (restoring Google Places, then reverting it)
+- [Change] Reverted venue discovery back to Geoapify as the sole provider. Google Places was fully working (billing active, spending capped at 200 requests/day on both APIs) and a real precision bug was fixed (results like Topgolf and a bowling alley were sneaking in because Google tags places with many overlapping categories — fixed by filtering on Google's more specific "primaryType" field instead). But after seeing it working, decided the ongoing complexity and even-capped financial exposure wasn't worth it for the quality gain — Geoapify's data already avoids the same noise problem (OpenStreetMap tags each place with one specific category, not a long overlapping list) at zero cost and zero billing risk. The Google integration is fully preserved in git history if ever wanted back.
+- [Fix] Added the "Powered by Geoapify" + OpenStreetMap attribution required by Geoapify's free-tier terms, now that it's the sole search provider rather than an occasional fallback.
+
 ## 2026-07-28 (continued)
 - [Change] Switched venue discovery back to Google Places as the primary search, now that billing is active on the Google Cloud project. Combined what used to be 2 search calls per user search into 1, halving the billable calls and doubling the free monthly search volume before any cost kicks in. Geoapify and OpenStreetMap remain as automatic backups if Google is ever unavailable.
 - [Feature] A hard daily request cap (200/day) was set on both the Places and Geocoding APIs in Google Cloud, so runaway or abusive traffic can never generate a surprise bill — worst case is capped around $32/month, and normal usage is expected to stay free.
