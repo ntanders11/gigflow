@@ -34,6 +34,12 @@ interface EmailConnectionRow {
   updated_at: string;
 }
 
+// Note: updated_at is bumped by ANY token refresh, including ones triggered
+// outside this file (e.g. app/api/calendar/sync/route.ts refreshing an
+// Outlook token for calendar purposes, not sending). If a UI caller for
+// calendar sync is ever added, a calendar-only action could incidentally
+// change which provider "wins" here for the artist's next email send.
+// Currently inert — calendar/sync has no UI caller anywhere in the app.
 function pickConnection(connections: EmailConnectionRow[]): EmailConnectionRow | null {
   if (connections.length === 0) return null;
   const active = connections.filter((c) => c.status === "active");
