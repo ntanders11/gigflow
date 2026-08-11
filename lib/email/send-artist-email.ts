@@ -124,10 +124,17 @@ async function sendViaResend(params: SendArtistEmailParams): Promise<SendArtistE
 export async function sendArtistEmail(params: SendArtistEmailParams): Promise<SendArtistEmailResult> {
   const supabase = await createServiceClient();
 
-  const { data: connections } = await supabase
+  const { data: connections, error: connectionsError } = await supabase
     .from("email_connections")
     .select("id, provider, connected_email, access_token, refresh_token, expires_at, status, updated_at")
     .eq("user_id", params.userId);
+
+  if (connectionsError) {
+    console.error(
+      `send-artist-email: failed to look up connections for user ${params.userId}, falling back to Resend:`,
+      connectionsError.message
+    );
+  }
 
   const connection = pickConnection((connections as EmailConnectionRow[]) ?? []);
 
