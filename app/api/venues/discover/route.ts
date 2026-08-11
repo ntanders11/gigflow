@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// Map Google Places types → our simplified type labels. Deliberately
-// scoped to small, informal venues only (see searchWithGoogle) — no
-// concert halls, theaters, or event venues, which book through a
-// different channel than a bar or club does.
-const GOOGLE_TYPE_MAP: Record<string, string> = {
-  bar: "bar",
-  night_club: "club",
-  winery: "winery",
-  brewery: "brewery",
-};
-
 // Map Geoapify categories → our simplified type labels
 const GEOAPIFY_TYPE_MAP: Record<string, string> = {
   "catering.bar": "bar",
@@ -42,26 +31,12 @@ type DiscoverResult = {
   already_in_pipeline: boolean;
 };
 
-// Geocode a city/zip string. Google first (most accurate, requires
-// billing), then Geoapify (free, no billing), then Nominatim (free,
-// US-restricted) as a last resort.
+// Geocode a city/zip string. Geoapify first (free, no billing), then
+// Nominatim (also free, US-restricted) as a last resort.
 async function geocodeCity(
   city: string,
-  googleKey: string | undefined,
   geoapifyKey: string | undefined
 ): Promise<{ lat: number; lon: number } | null> {
-  if (googleKey) {
-    try {
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city)}&region=us&key=${googleKey}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
-      if (res.ok) {
-        const data = await res.json();
-        const loc = data.results?.[0]?.geometry?.location;
-        if (loc) return { lat: loc.lat, lon: loc.lng };
-      }
-    } catch { /* fall through */ }
-  }
-
   if (geoapifyKey) {
     try {
       const url = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(city)}&filter=countrycode:us&limit=1&apiKey=${geoapifyKey}`;
@@ -101,7 +76,6 @@ export async function GET(req: NextRequest) {
   const miles     = parseInt(searchParams.get("radius") ?? "25");
   const radiusMeters = Math.min(miles * 1609, 50000);
 
-  const googleKey   = process.env.GOOGLE_PLACES_API_KEY?.trim();
   const geoapifyKey = process.env.GEOAPIFY_API_KEY?.trim();
 
   // Support legacy lat/lon params so old clients don't break,
@@ -114,7 +88,7 @@ export async function GET(req: NextRequest) {
     lat = latParam;
     lon = lonParam;
   } else if (cityParam) {
-    const coords = await geocodeCity(cityParam, googleKey, geoapifyKey);
+    const coords = await geocodeCity(cityParam, geoapifyKey);
     if (!coords) {
       return NextResponse.json({ error: "Location not found — try a different city or zip." }, { status: 400 });
     }
@@ -131,20 +105,7 @@ export async function GET(req: NextRequest) {
     .eq("user_id", user.id);
   const existingNames = new Set((existingVenues ?? []).map((v: { name: string }) => v.name.toLowerCase().trim()));
 
-  // ── 1. Try Google Places (best data quality — requires billing + a
-  //        hard budget cap set on the Google Cloud project) ──────────────────
-  if (googleKey) {
-    try {
-      const results = await searchWithGoogle(lat, lon, radiusMeters, googleKey, existingNames);
-      if (results.length > 0) {
-        return NextResponse.json({ results });
-      }
-    } catch (err) {
-      console.error("Google Places search failed:", err);
-    }
-  }
-
-  // ── 2. Geoapify fallback (free tier, no billing required) ──────────────────
+  // ── 1. Geoapify Places (free tier, no billing required) ────────────────────
   if (geoapifyKey) {
     try {
       const results = await searchWithGeoapify(lat, lon, radiusMeters, geoapifyKey, existingNames);
@@ -156,7 +117,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── 3. Overpass fallback ───────────────────────────────────────────────────
+  // ── 2. Overpass fallback ───────────────────────────────────────────────────
   try {
     const results = await searchWithOverpass(lat, lon, radiusMeters, existingNames);
     return NextResponse.json({ results });
@@ -165,99 +126,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// ── Google Places Nearby Search ──────────────────────────────────────────────
-// Deliberately a single combined call (not one pass per venue type) — halves
-// the number of billable API calls per search, doubling how many free
-// searches the account gets before any cost kicks in.
-async function searchWithGoogle(
-  lat: number,
-  lon: number,
-  radiusMeters: number,
-  apiKey: string,
-  existingNames: Set<string>,
-): Promise<DiscoverResult[]> {
-  const fieldMask = [
-    "places.id",
-    "places.displayName",
-    "places.formattedAddress",
-    "places.types",
-    "places.websiteUri",
-    "places.nationalPhoneNumber",
-    "places.rating",
-    "places.userRatingCount",
-  ].join(",");
-
-  const headers = {
-    "Content-Type": "application/json",
-    "X-Goog-Api-Key": apiKey,
-    "X-Goog-FieldMask": fieldMask,
-  };
-
-  const locationRestriction = {
-    circle: {
-      center: { latitude: lat, longitude: lon },
-      radius: radiusMeters,
-    },
-  };
-
-  // Small, informal venues only — the kind a musician can walk into and
-  // pitch for a regular gig slot. No concert_hall/event_venue/
-  // performing_arts_theater — those surfaced universities and city park
-  // amphitheaters when tried, which book through a different channel.
-  const includedTypes = ["bar", "night_club", "winery", "brewery"];
-
-  const res = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ locationRestriction, includedTypes, maxResultCount: 20 }),
-    signal: AbortSignal.timeout(8000),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Google Places error ${res.status}: ${err.slice(0, 300)}`);
-  }
-
-  const data = await res.json();
-  const seen = new Set<string>();
-  const results: DiscoverResult[] = [];
-
-  for (const place of data.places ?? []) {
-    const name: string = place.displayName?.text ?? "";
-    if (!name || seen.has(place.id)) continue;
-    seen.add(place.id);
-
-    const placeTypes: string[] = place.types ?? [];
-    let mappedType = "venue";
-    for (const t of placeTypes) {
-      if (GOOGLE_TYPE_MAP[t]) { mappedType = GOOGLE_TYPE_MAP[t]; break; }
-    }
-
-    // Extract city: Google address is "street, city, STATE zip, USA"
-    const fullAddress: string = place.formattedAddress ?? "";
-    const addrWithoutCountry = fullAddress.replace(/, USA$/, "");
-    const addrParts = addrWithoutCountry.split(", ");
-    const city = addrParts.length >= 2 ? addrParts[addrParts.length - 2] : null;
-
-    results.push({
-      osm_id: place.id,
-      name,
-      type: mappedType,
-      city,
-      address: fullAddress || null,
-      website: place.websiteUri || null,
-      phone: place.nationalPhoneNumber || null,
-      rating: typeof place.rating === "number" ? place.rating : null,
-      review_count: place.userRatingCount ?? 0,
-      live_music_tagged: placeTypes.includes("live_music_venue"),
-      already_in_pipeline: existingNames.has(name.toLowerCase().trim()),
-    });
-  }
-
-  return results;
-}
-
 // ── Geoapify Places search ───────────────────────────────────────────────────
+// Deliberately scoped to small, informal venues — the kind a musician can
+// walk into and pitch for a regular gig slot. OSM's single-tag category
+// system (a place has one `amenity` value) avoids the noise Google's
+// multi-type tagging caused, where restaurants/hotels/bowling alleys that
+// happen to serve alcohol also carry a "bar" tag.
 async function searchWithGeoapify(
   lat: number,
   lon: number,

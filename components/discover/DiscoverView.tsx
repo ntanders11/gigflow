@@ -363,6 +363,20 @@ export default function DiscoverView() {
           )}
         </>
       )}
+
+      {searched && !loading && (
+        <p className="text-xs text-center mt-6" style={{ color: "#5e5c58" }}>
+          Search results powered by{" "}
+          <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer" className="hover:brightness-125 transition-all" style={{ color: "#5e5c58", textDecoration: "underline" }}>
+            Geoapify
+          </a>{" "}
+          · Map data ©{" "}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="hover:brightness-125 transition-all" style={{ color: "#5e5c58", textDecoration: "underline" }}>
+            OpenStreetMap
+          </a>{" "}
+          contributors
+        </p>
+      )}
     </div>
   );
 }
