@@ -10,6 +10,15 @@ export type ConfidenceLevel = "HIGH" | "MEDIUM" | "LOW";
 
 export type InteractionType = "email" | "call" | "in_person" | "note" | "reply" | "follow_up";
 
+export type EmailProvider = "gmail" | "outlook";
+export type EmailConnectionStatus = "active" | "needs_reconnect";
+
+export interface EmailConnection {
+  provider: EmailProvider;
+  connected_email: string;
+  status: EmailConnectionStatus;
+}
+
 export interface OutreachInfo {
   count: number;
   lastDate: string | null;
@@ -61,6 +70,7 @@ export interface Interaction {
   email_body: string | null;
   email_sent: boolean;
   resend_id: string | null;
+  sent_via: "resend" | "gmail" | "outlook" | null;
   created_at: string;
 }
 
