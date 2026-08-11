@@ -159,5 +159,10 @@ export async function sendArtistEmail(params: SendArtistEmailParams): Promise<Se
     }
   }
 
-  return sendViaResend(params);
+  try {
+    return await sendViaResend(params);
+  } catch (err) {
+    console.error(`send-artist-email: Resend send threw for user ${params.userId}:`, err);
+    return { success: false, provider: "resend", providerMessageId: null, error: `Resend send threw: ${err}` };
+  }
 }
