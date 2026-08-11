@@ -1,7 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { TokenRefreshError } from "@/lib/email/errors";
 
-export const OUTLOOK_SCOPE = "Calendars.ReadWrite Mail.Send offline_access";
+export const OUTLOOK_SCOPE = "Calendars.ReadWrite Mail.Send User.Read offline_access";
 
 interface TokenResponse {
   access_token: string;
