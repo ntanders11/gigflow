@@ -1,5 +1,51 @@
 # StageReach - Session Log
 
+## Session: 2026-08-11 — Personal email sending via Gmail/Outlook OAuth (designed and built, not yet merged)
+
+### The problem
+
+Taylor asked whether there was a better way to send pitch/follow-up emails after noticing sends failing — investigation found a second real user ("Tiffany Bird") is on StageReach sharing the same Resend account as Taylor, and Resend's free tier caps sending at 100 emails/day across the whole account. With two active users already, that shared cap was going to keep causing problems as the app grows, not a one-off glitch.
+
+### The decision
+
+Presented two options: (1) upgrade Resend to a paid plan (~$20/month, removes the daily cap, simple) or (2) let each artist connect and send from their own Gmail/Outlook account via OAuth (more work, but removes the shared-cap problem entirely and makes outreach look like it's genuinely coming from the artist, not a shared bot address). **Taylor chose option 2.**
+
+### Process followed
+
+Used the project's brainstorming → spec → plan → subagent-driven-development workflow for a change this size:
+- **Design questions resolved with Taylor:** support both Gmail and Outlook (not just one); fall back to the shared Resend sender automatically for anyone who hasn't connected anything (never block sending); the automated 5-day follow-up cron should also use a connected account when available, not just interactive sends; Outlook's connection should be combined with the *existing* (but never actually wired up) calendar-sync OAuth flow rather than a second separate login; the Connected Accounts UI lives on the Artist Profile page (there's no dedicated Settings page yet); if a connected account fails mid-send, retry via the shared sender automatically rather than surfacing an error.
+- **Spec written, reviewed, and revised** (`docs/superpowers/specs/2026-08-11-personal-email-oauth-design.md`) — two review rounds caught real gaps before any code was written: refreshed OAuth tokens weren't being saved back to the database, a successful reconnect wasn't resetting the "needs reconnect" warning, and there was no plan for recording which service (Gmail/Outlook/shared) actually sent a given email.
+- **13-task implementation plan written and reviewed** (`docs/superpowers/plans/2026-08-11-personal-email-oauth.md`) — plan review caught two more bugs before implementation: a transient network hiccup during token refresh would have wrongly told an artist to reconnect, and the "reconnect needed" UI state would have shown the wrong button.
+- **Built task-by-task in an isolated worktree** (`.worktrees/personal-email-oauth`, branch `feature/personal-email-oauth`) using fresh subagents per task with two-stage review (spec compliance, then code quality) after each one.
+
+### What got built
+
+- New `email_connections` database table (one row per artist per provider — Gmail/Outlook — storing the connection and its OAuth tokens)
+- New Gmail OAuth connect/send flow from scratch
+- Outlook's existing calendar-only OAuth flow extended to also request mail-sending permission, and fixed — it turned out the redirect address had been hardcoded to `localhost` this whole time, meaning it had **never actually worked in production**, on top of never having a UI button to trigger it at all
+- A shared `sendArtistEmail()` helper that all three sending paths (single pitch/follow-up, batch sends, the automated cron) now go through — tries the artist's connected account first, falls back to the shared Resend sender automatically on any failure
+- A new "Connected Accounts" section on the Artist Profile page to connect/disconnect Gmail and Outlook
+
+### Real issues caught and fixed during code review (not just style nitpicks)
+
+- A hand-built email message (used for Gmail's API) had no protection against a malicious contact's name/address containing hidden characters that could forge extra hidden recipients into an outgoing email — fixed before it ever had a live caller
+- The Gmail/Outlook "Connect" buttons had no protection against a login-linking attack where someone could trick an already-logged-in artist into connecting a Gmail account that isn't theirs — added standard OAuth security (a one-time verification token) to both providers
+- The automated follow-up cron could have had one broken venue's send silently abort follow-ups for every other artist later in that day's batch — isolated so one failure can't take down the rest
+- A missing Microsoft permission (`User.Read`) would have made every real Outlook connection attempt fail with a vague, unhelpful error — caught and fixed before Taylor ever hit it
+- Documentation was double-checked against what was actually built and corrected twice — once for overstating that the feature was fully live before external setup is even done, once for citing an unverified number
+
+### Where this stands
+
+**Not yet merged to `main` and not deployed.** All 13 tasks complete, individually reviewed, and a final whole-implementation review passed with two follow-up fixes applied. Taylor decided to pause before merging.
+
+### Pick Up Here Next Session
+
+1. Merge `feature/personal-email-oauth` into `main` locally (safe — doesn't deploy anything by itself)
+2. Run the two new database migrations in the Supabase SQL Editor: `supabase/migrations/014_email_connections.sql` and `supabase/migrations/015_interactions_sent_via.sql`
+3. Taylor needs to do two things outside the codebase before this actually works: (a) create a Google OAuth client in Google Cloud Console (same project as the existing Places API key) and enable the Gmail API, and (b) in the Azure Portal, add the Mail.Send and User.Read permissions to the existing app registration and grant admin consent — both are documented step-by-step in the plan's Tasks 6 and 7
+4. Add the two new environment variables (`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`) to `.env.local` and to Vercel's production settings
+5. Only then push to `origin/main` and test a real Gmail/Outlook connection end-to-end before considering this fully live
+
 ## Session: 2026-05-28 (2) — Beta Tester Bug Fixes
 
 ### What Was Fixed
