@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-07-28 (merging search results)
+- [Fix] Some searches were returning very few venues (e.g. only 2 near Vancouver, WA) even though many more real bars/breweries existed nearby. Cause: Google's precise filtering only matches a couple of places per area, and Geoapify was only being used when Google returned zero results, not to fill in the gaps. Now both are searched at the same time and combined — verified this takes a sparse 2-result search up to around 50.
+
 ## 2026-07-28 (restoring Google Places as primary, 1 not 2)
 - [Change] Restored Google Places as the primary venue search provider (with Geoapify and OpenStreetMap Overpass as automatic backups), after all — decided the better data quality was worth keeping now that billing, the daily spending cap, and the primaryType noise fix are all in place and verified working.
 
