@@ -77,19 +77,7 @@ export default function ArtistProfilePage() {
   // Connected email accounts (Gmail / Outlook)
   const [connections, setConnections] = useState<EmailConnection[]>([]);
   const [connectionsLoading, setConnectionsLoading] = useState(true);
-  const [connectBanner, setConnectBanner] = useState<{ type: "success" | "error"; message: string } | null>(() => {
-    if (typeof window === "undefined") return null;
-    const params = new URLSearchParams(window.location.search);
-    const connected = params.get("connected");
-    const error = params.get("error");
-    if (connected === "gmail" || connected === "outlook") {
-      return { type: "success", message: `${connected === "gmail" ? "Gmail" : "Outlook"} connected.` };
-    }
-    if (error) {
-      return { type: "error", message: "Couldn't connect — please try again." };
-    }
-    return null;
-  });
+  const [connectBanner, setConnectBanner] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -124,14 +112,25 @@ export default function ArtistProfilePage() {
     loadConnections();
 
     const params = new URLSearchParams(window.location.search);
-    if (params.get("connected") || params.get("error")) {
+    const connected = params.get("connected");
+    const error = params.get("error");
+    if (connected === "gmail" || connected === "outlook") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of a post-redirect URL param to show a banner; not state synced from props/state, hydration-safe since it only runs client-side after mount
+      setConnectBanner({ type: "success", message: `${connected === "gmail" ? "Gmail" : "Outlook"} connected.` });
+      window.history.replaceState({}, "", "/artist-profile");
+    } else if (error) {
+      setConnectBanner({ type: "error", message: "Couldn't connect — please try again." });
       window.history.replaceState({}, "", "/artist-profile");
     }
   }, []);
 
   async function disconnectAccount(provider: "gmail" | "outlook") {
-    await fetch(`/api/email-connections?provider=${provider}`, { method: "DELETE" });
-    setConnections((prev) => prev.filter((c) => c.provider !== provider));
+    const res = await fetch(`/api/email-connections?provider=${provider}`, { method: "DELETE" });
+    if (res.ok) {
+      setConnections((prev) => prev.filter((c) => c.provider !== provider));
+    } else {
+      setConnectBanner({ type: "error", message: "Couldn't disconnect — please try again." });
+    }
   }
 
   async function save(updates: Partial<ArtistProfile>) {
