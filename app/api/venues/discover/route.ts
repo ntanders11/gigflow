@@ -137,32 +137,39 @@ export async function GET(req: NextRequest) {
     .eq("user_id", user.id);
   const existingNames = new Set((existingVenues ?? []).map((v: { name: string }) => v.name.toLowerCase().trim()));
 
-  // ── 1. Try Google Places (best data quality — requires billing + a
-  //        hard budget cap set on the Google Cloud project) ──────────────────
-  if (googleKey) {
-    try {
-      const results = await searchWithGoogle(lat, lon, radiusMeters, googleKey, existingNames);
-      if (results.length > 0) {
-        return NextResponse.json({ results });
-      }
-    } catch (err) {
-      console.error("Google Places search failed:", err);
-    }
+  // ── 1&2. Google Places + Geoapify, run together and merged ──────────────────
+  // Google's primaryType filter is precise but strict — a search area often
+  // only has a couple of places whose primaryType is exactly bar/pub/winery/
+  // brewery, even though more real small venues exist nearby (Google just
+  // ranks/categorizes them differently). Geoapify's broader category match
+  // fills in that gap. Run both concurrently rather than treating Geoapify as
+  // "only if Google totally fails" — dedupe by name, preferring Google's
+  // richer data (ratings, live-music tag) when both find the same venue.
+  const [googleSettled, geoapifySettled] = await Promise.allSettled([
+    googleKey ? searchWithGoogle(lat, lon, radiusMeters, googleKey, existingNames) : Promise.resolve([]),
+    geoapifyKey ? searchWithGeoapify(lat, lon, radiusMeters, geoapifyKey, existingNames) : Promise.resolve([]),
+  ]);
+
+  if (googleSettled.status === "rejected") console.error("Google Places search failed:", googleSettled.reason);
+  if (geoapifySettled.status === "rejected") console.error("Geoapify search failed:", geoapifySettled.reason);
+
+  const googleResults   = googleSettled.status === "fulfilled" ? googleSettled.value : [];
+  const geoapifyResults = geoapifySettled.status === "fulfilled" ? geoapifySettled.value : [];
+
+  const seen = new Set<string>();
+  const merged: DiscoverResult[] = [];
+  for (const r of [...googleResults, ...geoapifyResults]) {
+    const key = r.name.toLowerCase().trim();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(r);
   }
 
-  // ── 2. Geoapify fallback (free tier, no billing required) ──────────────────
-  if (geoapifyKey) {
-    try {
-      const results = await searchWithGeoapify(lat, lon, radiusMeters, geoapifyKey, existingNames);
-      if (results.length > 0) {
-        return NextResponse.json({ results });
-      }
-    } catch (err) {
-      console.error("Geoapify search failed:", err);
-    }
+  if (merged.length > 0) {
+    return NextResponse.json({ results: merged });
   }
 
-  // ── 3. Overpass fallback ───────────────────────────────────────────────────
+  // ── 3. Overpass fallback — only if both of the above came up empty ─────────
   try {
     const results = await searchWithOverpass(lat, lon, radiusMeters, existingNames);
     return NextResponse.json({ results });
