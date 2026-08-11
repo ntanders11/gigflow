@@ -1,9 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { refreshToken } from "@/lib/email/outlook";
+
+const REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
-  const accessToken = req.cookies.get("outlook_access_token")?.value;
-  if (!accessToken) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data: connection } = await supabase
+    .from("email_connections")
+    .select("id, access_token, refresh_token, expires_at")
+    .eq("user_id", user.id)
+    .eq("provider", "outlook")
+    .maybeSingle();
+
+  if (!connection) {
     return NextResponse.json({ error: "Not connected to Outlook" }, { status: 401 });
+  }
+
+  let accessToken = connection.access_token;
+  const expiresAt = new Date(connection.expires_at).getTime();
+  if (expiresAt - Date.now() < REFRESH_BUFFER_MS) {
+    try {
+      accessToken = await refreshToken(connection.id, connection.refresh_token);
+    } catch (err) {
+      console.error("calendar/sync: token refresh failed", err);
+      return NextResponse.json({ error: "Not connected to Outlook" }, { status: 401 });
+    }
   }
 
   const { venueName, city, gigDate, notes } = await req.json();
