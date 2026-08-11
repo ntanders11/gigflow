@@ -98,48 +98,53 @@ export async function POST(request: NextRequest) {
   const results: { venue: string; status: string }[] = [];
 
   for (const venue of eligible) {
-    const artist = artistMap.get(venue.user_id)!;
-    const subject = `Following up — live music inquiry for ${venue.name}`;
-    const body = buildFollowUpBody(venue.name, artist);
-    const htmlBody = body
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" style="color:#4a9d7a;">$1</a>')
-      .replace(/\n/g, "<br>");
+    try {
+      const artist = artistMap.get(venue.user_id)!;
+      const subject = `Following up — live music inquiry for ${venue.name}`;
+      const body = buildFollowUpBody(venue.name, artist);
+      const htmlBody = body
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" style="color:#4a9d7a;">$1</a>')
+        .replace(/\n/g, "<br>");
 
-    const sendResult = await sendArtistEmail({
-      userId: venue.user_id,
-      to: venue.contact_email!,
-      subject,
-      text: body,
-      html: `<div style="font-family:sans-serif;font-size:14px;line-height:1.6;color:#333;max-width:600px">${htmlBody}</div>`,
-      fromName: artist.name,
-      replyTo: artist.email || undefined,
-    });
+      const sendResult = await sendArtistEmail({
+        userId: venue.user_id,
+        to: venue.contact_email!,
+        subject,
+        text: body,
+        html: `<div style="font-family:sans-serif;font-size:14px;line-height:1.6;color:#333;max-width:600px">${htmlBody}</div>`,
+        fromName: artist.name,
+        replyTo: artist.email || undefined,
+      });
 
-    if (!sendResult.success) {
-      results.push({ venue: venue.name, status: `error: ${sendResult.error}` });
-      continue;
+      if (!sendResult.success) {
+        results.push({ venue: venue.name, status: `error: ${sendResult.error}` });
+        continue;
+      }
+
+      await supabase.from("interactions").insert({
+        venue_id: venue.id,
+        user_id: venue.user_id,
+        type: "follow_up",
+        email_subject: subject,
+        email_sent: true,
+        resend_id: sendResult.providerMessageId,
+        sent_via: sendResult.provider,
+        occurred_at: now,
+      });
+
+      await supabase
+        .from("venues")
+        .update({ last_contacted_at: now })
+        .eq("id", venue.id);
+
+      results.push({ venue: venue.name, status: "sent" });
+    } catch (err) {
+      console.error(`follow-up: unexpected error for venue ${venue.name}:`, err);
+      results.push({ venue: venue.name, status: `error: ${err}` });
     }
-
-    await supabase.from("interactions").insert({
-      venue_id: venue.id,
-      user_id: venue.user_id,
-      type: "follow_up",
-      email_subject: subject,
-      email_sent: true,
-      resend_id: sendResult.providerMessageId,
-      sent_via: sendResult.provider,
-      occurred_at: now,
-    });
-
-    await supabase
-      .from("venues")
-      .update({ last_contacted_at: now })
-      .eq("id", venue.id);
-
-    results.push({ venue: venue.name, status: "sent" });
   }
 
   return NextResponse.json({
