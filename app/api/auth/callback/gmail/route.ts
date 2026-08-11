@@ -8,6 +8,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/artist-profile?error=no_code", req.url));
   }
 
+  const state = req.nextUrl.searchParams.get("state");
+  const expectedState = req.cookies.get("gmail_oauth_state")?.value;
+  if (!state || !expectedState || state !== expectedState) {
+    return NextResponse.redirect(new URL("/artist-profile?error=invalid_state", req.url));
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -57,5 +63,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/artist-profile?error=save_failed", req.url));
   }
 
-  return NextResponse.redirect(new URL("/artist-profile?connected=gmail", req.url));
+  const response = NextResponse.redirect(new URL("/artist-profile?connected=gmail", req.url));
+  response.cookies.delete("gmail_oauth_state");
+  return response;
 }
