@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-07-28 (restoring Google Places as primary, 1 not 2)
+- [Change] Restored Google Places as the primary venue search provider (with Geoapify and OpenStreetMap Overpass as automatic backups), after all — decided the better data quality was worth keeping now that billing, the daily spending cap, and the primaryType noise fix are all in place and verified working.
+
 ## 2026-07-28 (restoring Google Places, then reverting it)
 - [Change] Reverted venue discovery back to Geoapify as the sole provider. Google Places was fully working (billing active, spending capped at 200 requests/day on both APIs) and a real precision bug was fixed (results like Topgolf and a bowling alley were sneaking in because Google tags places with many overlapping categories — fixed by filtering on Google's more specific "primaryType" field instead). But after seeing it working, decided the ongoing complexity and even-capped financial exposure wasn't worth it for the quality gain — Geoapify's data already avoids the same noise problem (OpenStreetMap tags each place with one specific category, not a long overlapping list) at zero cost and zero billing risk. The Google integration is fully preserved in git history if ever wanted back.
 - [Fix] Added the "Powered by Geoapify" + OpenStreetMap attribution required by Geoapify's free-tier terms, now that it's the sole search provider rather than an occasional fallback.
