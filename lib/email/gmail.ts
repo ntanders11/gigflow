@@ -94,6 +94,15 @@ function encodeSubject(subject: string): string {
   return `=?UTF-8?B?${Buffer.from(subject, "utf-8").toString("base64")}?=`;
 }
 
+// Values interpolated directly into a raw header line (From/To) must never
+// contain a CRLF — an attacker-controlled value like
+// "evil@x.com\r\nBcc: attacker@evil.com" would otherwise let a forged header
+// get injected into the outgoing message. Subject is already safe because
+// encodeSubject RFC-2047-encodes it, which absorbs any embedded CRLF.
+function stripHeaderInjection(value: string): string {
+  return value.replace(/[\r\n]/g, "");
+}
+
 function buildRawMessage({
   from,
   to,
@@ -107,21 +116,23 @@ function buildRawMessage({
   text: string;
   html: string;
 }): string {
-  const boundary = "stagereach_boundary";
+  const boundary = `stagereach_${crypto.randomUUID()}`;
   const message = [
-    `From: ${from}`,
-    `To: ${to}`,
+    `From: ${stripHeaderInjection(from)}`,
+    `To: ${stripHeaderInjection(to)}`,
     `Subject: ${encodeSubject(subject)}`,
     `MIME-Version: 1.0`,
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
     ``,
     `--${boundary}`,
     `Content-Type: text/plain; charset="UTF-8"`,
+    `Content-Transfer-Encoding: 8bit`,
     ``,
     text,
     ``,
     `--${boundary}`,
     `Content-Type: text/html; charset="UTF-8"`,
+    `Content-Transfer-Encoding: 8bit`,
     ``,
     html,
     ``,
