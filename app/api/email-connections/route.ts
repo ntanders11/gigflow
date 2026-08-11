@@ -50,6 +50,10 @@ export async function DELETE(req: NextRequest) {
     }
   }
 
+  // No equivalent revoke call for Outlook — Microsoft's v2.0 token endpoint
+  // has no one-call revoke API the way Google does. The row delete below is
+  // what actually stops StageReach from sending either way.
+
   const { error } = await supabase
     .from("email_connections")
     .delete()
