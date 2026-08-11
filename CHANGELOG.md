@@ -1,8 +1,9 @@
 # StageReach Changelog
 
 ## 2026-08-11
-- [Feature] Artists can now connect their own Gmail or Outlook account (Artist Profile → Connected Accounts) so pitch and follow-up emails send from their real address instead of the shared StageReach sender — removes the shared 100-email/day limit as a growth bottleneck for anyone who connects. If nothing is connected, or a connected account has a problem, sending automatically falls back to the shared sender so outreach never stops.
+- [Feature] Artists can now connect their own Gmail or Outlook account (Artist Profile → Connected Accounts) so pitch and follow-up emails send from their real address instead of the shared StageReach sender — removes the shared sender's daily sending limit as a growth bottleneck for anyone who connects. If nothing is connected, or a connected account has a problem, sending automatically falls back to the shared sender so outreach never stops.
 - [Fix] The Outlook calendar-connect flow had never actually worked in production — the redirect address was hardcoded to a local development URL. Fixed as part of rebuilding this flow to also handle email sending.
+- [Note] Requires a one-time setup step (creating Google OAuth credentials, granting a Microsoft permission) before artists can actually connect an account — not yet done as of this entry.
 
 ## 2026-07-28 (merging search results)
 - [Fix] Some searches were returning very few venues (e.g. only 2 near Vancouver, WA) even though many more real bars/breweries existed nearby. Cause: Google's precise filtering only matches a couple of places per area, and Geoapify was only being used when Google returned zero results, not to fill in the gaps. Now both are searched at the same time and combined — verified this takes a sparse 2-result search up to around 50.
