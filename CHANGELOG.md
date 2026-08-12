@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-12
+- [Feature] New artists now connect their Gmail or Outlook account as part of signing up (a new 5th onboarding step), instead of only discovering the option later on their profile page. If a connection attempt fails, artists can still continue and connect later — nothing about signup is ever fully blocked.
+
 ## 2026-08-11
 - [Feature] Artists can now connect their own Gmail or Outlook account (Artist Profile → Connected Accounts) so pitch and follow-up emails send from their real address instead of the shared StageReach sender — removes the shared sender's daily sending limit as a growth bottleneck for anyone who connects. If nothing is connected, or a connected account has a problem, sending automatically falls back to the shared sender so outreach never stops.
 - [Fix] The Outlook calendar-connect flow had never actually worked in production — the redirect address was hardcoded to a local development URL. Fixed as part of rebuilding this flow to also handle email sending.

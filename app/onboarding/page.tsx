@@ -77,10 +77,10 @@ export default function OnboardingPage() {
   // Artist Profile page's error handling — see that page's own useEffect),
   // jump straight to step 5 instead of defaulting to step 1. This can't be
   // done as a useState lazy initializer — window.location isn't available
-  // during server rendering, and reading it there would cause a hydration
-  // mismatch between the server render and the client's first render, the
-  // exact same class of bug already hit and fixed once on the Artist
-  // Profile page. An effect that runs after mount avoids that.
+  // during server rendering, so reading it there would crash with
+  // "window is not defined" on the server render, the exact same class of
+  // bug already hit and fixed once on the Artist Profile page. An effect
+  // that runs after mount avoids that.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
@@ -513,7 +513,10 @@ export default function OnboardingPage() {
 
             {emailConnectError && (
               <button
-                onClick={() => router.push("/dashboard")}
+                onClick={() => {
+                  document.cookie = "onboarding_email_connect=; path=/; max-age=0";
+                  router.push("/dashboard");
+                }}
                 className="w-full mt-4 text-xs"
                 style={{ color: "#5e5c58" }}
               >
