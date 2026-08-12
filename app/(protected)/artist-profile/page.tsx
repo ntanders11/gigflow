@@ -117,11 +117,15 @@ export default function ArtistProfilePage() {
 
     // The onboarding wizard sets this cookie right before sending the artist
     // to Google/Microsoft, to tag "the next OAuth outcome belongs to
-    // onboarding." Once any outcome (success or failure) has been observed
-    // here, it's spent and must be cleared either way — otherwise an
-    // unrelated later reconnect attempt from this page, within the cookie's
-    // short window, could get misrouted back into the onboarding wizard.
-    const fromOnboarding = document.cookie.includes("onboarding_email_connect=1");
+    // onboarding." Only check and clear it when an actual outcome is present
+    // in the URL — not on every page load — otherwise an unrelated visit to
+    // this page during the OAuth wait (e.g. a second tab) would silently
+    // consume the cookie before the real outcome ever arrives. Once a real
+    // outcome has been observed, it's spent and must be cleared either way,
+    // or an unrelated later reconnect attempt from this page, within the
+    // cookie's short window, could get misrouted back into onboarding.
+    const hasOutcome = connected === "gmail" || connected === "outlook" || !!error;
+    const fromOnboarding = hasOutcome && document.cookie.includes("onboarding_email_connect=1");
     if (fromOnboarding) {
       document.cookie = "onboarding_email_connect=; path=/; max-age=0";
     }
