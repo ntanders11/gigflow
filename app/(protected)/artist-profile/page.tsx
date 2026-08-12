@@ -114,11 +114,27 @@ export default function ArtistProfilePage() {
     const params = new URLSearchParams(window.location.search);
     const connected = params.get("connected");
     const error = params.get("error");
+
+    // The onboarding wizard sets this cookie right before sending the artist
+    // to Google/Microsoft, to tag "the next OAuth outcome belongs to
+    // onboarding." Once any outcome (success or failure) has been observed
+    // here, it's spent and must be cleared either way — otherwise an
+    // unrelated later reconnect attempt from this page, within the cookie's
+    // short window, could get misrouted back into the onboarding wizard.
+    const fromOnboarding = document.cookie.includes("onboarding_email_connect=1");
+    if (fromOnboarding) {
+      document.cookie = "onboarding_email_connect=; path=/; max-age=0";
+    }
+
     if (connected === "gmail" || connected === "outlook") {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of a post-redirect URL param to show a banner; not state synced from props/state, hydration-safe since it only runs client-side after mount
       setConnectBanner({ type: "success", message: `${connected === "gmail" ? "Gmail" : "Outlook"} connected.` });
       window.history.replaceState({}, "", "/artist-profile");
     } else if (error) {
+      if (fromOnboarding) {
+        window.location.replace(`/onboarding?error=${encodeURIComponent(error)}`);
+        return;
+      }
       setConnectBanner({ type: "error", message: "Couldn't connect — please try again." });
       window.history.replaceState({}, "", "/artist-profile");
     }
