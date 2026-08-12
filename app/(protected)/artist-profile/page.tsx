@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { ArtistProfile, Package, VideoSample, SocialLinks } from "@/types";
+import { ArtistProfile, Package, VideoSample, SocialLinks, EmailConnection } from "@/types";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 
 const DEFAULT_PACKAGES: Package[] = [
@@ -74,6 +74,11 @@ export default function ArtistProfilePage() {
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
   const [packageEdits, setPackageEdits] = useState<Partial<Package>>({});
 
+  // Connected email accounts (Gmail / Outlook)
+  const [connections, setConnections] = useState<EmailConnection[]>([]);
+  const [connectionsLoading, setConnectionsLoading] = useState(true);
+  const [connectBanner, setConnectBanner] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -94,6 +99,39 @@ export default function ArtistProfilePage() {
     }
     load();
   }, []);
+
+  useEffect(() => {
+    async function loadConnections() {
+      const res = await fetch("/api/email-connections");
+      if (res.ok) {
+        const data: { connections: EmailConnection[] } = await res.json();
+        setConnections(data.connections);
+      }
+      setConnectionsLoading(false);
+    }
+    loadConnections();
+
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get("connected");
+    const error = params.get("error");
+    if (connected === "gmail" || connected === "outlook") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of a post-redirect URL param to show a banner; not state synced from props/state, hydration-safe since it only runs client-side after mount
+      setConnectBanner({ type: "success", message: `${connected === "gmail" ? "Gmail" : "Outlook"} connected.` });
+      window.history.replaceState({}, "", "/artist-profile");
+    } else if (error) {
+      setConnectBanner({ type: "error", message: "Couldn't connect — please try again." });
+      window.history.replaceState({}, "", "/artist-profile");
+    }
+  }, []);
+
+  async function disconnectAccount(provider: "gmail" | "outlook") {
+    const res = await fetch(`/api/email-connections?provider=${provider}`, { method: "DELETE" });
+    if (res.ok) {
+      setConnections((prev) => prev.filter((c) => c.provider !== provider));
+    } else {
+      setConnectBanner({ type: "error", message: "Couldn't disconnect — please try again." });
+    }
+  }
 
   async function save(updates: Partial<ArtistProfile>) {
     setSaving(true);
@@ -518,6 +556,91 @@ export default function ArtistProfilePage() {
                 <p style={{ color: emailText ? "#9a9591" : "#5e5c58", fontSize: "12px" }}>
                   {emailText || "No email on file"}
                 </p>
+              </div>
+            )}
+          </div>
+
+          {/* Connected Accounts */}
+          <div
+            className="rounded-xl p-5"
+            style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <div style={{ fontSize: "9px", color: "#5e5c58", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>
+              Connected Accounts
+            </div>
+            <p style={{ color: "#9a9591", fontSize: "11px", marginBottom: "12px", lineHeight: 1.5 }}>
+              Connect Gmail or Outlook to send pitch and follow-up emails from your own address instead of StageReach&apos;s shared one.
+            </p>
+
+            {connectBanner && (
+              <div
+                className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 mb-3 text-xs"
+                style={{
+                  backgroundColor: connectBanner.type === "success" ? "rgba(76,175,125,0.12)" : "rgba(226,92,92,0.12)",
+                  color: connectBanner.type === "success" ? "#4caf7d" : "#e25c5c",
+                  border: `1px solid ${connectBanner.type === "success" ? "rgba(76,175,125,0.3)" : "rgba(226,92,92,0.3)"}`,
+                }}
+              >
+                <span>{connectBanner.message}</span>
+                <button
+                  onClick={() => setConnectBanner(null)}
+                  style={{ color: "inherit", fontSize: "13px", lineHeight: 1, cursor: "pointer", opacity: 0.7 }}
+                  aria-label="Dismiss"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {connectionsLoading ? (
+              <p style={{ color: "#5e5c58", fontSize: "11px" }}>Loading…</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {(["gmail", "outlook"] as const).map((provider) => {
+                  const connection = connections.find((c) => c.provider === provider);
+                  const label = provider === "gmail" ? "Gmail" : "Outlook";
+                  return (
+                    <div
+                      key={provider}
+                      className="flex items-center justify-between rounded-lg px-3 py-2"
+                      style={{ backgroundColor: "#1e2128" }}
+                    >
+                      <div>
+                        <div style={{ color: "#F4E8D2", fontSize: "12px", fontWeight: 500 }}>{label}</div>
+                        {connection ? (
+                          <div style={{ color: "#9a9591", fontSize: "10px" }}>{connection.connected_email}</div>
+                        ) : (
+                          <div style={{ color: "#5e5c58", fontSize: "10px" }}>Not connected</div>
+                        )}
+                        {connection?.status === "needs_reconnect" && (
+                          <div style={{ color: "#D4A64F", fontSize: "10px", marginTop: "2px" }}>
+                            Reconnect needed — sends fell back to your shared StageReach address
+                          </div>
+                        )}
+                      </div>
+                      {connection && connection.status === "active" ? (
+                        <button
+                          onClick={() => disconnectAccount(provider)}
+                          className="text-xs px-2.5 py-1 rounded transition-all hover:brightness-125"
+                          style={{ backgroundColor: "rgba(255,255,255,0.04)", color: "#9a9591", cursor: "pointer" }}
+                        >
+                          Disconnect
+                        </button>
+                      ) : (
+                        // Covers both "never connected" and "needs_reconnect" — in the
+                        // latter case, clicking Connect re-runs the OAuth flow and the
+                        // callback's upsert resets status back to 'active'.
+                        <a
+                          href={`/api/auth/${provider}/connect`}
+                          className="text-xs px-2.5 py-1 rounded font-semibold transition-all hover:brightness-110 inline-block"
+                          style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
+                        >
+                          Connect
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

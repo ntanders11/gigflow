@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { exchangeCode, fetchConnectedEmail, OUTLOOK_SCOPE } from "@/lib/email/outlook";
+import { exchangeCode, fetchConnectedEmail, GMAIL_SCOPES } from "@/lib/email/gmail";
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   }
 
   const state = req.nextUrl.searchParams.get("state");
-  const expectedState = req.cookies.get("outlook_oauth_state")?.value;
+  const expectedState = req.cookies.get("gmail_oauth_state")?.value;
   if (!state || !expectedState || state !== expectedState) {
     return NextResponse.redirect(new URL("/artist-profile?error=invalid_state", req.url));
   }
@@ -20,13 +20,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/outlook`;
+  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/gmail`;
 
   let tokens;
   try {
     tokens = await exchangeCode(code, redirectUri);
   } catch (err) {
-    console.error("outlook callback: token exchange failed", err);
+    console.error("gmail callback: token exchange failed", err);
     return NextResponse.redirect(new URL("/artist-profile?error=token_failed", req.url));
   }
 
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   try {
     connectedEmail = await fetchConnectedEmail(tokens.access_token);
   } catch (err) {
-    console.error("outlook callback: failed to fetch connected email", err);
+    console.error("gmail callback: failed to fetch connected email", err);
     return NextResponse.redirect(new URL("/artist-profile?error=token_failed", req.url));
   }
 
@@ -47,23 +47,23 @@ export async function GET(req: NextRequest) {
     .upsert(
       {
         user_id: user.id,
-        provider: "outlook",
+        provider: "gmail",
         connected_email: connectedEmail,
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-        scope: tokens.scope ?? OUTLOOK_SCOPE,
+        scope: tokens.scope ?? GMAIL_SCOPES,
         status: "active",
       },
       { onConflict: "user_id,provider" }
     );
 
   if (upsertError) {
-    console.error("outlook callback: failed to save connection", upsertError.message);
+    console.error("gmail callback: failed to save connection", upsertError.message);
     return NextResponse.redirect(new URL("/artist-profile?error=save_failed", req.url));
   }
 
-  const response = NextResponse.redirect(new URL("/artist-profile?connected=outlook", req.url));
-  response.cookies.delete("outlook_oauth_state");
+  const response = NextResponse.redirect(new URL("/artist-profile?connected=gmail", req.url));
+  response.cookies.delete("gmail_oauth_state");
   return response;
 }
