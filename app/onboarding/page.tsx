@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 interface FormData {
   // Step 1
@@ -35,7 +35,7 @@ const INITIAL: FormData = {
 function ProgressBar({ step }: { step: Step }) {
   return (
     <div className="flex items-center gap-1 mb-6">
-      {[1, 2, 3, 4].map((s) => (
+      {[1, 2, 3, 4, 5].map((s) => (
         <div
           key={s}
           className="h-1 flex-1 rounded-full transition-colors duration-300"
@@ -43,7 +43,7 @@ function ProgressBar({ step }: { step: Step }) {
         />
       ))}
       <span className="text-xs ml-3 shrink-0" style={{ color: "#9a9591" }}>
-        Step {step} of 4
+        Step {step} of 5
       </span>
     </div>
   );
@@ -69,6 +69,38 @@ export default function OnboardingPage() {
   const [cropSrc, setCropSrc]         = useState<string | null>(null);
   const [cropFileName, setCropFileName] = useState("");
   const [cropFileType, setCropFileType] = useState("");
+
+  // Step 5: email connect
+  const [emailConnectError, setEmailConnectError] = useState<string | null>(null);
+
+  // If we're landing here after a failed OAuth attempt (redirected from the
+  // Artist Profile page's error handling — see that page's own useEffect),
+  // jump straight to step 5 instead of defaulting to step 1. This can't be
+  // done as a useState lazy initializer — window.location isn't available
+  // during server rendering, and reading it there would cause a hydration
+  // mismatch between the server render and the client's first render, the
+  // exact same class of bug already hit and fixed once on the Artist
+  // Profile page. An effect that runs after mount avoids that.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    if (error) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of a post-redirect URL param, same justified pattern already used in app/(protected)/artist-profile/page.tsx
+      setStep(5);
+      setEmailConnectError("That didn't work — you can try again, or connect later from your profile.");
+      window.history.replaceState({}, "", "/onboarding");
+    }
+  }, []);
+
+  // Whenever step 5 is shown (whether by normal progression or by the
+  // effect above returning here after a failure), tag the next OAuth
+  // outcome as belonging to onboarding. A fresh cookie is set on every
+  // arrival at step 5 so a retry after a failure is tagged again too.
+  useEffect(() => {
+    if (step === 5) {
+      document.cookie = "onboarding_email_connect=1; path=/; max-age=600; SameSite=Lax";
+    }
+  }, [step]);
 
   function update(fields: Partial<FormData>) {
     setForm((prev) => ({ ...prev, ...fields }));
@@ -96,20 +128,20 @@ export default function OnboardingPage() {
     });
   }
 
-  async function finish() {
+  async function saveProfileAndContinue() {
     setSaving(true);
     setError(null);
     try {
-      await doFinish();
+      await doSaveProfile();
     } catch (err) {
-      console.error("Onboarding finish error:", err);
+      console.error("Onboarding save error:", err);
       const msg = err instanceof Error ? err.message : "Unknown error";
       setError(`Something went wrong (${msg}) — please try again.`);
       setSaving(false);
     }
   }
 
-  async function doFinish() {
+  async function doSaveProfile() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -213,7 +245,8 @@ export default function OnboardingPage() {
       }
     }
 
-    router.push("/dashboard");
+    setSaving(false);
+    setStep(5);
   }
 
   const card = {
@@ -435,15 +468,58 @@ export default function OnboardingPage() {
             <div className="flex gap-3">
               <button onClick={() => setStep(3)} className="flex-1 rounded-lg py-2 text-sm" style={backBtn}>← Back</button>
               <button
-                onClick={finish}
+                onClick={saveProfileAndContinue}
                 disabled={saving}
                 className="flex-[2] rounded-lg py-2 text-sm font-semibold disabled:opacity-50"
                 style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
               >
-                {saving ? "Saving…" : "Let's go! 🎸"}
+                {saving ? "Saving…" : "Continue →"}
               </button>
             </div>
-            <button onClick={finish} disabled={saving} className="w-full mt-3 text-xs disabled:opacity-50" style={{ color: "#5e5c58" }}>Skip for now</button>
+            <button onClick={saveProfileAndContinue} disabled={saving} className="w-full mt-3 text-xs disabled:opacity-50" style={{ color: "#5e5c58" }}>Skip for now</button>
+          </div>
+        )}
+
+        {/* ── Step 5 ── */}
+        {step === 5 && (
+          <div>
+            <h2 className="text-base font-semibold mb-1" style={{ color: "#F4E8D2" }}>Connect your email</h2>
+            <p className="text-xs mb-5" style={{ color: "#9a9591" }}>
+              Pitch and follow-up emails will send from your own address instead of a shared one. Takes about a minute.
+            </p>
+
+            {emailConnectError && (
+              <p className="text-xs rounded-lg px-3 py-2 mb-4" style={{ color: "#e25c5c", backgroundColor: "rgba(226,92,92,0.1)", border: "1px solid rgba(226,92,92,0.2)" }}>
+                {emailConnectError}
+              </p>
+            )}
+
+            <div className="flex flex-col gap-2.5">
+              <a
+                href="/api/auth/gmail/connect"
+                className="w-full rounded-lg py-2 text-sm font-semibold text-center"
+                style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
+              >
+                Connect Gmail
+              </a>
+              <a
+                href="/api/auth/outlook/connect"
+                className="w-full rounded-lg py-2 text-sm font-semibold text-center"
+                style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
+              >
+                Connect Outlook
+              </a>
+            </div>
+
+            {emailConnectError && (
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="w-full mt-4 text-xs"
+                style={{ color: "#5e5c58" }}
+              >
+                Continue without connecting for now
+              </button>
+            )}
           </div>
         )}
       </div>
