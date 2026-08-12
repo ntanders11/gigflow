@@ -58,19 +58,22 @@ Shown after step 4's save succeeds. Visually matches the existing wizard steps (
 3. On success, wizard advances to step 5 (still on `/onboarding`, no navigation yet)
 4. Artist clicks "Connect Gmail" or "Connect Outlook" → full-page navigation to the existing connect route → provider's consent screen → existing callback route
 5. **Success path**: callback redirects to `/artist-profile?connected=...` → profile already saved, loads normally, shows existing success banner. Onboarding is done.
-6. **Failure path**: callback redirects to `/artist-profile?error=...` → step 5's logic (added to the onboarding page, not the profile page) needs to catch this before the artist-profile page's middleware/render takes over — see Open Question below.
+6. **Failure path**: callback redirects to `/artist-profile?error=...` → the Artist Profile page detects the onboarding-origin cookie and redirects to `/onboarding?error=...` instead of showing its own error banner — see "Routing a Failed Connection Back to Step 5" below.
 7. If step 2 (the save itself) fails, the artist stays on step 4 with today's existing inline error — no change.
 
 ---
 
-## Open Question for the Plan to Resolve
+## Routing a Failed Connection Back to Step 5
 
-The callback routes redirect errors to `/artist-profile?error=...`, but step 5 lives on `/onboarding`. Two ways to make a failed connection land back on step 5's own UI (with its "continue without connecting" fallback) rather than silently showing on the Artist Profile page instead:
+The callback routes redirect errors to `/artist-profile?error=...`, but step 5 lives on `/onboarding`. Since the connect buttons are a full-page navigation (not a popup), there's no `/onboarding` tab left open to "return to" once the browser has gone to Google/Microsoft and come back — whatever happens next has to happen on whatever page the callback actually lands on.
 
-- **(a)** Have the Artist Profile page detect it arrived via an onboarding-originated error (e.g. a short-lived flag) and bounce back to `/onboarding` with the error preserved, or
-- **(b)** Have step 5 itself poll/check connection status after returning focus, independent of the exact redirect target.
+**Resolution**: when step 5 mounts, before the artist clicks anything, it sets a short-lived cookie (e.g. `onboarding_email_connect=1`, a few minutes' expiry, `path=/` set explicitly, default `SameSite=Lax` — not `Strict`, which would be dropped across the top-level redirect back from Google/Microsoft) via client-side JavaScript. This survives the round trip to the provider and back, since cookies are scoped to the site, not the originating page. The Artist Profile page's existing `?connected=...` / `?error=...` handling gets one small addition: if that cookie is present, clear it immediately regardless of which branch fires — and additionally, only on the `?error=...` branch, redirect to `/onboarding?error=...` instead of showing its own error banner.
 
-This is an implementation detail, not a product decision — the plan should pick the simpler of the two once it's being built against the real callback code.
+Clearing the cookie on *both* outcomes (not just the error path) matters: without it, an artist who successfully connects during onboarding, then later disconnects and retries from the Connected Accounts card within the cookie's short window, would have that unrelated retry misrouted back into the onboarding wizard's failure screen if it happened to fail. The cookie's only job is to flag "the very next OAuth outcome belongs to onboarding" — once any outcome (success or failure) has been observed, it's spent and must be cleared either way.
+
+The redirect back to `/onboarding?error=...` is a full page load, which remounts the wizard from scratch — its step state normally defaults to step 1. So on mount, the page must check the URL for `?error=...` (the same on-mount URL-param pattern the Artist Profile page already uses) and initialize directly at step 5 instead of step 1 when it's present, showing the plain-language failure message plus the "Continue without connecting for now" link. Without this, the artist would land on a blank step-1 form instead of the failure screen.
+
+This keeps the Non-Goal above fully intact — the OAuth connect and callback routes themselves are never touched. The only addition beyond `app/onboarding/page.tsx` is a few lines in the Artist Profile page's existing error-handling to check for and act on that cookie.
 
 ---
 
@@ -78,5 +81,5 @@ This is an implementation detail, not a product decision — the plan should pic
 
 | File | Change |
 |---|---|
-| `app/onboarding/page.tsx` | Add step 5 UI; move the save call from the step-4 "finish" button to the step-4→5 transition; step 4's button relabeled "Continue →"; add error/fallback handling for a failed connection attempt |
-| `app/api/auth/callback/gmail/route.ts`, `app/api/auth/callback/outlook/route.ts` | Only touched if the plan resolves the Open Question via approach (a) above — otherwise unchanged |
+| `app/onboarding/page.tsx` | Add step 5 UI; extend the `Step` type and the progress bar's hardcoded 4-segment/"Step X of 4" display to account for a 5th step; move the save call from step 4's "Let's go! 🎸" button *and* its "Skip for now" link (both currently call `finish()`) to the step-4→5 transition — both should save and advance to step 5, not save-and-go-to-dashboard; step 4's primary button relabeled "Continue →"; set the short-lived cookie on step 5 mount; on initial page load, check for `?error=...` in the URL and initialize directly at step 5 (not step 1) when present, showing the failure message + "Continue without connecting for now" fallback |
+| `app/(protected)/artist-profile/page.tsx` | In the existing `?connected=...` / `?error=...` handling, check for the onboarding-origin cookie and clear it on either outcome; on the `?error=...` branch specifically, if the cookie was present, redirect to `/onboarding?error=...` instead of showing the profile page's own error banner |
