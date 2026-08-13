@@ -22,7 +22,7 @@ This spec covers only #1. A venue that finishes this flow can log in and manage 
 - Venues get their own front door — a dedicated landing/signup experience at `/venues` with venue-focused messaging — separate from the artist-facing homepage and signup flow, which are untouched
 - Logging in uses one shared mechanism for both artists and venues; after authentication, the app determines which kind of account it is and routes accordingly
 - **Wherever a venue already exists in an artist's world, a real StageReach account gets surfaced and recognized:**
-  - Any artist pipeline entry that matches a real venue account shows a small "✓ On StageReach" badge
+  - Any artist pipeline entry that matches a real venue account shows a small "🛡 On StageReach" gold shield badge
   - In the existing Discover Venues search, results that match a real venue account are badged the same way **and always ranked above every non-StageReach result**, regardless of the existing HIGH/MEDIUM/LOW confidence ordering
 
 ## Non-Goals
@@ -68,7 +68,7 @@ A unique index on `(lower(venue_name), lower(city))`, applied once `venue_name` 
 
 ### New column: `venues.venue_profile_id`
 
-A nullable foreign key added to the existing `venues` table (an artist's private pipeline rows), pointing at `venue_profiles.id`. This is the link that powers the "✓ On StageReach" badge — everything else about the `venues` row (notes, stage, confidence, contact info) is completely unaffected by whether this is set.
+A nullable foreign key added to the existing `venues` table (an artist's private pipeline rows), pointing at `venue_profiles.id`. This is the link that powers the "🛡 On StageReach" gold shield badge — everything else about the `venues` row (notes, stage, confidence, contact info) is completely unaffected by whether this is set.
 
 ### Signup flow (no invite code)
 
@@ -113,12 +113,12 @@ Just view and edit their own `venue_profiles` row. That's the entire venue-facin
 
 ### Pipeline badge
 
-On the artist's pipeline board, any venue card where `venues.venue_profile_id` is set shows a small "✓ On StageReach" badge, alongside the existing stage/confidence indicators. This is read-only from the artist's side — it's just a signal that this venue has a real account, not something the artist can set or remove.
+On the artist's pipeline board, any venue card where `venues.venue_profile_id` is set shows a small "🛡 On StageReach" gold shield badge, alongside the existing stage/confidence indicators. This is read-only from the artist's side — it's just a signal that this venue has a real account, not something the artist can set or remove.
 
 ### Discover Venues ranking boost
 
 The existing Discover Venues search (`GET /api/venues/discover`) already merges results from Google Places, Geoapify, and OpenStreetMap. This spec adds one more step: after merging, each result is checked against `venue_profiles` by the same name + city matching logic used elsewhere in this spec. Any match:
-- Gets the same "✓ On StageReach" badge
+- Gets the same "🛡 On StageReach" gold shield badge
 - Is sorted **above every non-matching result**, regardless of the existing HIGH/MEDIUM/LOW confidence ordering — verified StageReach accounts always come first
 
 If an artist adds one of these badged results to their pipeline, the new `venues` row is created with `venue_profile_id` already set (the match is already known at that point — no extra sweep needed).
@@ -133,7 +133,7 @@ If an artist adds one of these badged results to their pipeline, the new `venues
 4. The moment `venue_name` is set, a linking sweep sets `venue_profile_id` on every matching artist's `venues` row.
 5. Venue fills in remaining profile fields and saves — standard RLS-scoped read/write from here on, same pattern as `artist_profiles`.
 6. On any subsequent login, the app checks for a `venue_profiles` row first, then falls back to existing `artist_profiles` logic, and routes accordingly.
-7. Separately, any time an artist views their pipeline or runs a Discover Venues search, venues with a set/matching `venue_profile_id` show the "✓ On StageReach" badge — and in Discover Venues, are always sorted to the top.
+7. Separately, any time an artist views their pipeline or runs a Discover Venues search, venues with a set/matching `venue_profile_id` show the "🛡 On StageReach" gold shield badge — and in Discover Venues, are always sorted to the top.
 
 ---
 
@@ -149,7 +149,7 @@ If an artist adds one of these badged results to their pipeline, the new `venues
 | `app/api/venue-profile/route.ts` | New — create (claim/fresh) + GET/PATCH for the logged-in venue's own profile; triggers the linking sweep when `venue_name` is set |
 | `app/venue/profile/page.tsx` (or similar) | New — the venue's protected profile-management page (v1's entire venue-facing app surface) |
 | `proxy.ts` | Check `venue_profiles` before the existing `artist_profiles`/onboarding check; add `/venues` and `/venues/signup` to public routes |
-| `components/pipeline/KanbanBoard.tsx` | Add "✓ On StageReach" badge when `venue_profile_id` is set |
+| `components/pipeline/KanbanBoard.tsx` | Add "🛡 On StageReach" gold shield badge when `venue_profile_id` is set |
 | `components/venue/VenueDetail.tsx` | Same badge, for consistency on the venue detail page |
 | `app/api/venues/discover/route.ts` | Cross-reference merged results against `venue_profiles`; badge and always-rank-first matches |
 | `components/discover/DiscoverView.tsx` | Render the badge on matched results; when adding to pipeline, set `venue_profile_id` on the created row |
