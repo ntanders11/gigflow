@@ -55,6 +55,7 @@ export interface Venue {
   address: string | null;
   gig_time: string | null;
   gig_end_time: string | null;
+  venue_profile_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -184,4 +185,37 @@ export interface Invoice {
   stripe_invoice_url: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// ============================================================
+// VENUE PROFILES
+// ============================================================
+
+export interface VenueProfile {
+  id: string;
+  user_id: string;
+  venue_name: string | null;
+  address: string | null;
+  city: string | null;
+  venue_type: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  description: string | null;
+  genres: string[];
+  stage_equipment: string | null;
+  photo_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// A single candidate result from the venue-signup search — either an
+// unclaimed match pulled from some artist's private pipeline, or an
+// already-claimed venue_profiles row (surfaced so the search can say
+// "taken" instead of offering it as claimable).
+export interface VenueMatchCandidate {
+  name: string;
+  city: string | null;
+  address: string | null;
+  venue_type: string | null;
+  status: "claimable" | "taken";
 }
