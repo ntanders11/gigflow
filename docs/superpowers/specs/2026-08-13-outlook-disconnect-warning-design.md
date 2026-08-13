@@ -35,6 +35,8 @@ const [confirmingDisconnect, setConfirmingDisconnect] = useState<"outlook" | nul
 
 ### Outlook's row: three visual states instead of two
 
+Gmail and Outlook are currently both rendered from one shared block — `(["gmail", "outlook"] as const).map((provider) => { ... })` — not as two separately-coded rows. The change below is implemented as a `provider === "outlook"` branch inside that same shared map body, not a new, separate render path; there is no independent "Gmail row" component to leave alone, just this one condition inside the existing loop.
+
 Currently the Outlook row (like Gmail's) shows either "Connect" (not connected / needs reconnect) or "Disconnect" (active). That becomes three states, mirroring `DeleteInvoiceButton`'s `confirming` boolean exactly:
 
 1. **Not connected / needs reconnect** — unchanged, shows the gold "Connect" link.
@@ -54,7 +56,7 @@ Gmail's "Disconnect" button keeps its current `onClick={() => disconnectAccount(
 
 1. Artist clicks "Disconnect" on the Outlook row → `confirmingDisconnect` is set to `"outlook"` → that row re-renders showing the warning text + Yes/Cancel buttons in place of the Disconnect button. No network request happens yet.
 2. **Cancel** → `confirmingDisconnect` reset to `null` → row reverts to showing "Disconnect" again. Nothing else changed.
-3. **Yes, disconnect** → calls the existing `disconnectAccount("outlook")` (unchanged: `DELETE /api/email-connections?provider=outlook`, then either removes the connection from local state on success or shows the existing "Couldn't disconnect" banner on failure) → `confirmingDisconnect` reset to `null` regardless of outcome, so the row doesn't get stuck showing the confirm state after the request resolves.
+3. **Yes, disconnect** → calls the existing `disconnectAccount("outlook")` (unchanged: `DELETE /api/email-connections?provider=outlook`, then either removes the connection from local state on success or shows the existing "Couldn't disconnect" banner on failure) → `confirmingDisconnect` reset to `null` regardless of outcome, so the row doesn't get stuck showing the confirm state after the request resolves. Unlike `DeleteInvoiceButton`, this does not add its own in-flight "disabled while deleting" state — `disconnectAccount` itself has no loading state today (it's a single `await fetch(...)` with no `setDeleting`-equivalent), and adding one would mean touching that shared function's behavior, which is explicitly out of scope. A rapid double-click on "Yes, disconnect" could in theory fire two `DELETE` requests; the second would just find nothing left to delete and no-op. This is a deliberate, minor scope boundary, not an oversight.
 4. Gmail's disconnect flow is untouched — clicking its "Disconnect" button calls `disconnectAccount("gmail")` immediately, exactly as it does today.
 
 ---
