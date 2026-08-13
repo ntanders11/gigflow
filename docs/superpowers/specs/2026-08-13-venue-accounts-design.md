@@ -65,7 +65,7 @@ venue_profiles
 
 RLS: a venue can only read/write the row where `auth.uid() = user_id` — same pattern as `artist_profiles`.
 
-A unique index on `(lower(venue_name), lower(city))`, applied once `venue_name` is set, prevents two accounts from ever completing signup as the same venue — if two people try to claim/create the same venue at the same moment, the database rejects the second write and that request is shown the same "this venue already has an account" message as a normal already-claimed match.
+A unique index on `(lower(venue_name), lower(city))`, applied once both `venue_name` and `city` are set, prevents two accounts from ever completing signup as the same venue — if two people try to claim/create the same venue at the same moment, the database rejects the second write and that request is shown the same "this venue already has an account" message as a normal already-claimed match. (A venue with no city on file falls outside this index and relies on the app-level "already claimed" check from search alone — an acceptable gap given how rare a nameless-city venue would be.)
 
 ### New column: `venues.venue_profile_id`
 
@@ -120,7 +120,7 @@ On the artist's pipeline board, any venue card where `venues.venue_profile_id` i
 
 The existing Discover Venues search (`GET /api/venues/discover`) already merges results from Google Places, Geoapify, and OpenStreetMap. This spec adds one more step: after merging, each result is checked against `venue_profiles` by the same name + city matching logic used elsewhere in this spec. Any match:
 - Gets the same "⭐ On StageReach" gold star badge
-- Is sorted **above every non-matching result**, regardless of the existing HIGH/MEDIUM/LOW confidence ordering — verified StageReach accounts always come first
+- Is sorted **above every non-matching result** — Discover Venues doesn't currently sort by anything (results just render in whatever order Google/Geoapify/OSM return them), so this adds the first ranking rule the feature has: verified StageReach accounts always come first, non-matching results keep their existing relative order after that
 
 If an artist adds one of these badged results to their pipeline, the new `venues` row is created with `venue_profile_id` already set (the match is already known at that point — no extra sweep needed).
 
