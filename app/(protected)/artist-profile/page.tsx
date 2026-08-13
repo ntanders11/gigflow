@@ -78,6 +78,7 @@ export default function ArtistProfilePage() {
   const [connections, setConnections] = useState<EmailConnection[]>([]);
   const [connectionsLoading, setConnectionsLoading] = useState(true);
   const [connectBanner, setConnectBanner] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState<"outlook" | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -641,13 +642,42 @@ export default function ArtistProfilePage() {
                         )}
                       </div>
                       {connection && connection.status === "active" ? (
-                        <button
-                          onClick={() => disconnectAccount(provider)}
-                          className="text-xs px-2.5 py-1 rounded transition-all hover:brightness-125"
-                          style={{ backgroundColor: "rgba(255,255,255,0.04)", color: "#9a9591", cursor: "pointer" }}
-                        >
-                          Disconnect
-                        </button>
+                        provider === "outlook" && confirmingDisconnect === "outlook" ? (
+                          <span className="inline-flex items-center gap-2 flex-wrap justify-end">
+                            <span className="text-xs" style={{ color: "#e25c5c" }}>
+                              This will also stop syncing your gigs to your Outlook calendar. Disconnect anyway?
+                            </span>
+                            <button
+                              onClick={() => {
+                                setConfirmingDisconnect(null);
+                                disconnectAccount("outlook");
+                              }}
+                              className="text-xs font-semibold transition-all hover:brightness-125"
+                              style={{ color: "#e25c5c", cursor: "pointer" }}
+                            >
+                              Yes, disconnect
+                            </button>
+                            <button
+                              onClick={() => setConfirmingDisconnect(null)}
+                              className="text-xs transition-all hover:brightness-125"
+                              style={{ color: "#9a9591", cursor: "pointer" }}
+                            >
+                              Cancel
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              provider === "outlook"
+                                ? setConfirmingDisconnect("outlook")
+                                : disconnectAccount(provider)
+                            }
+                            className="text-xs px-2.5 py-1 rounded transition-all hover:brightness-125"
+                            style={{ backgroundColor: "rgba(255,255,255,0.04)", color: "#9a9591", cursor: "pointer" }}
+                          >
+                            Disconnect
+                          </button>
+                        )
                       ) : (
                         // Covers both "never connected" and "needs_reconnect" — in the
                         // latter case, clicking Connect re-runs the OAuth flow and the
