@@ -26,15 +26,24 @@ export default function Sidebar() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/artist-profile")
-      .then((r) => r.ok ? r.json() : null)
-      .then((p) => {
-        if (p) {
-          setDisplayName(p.display_name ?? null);
-          setPhotoUrl(p.photo_url ?? null);
-        }
-      })
-      .catch(() => {});
+    function loadProfile() {
+      fetch("/api/artist-profile")
+        .then((r) => r.ok ? r.json() : null)
+        .then((p) => {
+          if (p) {
+            setDisplayName(p.display_name ?? null);
+            setPhotoUrl(p.photo_url ?? null);
+          }
+        })
+        .catch(() => {});
+    }
+
+    loadProfile();
+
+    // The Artist Profile page dispatches this after a successful save, since
+    // this sidebar keeps its own copy of name/photo and only loads it once on mount.
+    window.addEventListener("stagereach:profile-updated", loadProfile);
+    return () => window.removeEventListener("stagereach:profile-updated", loadProfile);
   }, []);
 
   async function handleSignOut() {
