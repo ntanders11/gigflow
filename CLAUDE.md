@@ -91,7 +91,7 @@ If a session involves significant decisions, research, or direction changes (not
 
   Outlook Calendar Connect — app/api/auth/outlook/connect and app/api/auth/callback/outlook implement an Azure AD OAuth flow (now also requesting Mail.Send, shared with Personal Email Sending above) so gigs can sync to a musician's Outlook calendar via app/api/calendar/sync. Tokens are stored in the email_connections table (not cookies) so they can be refreshed server-side. app/api/calendar/ics exposes a public .ics feed as an alternative.
 
-  Diagnostics — /api/email-status and /api/stripe-status (both require login) return a plain-language report of whether email sending and Stripe payouts are correctly configured. Useful for debugging delivery/payment issues without digging through provider dashboards.
+  Diagnostics — /api/email-status and /api/stripe-status (both require login) return a plain-language report of whether email sending and Stripe payouts are correctly configured. /api/email-status also reports the logged-in artist's personal Gmail/Outlook connection status (if any) and which one sending will actually use, alongside the shared Resend checks. Useful for debugging delivery/payment issues without digging through provider dashboards.
                                                             
   Supabase Clients
 
