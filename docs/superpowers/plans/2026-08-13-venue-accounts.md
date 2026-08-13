@@ -504,7 +504,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  if (isFirstTimeNamed && data.city) {
+  if (isFirstTimeNamed) {
     await runLinkingSweep(data.id, data.venue_name as string, data.city);
   }
 
@@ -517,8 +517,14 @@ export async function PATCH(request: NextRequest) {
 // surface during search. Writes across other artists' private rows, so
 // this goes through the service-role client, same pattern as the
 // existing CSV import route uses for cross-user writes; RLS on `venues`
-// would otherwise block it entirely.
-async function runLinkingSweep(venueProfileId: string, venueName: string, city: string) {
+// would otherwise block it entirely. `city` is deliberately `string | null`
+// here, not `string` — gating this on city being present was an earlier
+// mistake caught in plan review: a venue that signs up without entering a
+// city would otherwise never get linked at all, silently breaking the
+// badge for exactly that case. `normalizeMatchKey` already treats a null
+// city as an empty string on both sides of the comparison, so this just
+// works without a special case.
+async function runLinkingSweep(venueProfileId: string, venueName: string, city: string | null) {
   const service = await createServiceClient();
   const key = normalizeMatchKey(venueName, city);
 
@@ -1550,7 +1556,7 @@ Replace with:
   }
 ```
 
-Every place `DiscoverResult` objects are constructed inside `searchWithGoogle`/`searchWithGeoapify`/`searchWithOverpass` needs the new field added at construction time too — find each of the three `already_in_pipeline: existingNames.has(...)` lines and add `venue_profile_id: null,` immediately after each one (it gets filled in by `attachStageReachMatches` afterward; `null` here is just to satisfy the type before that step runs).
+Every place `DiscoverResult` objects are constructed inside `searchWithGoogle`/`searchWithGeoapify`/`searchWithOverpass` needs the new field added at construction time too — find each of the three `already_in_pipeline: existingNames.has(...)` lines and add `venue_profile_id: null,` immediately after each one (it gets filled in by `attachStageReachMatches` afterward; `null` here is just to satisfy the type before that step runs). Note: the `searchWithGoogle` and `searchWithGeoapify` lines are textually identical (`already_in_pipeline: existingNames.has(name.toLowerCase().trim()),`), so a plain find/replace will hit whichever comes first twice — edit them by function (search for `async function searchWithGoogle` and `async function searchWithGeoapify` first, then find the line within each), not by blind text search.
 
 - [ ] **Step 2: Verify**
 
