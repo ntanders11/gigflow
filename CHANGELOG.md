@@ -2,6 +2,8 @@
 
 ## 2026-08-13
 - [Feature] The email diagnostics check (visit /api/email-status directly in your browser) now also shows whether you've connected a personal Gmail or Outlook account, whether it's healthy, and which one your pitch/follow-up emails are actually sending from right now — alongside the existing shared-sender checks.
+- [Fix] Uploading a new profile photo now updates the small picture in the sidebar right away, instead of only showing up there after a full page reload.
+- [Feature] Disconnecting Outlook from Connected Accounts now warns first that it also stops syncing your gigs to your Outlook calendar, since both share one connection — click "Yes, disconnect" to confirm, or "Cancel" to back out. Gmail's disconnect is unaffected.
 
 ## 2026-08-12
 - [Feature] New artists now connect their Gmail or Outlook account as part of signing up (a new 5th onboarding step), instead of only discovering the option later on their profile page. If a connection attempt fails, artists can still continue and connect later — nothing about signup is ever fully blocked.
