@@ -38,9 +38,15 @@ interface EmailConnectionRow {
 // outside this file (e.g. app/api/calendar/sync/route.ts refreshing an
 // Outlook token for calendar purposes, not sending). If a UI caller for
 // calendar sync is ever added, a calendar-only action could incidentally
-// change which provider "wins" here for the artist's next email send.
+// change which provider "wins" here — for the artist's next email send,
+// and for what /api/email-status reports as currently active.
 // Currently inert — calendar/sync has no UI caller anywhere in the app.
-function pickConnection(connections: EmailConnectionRow[]): EmailConnectionRow | null {
+export interface ConnectionStatusInfo {
+  status: "active" | "needs_reconnect";
+  updated_at: string;
+}
+
+export function pickConnection<T extends ConnectionStatusInfo>(connections: T[]): T | null {
   if (connections.length === 0) return null;
   const active = connections.filter((c) => c.status === "active");
   const pool = active.length > 0 ? active : connections;
