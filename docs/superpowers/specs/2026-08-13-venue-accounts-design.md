@@ -22,8 +22,8 @@ This spec covers only #1. A venue that finishes this flow can log in and manage 
 - Venues get their own front door — a dedicated landing/signup experience at `/venues` with venue-focused messaging — separate from the artist-facing homepage and signup flow, which are untouched
 - Logging in uses one shared mechanism for both artists and venues; after authentication, the app determines which kind of account it is and routes accordingly
 - **Wherever a venue already exists in an artist's world, a real StageReach account gets surfaced and recognized:**
-  - Any artist pipeline entry that matches a real venue account shows a small "🛡 On StageReach" gold shield badge
-  - In the existing Discover Venues search, results that match a real venue account are badged the same way **and always ranked above every non-StageReach result**, regardless of the existing HIGH/MEDIUM/LOW confidence ordering
+  - Any artist pipeline entry that matches a real venue account shows a small "⭐ On StageReach" gold star badge
+  - In the existing Discover Venues search, results that match a real venue account are badged the same way **and always ranked above every non-StageReach result**
 
 ## Non-Goals
 
@@ -34,6 +34,7 @@ This spec covers only #1. A venue that finishes this flow can log in and manage 
 - No account recovery flow if a venue loses access to a claimed profile — for now, that's a manual/support conversation, not a built feature
 - No support for one venue business having multiple locations/rooms — one account, one location, same as artist accounts today
 - No change to how artists' existing `venues` pipeline records work, look, or behave beyond the new badge — pipeline data itself (notes, stage, confidence, contact info) is never read into, written from, or altered by a venue's account
+- **No re-sweep on rename:** if a venue edits their name or city after signing up, their existing pipeline links (which point at a stable `venue_profiles.id`, not a name) stay valid, but no new sweep runs to catch pipeline rows that would now match but didn't before the edit. Those rows simply stay unlinked/unbadged — a reasonable limitation, not something this spec solves.
 - **Linking scope is bounded, not exhaustive:** a venue's real account gets automatically linked to (a) every existing pipeline row it matches at the moment the account is created, and (b) any Discover Venues result an artist adds to their pipeline after that (since the match is already known at that moment). Venues added later via **CSV import or manual entry are not automatically checked against real accounts** in this pass — that's a reasonable follow-up, not something this spec solves.
 
 ---
@@ -68,20 +69,20 @@ A unique index on `(lower(venue_name), lower(city))`, applied once `venue_name` 
 
 ### New column: `venues.venue_profile_id`
 
-A nullable foreign key added to the existing `venues` table (an artist's private pipeline rows), pointing at `venue_profiles.id`. This is the link that powers the "🛡 On StageReach" gold shield badge — everything else about the `venues` row (notes, stage, confidence, contact info) is completely unaffected by whether this is set.
+A nullable foreign key added to the existing `venues` table (an artist's private pipeline rows), pointing at `venue_profiles.id`. This is the link that powers the "⭐ On StageReach" gold star badge — everything else about the `venues` row (notes, stage, confidence, contact info) is completely unaffected by whether this is set.
 
 ### Signup flow (no invite code)
 
 New public route `/venues` — a dedicated landing page for venue owners (see "Front door" below), leading into `/venues/signup`:
 
-1. **Create account** — email + password via Supabase auth, same mechanism and email-confirmation behavior as artist signup (no new decision here — just reused as-is). This immediately creates a `venue_profiles` row with `venue_name` left blank — this placeholder row is what lets the app tell "a venue mid-signup" apart from "an artist mid-signup" at every step from here on (see Logging in, below).
+1. **Create account** — email + password via Supabase auth. Artist signup today calls `supabase.auth.signUp()` and immediately proceeds (`router.push("/onboarding")`) without waiting on email confirmation — the venue account is auto-signed-in the same way, immediately usable, with confirmation happening asynchronously in the background exactly as it already does for artists. Account creation immediately creates a `venue_profiles` row with `venue_name` left blank — this placeholder row is what lets the app tell "a venue mid-signup" apart from "an artist mid-signup" at every step from here on (see Logging in, below).
 2. **Search for an existing match** — the venue searches by name + city. This checks across *every* artist's private `venues` pipeline rows (not just one artist's), but only surfaces name, city, address, and venue type — never contact info, notes, pipeline stage, confidence, or which artist owns the relationship. This requires a service-role-backed search (RLS on `venues` normally scopes to the owning artist, so a venue account has no direct read access to other artists' pipeline data). Results are de-duplicated by normalized name + city first — if five different artists each have their own copy of "The Blue Note," the venue sees one match candidate, not five, pre-filled from whichever of those five entries has the most complete data.
    - The same search also checks existing `venue_profiles` (by the same unique-index key), so an already-claimed or already-created venue shows up as **taken**, not as a claimable match.
 3. **Claim or create:**
    - **Match found (unclaimed)** → selecting it fills in the placeholder `venue_profiles` row with that entry's name/city/address/venue type, and triggers the linking sweep below.
    - **Already claimed** → blocked with a simple message ("This venue already has an account — reach out if that's a mistake"). No recovery flow.
    - **No match** → the venue fills out the placeholder profile from scratch. Once `venue_name` is saved, the same linking sweep runs (in case a matching pipeline row existed but didn't surface as an exact match earlier).
-4. **Linking sweep** — the moment `venue_name` is set (claim or fresh), the app finds every artist's `venues` row matching that name + city (the same matching logic used for search) and sets `venue_profile_id` on all of them — not just the one row the venue interacted with. This is what makes the badge (below) show up correctly for every artist who already had this venue in their pipeline, not just the one whose entry happened to surface during search.
+4. **Linking sweep** — the moment `venue_name` is set (claim or fresh), the app finds every artist's `venues` row matching that name + city (the same matching logic used for search) and sets `venue_profile_id` on all of them — not just the one row the venue interacted with. Like the search step, this writes across other artists' private `venues` rows, which their RLS policy (`auth.uid() = user_id`) does not permit directly — so this sweep runs through the same service-role client used elsewhere in the app for cross-user writes (e.g. CSV import), not through the venue's own RLS-scoped session. This is what makes the badge (below) show up correctly for every artist who already had this venue in their pipeline, not just the one whose entry happened to surface during search.
 5. **Fill in the rest** — venue type, description, genres, stage/equipment, contact info, photo (whichever weren't already pre-filled).
 
 The original artist pipeline rows are never deleted or overwritten by any of this — only the new `venue_profile_id` link is set on matching rows, and only after venue_name is confirmed real.
@@ -99,7 +100,7 @@ This is purely a marketing/entry surface — it links into the `/venues/signup` 
 
 ### Logging in
 
-Venues log in through the same `/login` page and Supabase auth session artists already use — no separate login form. After authentication, routing needs to determine which kind of account this is. The existing middleware currently redirects *any* authenticated user lacking a complete `artist_profiles` row to `/onboarding` — that check needs to run only when there's no `venue_profiles` row at all, otherwise a venue would be incorrectly swept into the artist onboarding wizard:
+Venues log in through the same `/login` page and Supabase auth session artists already use — no separate login form. After authentication, routing needs to determine which kind of account this is. The existing middleware currently redirects *any* authenticated user lacking a complete `artist_profiles` row to `/onboarding` — that check needs to run only when there's no `venue_profiles` row at all, otherwise a venue would be incorrectly swept into the artist onboarding wizard. `/venues` and `/venues/signup` also need to be added to the middleware's existing public-route list (alongside `/signup`), so an unauthenticated visitor — or a venue mid-signup, before their session is fully settled — can reach them without being redirected to `/login` first:
 
 - Has a `venue_profiles` row → this is a venue account, full stop (an artist account never gets one). If `venue_name` is still blank, signup didn't finish — redirect to `/venues/signup` to continue. If it's set, route to the venue's own protected area.
 - No `venue_profiles` row, has an `artist_profiles` row → existing artist behavior, completely unchanged (including the existing onboarding-incomplete redirect).
@@ -113,12 +114,12 @@ Just view and edit their own `venue_profiles` row. That's the entire venue-facin
 
 ### Pipeline badge
 
-On the artist's pipeline board, any venue card where `venues.venue_profile_id` is set shows a small "🛡 On StageReach" gold shield badge, alongside the existing stage/confidence indicators. This is read-only from the artist's side — it's just a signal that this venue has a real account, not something the artist can set or remove.
+On the artist's pipeline board, any venue card where `venues.venue_profile_id` is set shows a small "⭐ On StageReach" gold star badge, alongside the existing stage/confidence indicators. This is read-only from the artist's side — it's just a signal that this venue has a real account, not something the artist can set or remove.
 
 ### Discover Venues ranking boost
 
 The existing Discover Venues search (`GET /api/venues/discover`) already merges results from Google Places, Geoapify, and OpenStreetMap. This spec adds one more step: after merging, each result is checked against `venue_profiles` by the same name + city matching logic used elsewhere in this spec. Any match:
-- Gets the same "🛡 On StageReach" gold shield badge
+- Gets the same "⭐ On StageReach" gold star badge
 - Is sorted **above every non-matching result**, regardless of the existing HIGH/MEDIUM/LOW confidence ordering — verified StageReach accounts always come first
 
 If an artist adds one of these badged results to their pipeline, the new `venues` row is created with `venue_profile_id` already set (the match is already known at that point — no extra sweep needed).
@@ -133,7 +134,7 @@ If an artist adds one of these badged results to their pipeline, the new `venues
 4. The moment `venue_name` is set, a linking sweep sets `venue_profile_id` on every matching artist's `venues` row.
 5. Venue fills in remaining profile fields and saves — standard RLS-scoped read/write from here on, same pattern as `artist_profiles`.
 6. On any subsequent login, the app checks for a `venue_profiles` row first, then falls back to existing `artist_profiles` logic, and routes accordingly.
-7. Separately, any time an artist views their pipeline or runs a Discover Venues search, venues with a set/matching `venue_profile_id` show the "🛡 On StageReach" gold shield badge — and in Discover Venues, are always sorted to the top.
+7. Separately, any time an artist views their pipeline or runs a Discover Venues search, venues with a set/matching `venue_profile_id` show the "⭐ On StageReach" gold star badge — and in Discover Venues, are always sorted to the top.
 
 ---
 
@@ -149,7 +150,7 @@ If an artist adds one of these badged results to their pipeline, the new `venues
 | `app/api/venue-profile/route.ts` | New — create (claim/fresh) + GET/PATCH for the logged-in venue's own profile; triggers the linking sweep when `venue_name` is set |
 | `app/venue/profile/page.tsx` (or similar) | New — the venue's protected profile-management page (v1's entire venue-facing app surface) |
 | `proxy.ts` | Check `venue_profiles` before the existing `artist_profiles`/onboarding check; add `/venues` and `/venues/signup` to public routes |
-| `components/pipeline/KanbanBoard.tsx` | Add "🛡 On StageReach" gold shield badge when `venue_profile_id` is set |
+| `components/pipeline/KanbanBoard.tsx` | Add "⭐ On StageReach" gold star badge when `venue_profile_id` is set |
 | `components/venue/VenueDetail.tsx` | Same badge, for consistency on the venue detail page |
 | `app/api/venues/discover/route.ts` | Cross-reference merged results against `venue_profiles`; badge and always-rank-first matches |
 | `components/discover/DiscoverView.tsx` | Render the badge on matched results; when adding to pipeline, set `venue_profile_id` on the created row |
