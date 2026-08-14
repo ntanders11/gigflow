@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-08-14
+- [Feature] Venues can now create their own StageReach account at stagereach.app/venues — search to claim a listing an artist already has in their pipeline, or create a fresh one if nobody's found them yet. No invite code needed.
+- [Feature] Any venue with a real account now shows a "⭐ On StageReach" badge on your pipeline cards and venue detail page, and always appears first in Discover Venues search results.
+
 ## 2026-08-13
 - [Feature] The email diagnostics check (visit /api/email-status directly in your browser) now also shows whether you've connected a personal Gmail or Outlook account, whether it's healthy, and which one your pitch/follow-up emails are actually sending from right now — alongside the existing shared-sender checks.
 - [Fix] Uploading a new profile photo now updates the small picture in the sidebar right away, instead of only showing up there after a full page reload.
