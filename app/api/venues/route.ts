@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { name, type, city, website, contact_name, contact_email, contact_phone, stage, confidence, notes } = body;
+  const { name, type, city, website, contact_name, contact_email, contact_phone, stage, confidence, notes, venue_profile_id } = body;
 
   if (!name?.trim()) {
     return NextResponse.json({ error: "Venue name is required" }, { status: 400 });
@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
       stage: stage ?? "discovered",
       confidence: confidence ?? "MEDIUM",
       notes: notes ?? null,
+      venue_profile_id: venue_profile_id ?? null,
     })
     .select()
     .single();
