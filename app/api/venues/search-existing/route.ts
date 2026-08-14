@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { normalizeMatchKey, dedupeMatchableVenues } from "@/lib/venues/matching";
 
+// Escapes ILIKE special characters (%, _, \) in user-supplied search text
+// before it's interpolated into a LIKE/ILIKE pattern. Without this, a
+// caller-controlled "%" or "_" changes the meaning of the pattern itself
+// (e.g. name=% would match every row), not just the literal text searched for.
+function escapeIlike(value: string): string {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 // Searches across EVERY artist's private `venues` pipeline rows (not
 // just one artist's) to help a signing-up venue find themselves. RLS on
 // `venues` scopes reads to auth.uid() = user_id, so a venue account has
@@ -17,6 +25,9 @@ export async function GET(req: NextRequest) {
 
   const name = req.nextUrl.searchParams.get("name")?.trim();
   if (!name) return NextResponse.json({ error: "name is required" }, { status: 400 });
+  if (name.length < 2) {
+    return NextResponse.json({ error: "Search term must be at least 2 characters" }, { status: 400 });
+  }
   const city = req.nextUrl.searchParams.get("city")?.trim() || null;
 
   const service = await createServiceClient();
@@ -24,7 +35,9 @@ export async function GET(req: NextRequest) {
   const { data: pipelineMatches, error: pipelineError } = await service
     .from("venues")
     .select("name, city, address, type")
-    .ilike("name", `%${name}%`);
+    .ilike("name", `%${escapeIlike(name)}%`)
+    .order("name")
+    .limit(50);
 
   if (pipelineError) return NextResponse.json({ error: pipelineError.message }, { status: 500 });
 
@@ -34,7 +47,9 @@ export async function GET(req: NextRequest) {
     .from("venue_profiles")
     .select("venue_name, city")
     .not("venue_name", "is", null)
-    .ilike("venue_name", `%${name}%`);
+    .ilike("venue_name", `%${escapeIlike(name)}%`)
+    .order("venue_name")
+    .limit(50);
 
   if (profilesError) return NextResponse.json({ error: profilesError.message }, { status: 500 });
 
@@ -54,7 +69,7 @@ export async function GET(req: NextRequest) {
   // pipeline row at all (e.g. someone created a fresh profile with no
   // prior pipeline entry), still surface it as taken so a second person
   // can't attempt to "create fresh" under the same identity.
-  if (city && claimedKeys.has(normalizeMatchKey(name, city)) &&
+  if (claimedKeys.has(normalizeMatchKey(name, city)) &&
       !candidates.some((c) => normalizeMatchKey(c.name, c.city) === normalizeMatchKey(name, city))) {
     candidates.push({ name, city, address: null, venue_type: null, status: "taken" });
   }
