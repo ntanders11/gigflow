@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { normalizeMatchKey } from "@/lib/venues/matching";
 
 // Map Google's primaryType → our simplified type labels. Filtering on
 // primaryType (what a place actually IS) rather than the full `types`
@@ -46,7 +47,52 @@ type DiscoverResult = {
   review_count: number;
   live_music_tagged: boolean;
   already_in_pipeline: boolean;
+  venue_profile_id: string | null;
 };
+
+// Fetches every real venue account's name+city, keyed for matching against
+// Discover Venues results. Has no dependency on the search itself (lat/lon,
+// Google/Geoapify results), so callers should kick this off up front and run
+// it concurrently with geocoding + the external place searches rather than
+// waiting until results are in hand.
+async function fetchStageReachProfileMap(): Promise<Map<string, string>> {
+  const service = await createServiceClient();
+  const { data: profiles, error } = await service
+    .from("venue_profiles")
+    .select("id, venue_name, city")
+    .not("venue_name", "is", null);
+
+  if (error) console.error("fetchStageReachProfileMap: venue_profiles lookup failed", error);
+
+  if (!profiles || profiles.length === 0) return new Map();
+
+  return new Map(
+    profiles.map((p) => [normalizeMatchKey(p.venue_name as string, p.city), p.id as string])
+  );
+}
+
+// Cross-checks a batch of Discover Venues results against an already-resolved
+// map of real venue accounts, tags each with venue_profile_id when matched,
+// and moves every match to the front. Discover Venues has no existing sort of
+// its own today — results just render in whatever order Google/Geoapify/OSM
+// returned them — so this is the first ranking rule the feature gets, not a
+// change to one that already existed.
+function applyStageReachMatches(
+  results: DiscoverResult[],
+  profileByKey: Map<string, string>
+): DiscoverResult[] {
+  if (results.length === 0 || profileByKey.size === 0) return results;
+
+  const tagged = results.map((r) => ({
+    ...r,
+    venue_profile_id: profileByKey.get(normalizeMatchKey(r.name, r.city)) ?? null,
+  }));
+
+  return tagged.sort((a, b) => {
+    if (!!a.venue_profile_id === !!b.venue_profile_id) return 0;
+    return a.venue_profile_id ? -1 : 1;
+  });
+}
 
 // Geocode a city/zip string. Google first (most accurate, requires
 // billing), then Geoapify (free, no billing), then Nominatim (free,
@@ -101,6 +147,11 @@ export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Kicked off now (no dependency on lat/lon or search results) so it runs
+  // concurrently with geocoding and the Google/Geoapify searches below,
+  // instead of stacking its latency on top of them.
+  const profileMapPromise = fetchStageReachProfileMap();
 
   const { searchParams } = req.nextUrl;
   const cityParam = searchParams.get("city");
@@ -166,13 +217,13 @@ export async function GET(req: NextRequest) {
   }
 
   if (merged.length > 0) {
-    return NextResponse.json({ results: merged });
+    return NextResponse.json({ results: applyStageReachMatches(merged, await profileMapPromise) });
   }
 
   // ── 3. Overpass fallback — only if both of the above came up empty ─────────
   try {
     const results = await searchWithOverpass(lat, lon, radiusMeters, existingNames);
-    return NextResponse.json({ results });
+    return NextResponse.json({ results: applyStageReachMatches(results, await profileMapPromise) });
   } catch {
     return NextResponse.json({ error: "Search unavailable — please try again." }, { status: 502 });
   }
@@ -270,6 +321,7 @@ async function searchWithGoogle(
       review_count: place.userRatingCount ?? 0,
       live_music_tagged: placeTypes.includes("live_music_venue"),
       already_in_pipeline: existingNames.has(name.toLowerCase().trim()),
+      venue_profile_id: null,
     });
   }
 
@@ -327,6 +379,7 @@ async function searchWithGeoapify(
       review_count: 0,
       live_music_tagged: false,
       already_in_pipeline: existingNames.has(name.toLowerCase().trim()),
+      venue_profile_id: null,
     });
   }
 
@@ -414,6 +467,7 @@ async function searchWithOverpass(
       review_count: 0,
       live_music_tagged: !!tags.live_music,
       already_in_pipeline: existingNames.has(tags.name.toLowerCase().trim()),
+      venue_profile_id: null,
     };
   }).slice(0, 80);
 }
