@@ -108,6 +108,16 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
               {conf.label}
             </span>
 
+            {venue.venue_profile_id && (
+              <span
+                className="text-xs px-1.5 py-0.5 rounded border font-medium"
+                style={{ backgroundColor: "rgba(212,166,79,0.1)", color: "#D4A64F", borderColor: "rgba(212,166,79,0.3)" }}
+                title="This venue has a real StageReach account"
+              >
+                ⭐ On StageReach
+              </span>
+            )}
+
             {outreach && outreach.count > 0 && (
               <span className="text-xs" style={{ color: "#5e5c58" }}>
                 ✉ {outreach.count}× · {daysAgo(outreach.lastDate)}
