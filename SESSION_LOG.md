@@ -1,6 +1,6 @@
 # StageReach - Session Log
 
-## Session: 2026-08-11 — Personal email sending via Gmail/Outlook OAuth (designed and built, not yet merged)
+## Session: 2026-08-11 — Personal email sending via Gmail/Outlook OAuth
 
 ### The problem
 
@@ -36,15 +36,88 @@ Used the project's brainstorming → spec → plan → subagent-driven-developme
 
 ### Where this stands
 
-**Not yet merged to `main` and not deployed.** All 13 tasks complete, individually reviewed, and a final whole-implementation review passed with two follow-up fixes applied. Taylor decided to pause before merging.
+**Merged to `main` and live in production.** All 13 tasks complete, individually reviewed, final whole-implementation review passed. Both database migrations run in Supabase. Taylor created the Google OAuth client and granted Azure admin consent; both new env vars added to `.env.local` and Vercel. Pushed to `origin/main` and verified with real Gmail and Outlook sends showing the correct `sent_via` value. Follow-on work building on this (onboarding integration, diagnostics, disconnect UX) is logged in the entry below.
+
+## Session: 2026-08-12 to 2026-08-13 — Onboarding email connect, diagnostics, sidebar fix, and disconnect warning
+
+Four more features shipped on top of the personal-email-OAuth work above, each run through the same brainstorm → spec → plan → subagent-driven-development process, plus one small direct fix.
+
+### 1. Connect email during onboarding
+
+Taylor's ask: make sure new artists connect Gmail/Outlook as part of first-run setup — *"I just wanna make sure they get connected off the bat so that they can start working right away"* — rather than leaving it as something they might never discover on the Artist Profile page.
+
+- Added a 5th onboarding step (Connect Gmail/Outlook) with no upfront "skip" — an artist either connects or explicitly chooses "Continue without connecting for now"
+- Moved the profile/zone save earlier (from the old final "finish" button to the step 4 → 5 transition), since step 5 involves a full-page redirect to Google/Microsoft that would otherwise lose in-progress data
+- A short-lived cookie tags the OAuth attempt as belonging to onboarding, so a failed connection during onboarding routes the artist back to the wizard instead of showing a generic error on the Artist Profile page
+- Live-tested with a real signup end-to-end: profile, zone, and a real Outlook connection all saved correctly
+
+### 2. Personal connection status in `/api/email-status`
+
+Taylor's ask: *"Let's check the API status"* — extend the existing email diagnostics check to also show personal Gmail/Outlook connection health, not just the shared sender.
+
+- Added `personal_gmail` / `personal_outlook` status lines and a `personal_email_active` summary line showing which account sending will actually use
+- Fixed a real bug found during review: the helper that picks which connection to use returns the *newest* connection even if it needs reconnecting, so the status check needed an explicit "and is it actually active" condition — otherwise a broken connection would have been reported as fine
+
+### 3. Sidebar photo not refreshing (direct fix)
+
+Taylor noticed a newly-uploaded profile photo wasn't showing in the bottom-left sidebar until a full page reload. Fixed by having the profile save fire a lightweight signal that the sidebar listens for, so it re-fetches the name/photo immediately after a save — no reload needed.
+
+### 4. Warning before disconnecting Outlook
+
+Taylor's ask, picking from a list of previously-flagged small follow-ups: *"It's the connected accounts card"* — since Outlook's connection also powers calendar sync (both share one login), disconnecting it was silently turning off calendar sync with no warning.
+
+- Added an inline confirm step (matching the app's existing invoice-delete confirm pattern) that warns *"This will also stop syncing your gigs to your Outlook calendar. Disconnect anyway?"* before disconnecting Outlook specifically. Gmail's disconnect is unchanged (it doesn't affect calendar sync).
+- Taylor confirmed the confirm/cancel UI displays correctly live in the browser.
+
+### Where this stands
+
+All four features — onboarding email connect, email-status diagnostics, the sidebar fix, and the Outlook disconnect warning — are merged **and pushed to `origin/main`** — live in production. Taylor confirmed the disconnect warning's "Cancel" button reverts cleanly before the push.
 
 ### Pick Up Here Next Session
 
-1. Merge `feature/personal-email-oauth` into `main` locally (safe — doesn't deploy anything by itself)
-2. Run the two new database migrations in the Supabase SQL Editor: `supabase/migrations/014_email_connections.sql` and `supabase/migrations/015_interactions_sent_via.sql`
-3. Taylor needs to do two things outside the codebase before this actually works: (a) create a Google OAuth client in Google Cloud Console (same project as the existing Places API key) and enable the Gmail API, and (b) in the Azure Portal, add the Mail.Send and User.Read permissions to the existing app registration and grant admin consent — both are documented step-by-step in the plan's Tasks 6 and 7
-4. Add the two new environment variables (`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`) to `.env.local` and to Vercel's production settings
-5. Only then push to `origin/main` and test a real Gmail/Outlook connection end-to-end before considering this fully live
+- Superseded — see the entry directly below. Venue accounts (the first of the three pieces described here) were designed and built in the very next session.
+
+## Session: 2026-08-13 to 2026-08-14 — Venue accounts & login (first piece of the venue-facing portal)
+
+Taylor's ask from the end of the prior session: build a venue-facing side of the app, plus a mutual 1–5 star rating system between artists and venues. This was too large for one spec, so it got broken into three sequenced pieces — **venue accounts & login** (this entry), then artist discovery for venues, then booking — decided together with Taylor before any design work started.
+
+### Design decisions made with Taylor
+
+- Venues should be able to **find and claim** a venue that's already sitting in some artist's private pipeline, rather than always starting from scratch — this became the "search → claim or create fresh" signup flow.
+- Venue signup is **open, no invite code** — Taylor's growth plan is artist-first ("get artists to use it and then start to have venues use it once artists are already using it"), so there's no reason to gate venue signup the way artist signup is gated.
+- **No ownership verification** beyond first-claim-wins, blocked from claiming the same venue twice — Taylor explicitly said he's "not really concerned with that" at this stage.
+- Once a venue signs up, it should be **visibly connected back to wherever it already exists** — both the specific pipeline entry a venue claimed, and any *other* artist's separate copy of that same venue. This became a "linking sweep" that runs across every artist's pipeline, not just the entry the venue interacted with.
+- Real venue accounts should be **prioritized and badged** in the existing Discover Venues search — Taylor: "I want the real stage reach account of venues to have a higher ranked and badged profile when it's searched." This also applies to the badge shown on pipeline cards for venues an artist already has.
+- The badge went through several rounds — a gold shield (drawn live via the visual-companion browser tool, iterated on shape three times), then a gold microphone, then pulling from the actual StageReach logo's ring-and-mic motif — before Taylor settled on a plain gold star: "I hate all of these. Let's just do a gold star and call it a day."
+- Pricing/monetization for venues (subscription vs. ad space) was explicitly deferred — Taylor hadn't decided, and nothing in this piece needed that decision to be built.
+
+### Process
+
+Full brainstorm → spec → plan → subagent-driven-development cycle, same as every other feature this session, but at roughly triple the scale of anything built before it:
+- Spec (`docs/superpowers/specs/2026-08-13-venue-accounts-design.md`) went through **three review rounds**, catching a real middleware bug (venue accounts would have been misrouted into the artist onboarding wizard), a claim race condition, a factual error about Discover Venues having a confidence-based sort it doesn't actually have, a missing service-role/RLS callout, and a missing DB-level duplicate-prevention constraint.
+- 16-task implementation plan, each task built by a fresh subagent and passed through two-stage review (spec compliance, then code quality) — real bugs caught and fixed at nearly every step: a case-insensitive matching bug in the cross-pipeline linking sweep, a missing `ORDER BY` before a `LIMIT` that could silently drop a venue's own match, no try/catch anywhere in the two new client-side forms (leaving the UI stuck on any network hiccup), a serialized database call that could have added latency to the *existing*, already-shipped Discover Venues search.
+- One implementer subagent hit a monthly usage limit mid-fix, leaving a half-applied change in the working tree; sorted through by hand (kept the good parts, fixed a bug the interrupted attempt introduced, removed a misleading access check it added that wasn't asked for and didn't actually work).
+- A final whole-implementation review (after all 16 tasks individually passed) caught one more real bug that no single task's review could have: a venue logging back in for the *second* time landed on the artist dashboard instead of their own profile — only the signup wizard's own one-time redirect worked, nothing routed a returning venue anywhere on subsequent logins. Fixed directly in `proxy.ts`.
+
+### What got built
+
+- New `venue_profiles` table, separate from artists' private `venues` pipeline rows, plus a `venues.venue_profile_id` link column
+- `/venues` public landing page and `/venues/signup`, a 4-step wizard (create account → search existing pipeline entries → claim or start fresh → fill in profile details)
+- Cross-artist search and a "linking sweep" — both via the service-role client (same pattern the CSV import route already used), scoped tightly to public-safe fields only (name, city, address, type — never notes, contact info, pipeline stage, or which artist owns the relationship)
+- `proxy.ts` now recognizes venue accounts and routes them correctly, never into the artist onboarding wizard
+- `/venue/profile` — the venue's own protected area (the entire venue-facing app surface for now)
+- A "⭐ On StageReach" gold star badge on pipeline cards, the venue detail page, and Discover Venues search results — where a real account is always ranked first (Discover Venues had no sort of its own before this)
+
+### Where this stands
+
+**Merged to `main` locally.** Not yet pushed. **The new migration (`supabase/migrations/016_venue_profiles.sql`) has not been run in Supabase yet — and unlike every prior feature, this one can't wait until convenient.** Two already-shipped, unrelated pieces of the app (adding a venue manually, and adding one from Discover Venues) now depend on the new database column. Pushing this before the migration runs would break those for every artist, not just leave the new feature inert.
+
+One known, deliberately-accepted limitation: the two new search/claim endpoints only check "is someone logged in," not "is this caller specifically a venue" — an artist could technically call them directly. Data exposure is narrow (venue name/city/address/type only), and this matches Taylor's explicit "not concerned with that" stance on verification — flagged for awareness, not treated as a blocker.
+
+### Pick Up Here Next Session
+
+1. **Run the migration in Supabase's SQL Editor before anything else** — then push to `origin/main` and live-test the full signup/claim/badge flow with Taylor in the browser, same as every other feature.
+2. Once venue accounts are confirmed live: the next piece is **artist discovery for venues** (a venue-side search for artists), followed by **booking**, and only after both of those, the **mutual 1–5 star rating/review system** (with highlighting) Taylor originally asked for — venue accounts had to come first since ratings need venues to have real identities.
 
 ## Session: 2026-05-28 (2) — Beta Tester Bug Fixes
 
