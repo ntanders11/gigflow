@@ -36,7 +36,9 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/profile/") ||
     pathname === "/api/calendar/ics" ||
     pathname === "/api/auth/validate-code" ||
-    pathname === "/signup";
+    pathname === "/signup" ||
+    pathname === "/venues" ||
+    pathname === "/venues/signup";
 
   if (!user && !isLoginPage && !isPublicRoute) {
     const url = request.nextUrl.clone();
@@ -54,14 +56,50 @@ export async function proxy(request: NextRequest) {
   // are redirected to /onboarding. Skip this check on /onboarding
   // itself (would cause infinite redirect) and on all API routes.
   const isOnboardingRoute = pathname === "/onboarding";
+  const isVenueSignupRoute = pathname === "/venues/signup";
   const isApiRoute = pathname.startsWith("/api/");
 
   if (user && !isPublicRoute && !isLoginPage && !isOnboardingRoute && !isApiRoute) {
-    const { data: artistProfile, error: profileError } = await supabase
-      .from("artist_profiles")
-      .select("display_name")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    // Venue accounts are unambiguous — a venue_profiles row only ever
+    // exists for a venue account, created the moment signup starts (see
+    // /api/venue-profile's POST handler). Check this FIRST: without it,
+    // the artist_profiles check below would incorrectly bounce every
+    // venue account into the artist onboarding wizard, since a venue
+    // never has an artist_profiles row at all. A user can only ever have
+    // a row in one of these two tables, so the lookups are independent
+    // and safe to run concurrently.
+    const [
+      { data: venueProfile, error: venueProfileError },
+      { data: artistProfile, error: profileError },
+    ] = await Promise.all([
+      supabase
+        .from("venue_profiles")
+        .select("venue_name")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("artist_profiles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
+
+    if (venueProfileError) {
+      // Can't safely determine account type when the lookup itself
+      // failed — fail open rather than risk redirecting a real venue
+      // account into the artist onboarding wizard.
+      console.error("proxy: venue_profiles lookup failed", venueProfileError);
+      return supabaseResponse;
+    }
+
+    if (venueProfile) {
+      if (!venueProfile.venue_name && !isVenueSignupRoute) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/venues/signup";
+        return NextResponse.redirect(url);
+      }
+      return supabaseResponse;
+    }
 
     if (!profileError && !artistProfile?.display_name) {
       const url = request.nextUrl.clone();
