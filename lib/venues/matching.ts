@@ -11,6 +11,14 @@ export function normalizeMatchKey(name: string, city: string | null): string {
   return `${name.trim().toLowerCase()}|${(city ?? "").trim().toLowerCase()}`;
 }
 
+// Escapes ILIKE special characters (%, _, \) in user-supplied search text
+// before it's interpolated into a LIKE/ILIKE pattern. Without this, a
+// caller-controlled "%" or "_" changes the meaning of the pattern itself
+// (e.g. name=% would match every row), not just the literal text searched for.
+export function escapeIlike(value: string): string {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 interface MatchableVenue {
   name: string;
   city: string | null;

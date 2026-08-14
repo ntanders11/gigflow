@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { normalizeMatchKey, dedupeMatchableVenues } from "@/lib/venues/matching";
-
-// Escapes ILIKE special characters (%, _, \) in user-supplied search text
-// before it's interpolated into a LIKE/ILIKE pattern. Without this, a
-// caller-controlled "%" or "_" changes the meaning of the pattern itself
-// (e.g. name=% would match every row), not just the literal text searched for.
-function escapeIlike(value: string): string {
-  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
-}
+import { normalizeMatchKey, dedupeMatchableVenues, escapeIlike } from "@/lib/venues/matching";
 
 // Searches across EVERY artist's private `venues` pipeline rows (not
 // just one artist's) to help a signing-up venue find themselves. RLS on
