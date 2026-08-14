@@ -227,6 +227,15 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {venue.venue_profile_id && (
+            <span
+              className="text-xs px-2 py-1 rounded-full font-medium"
+              style={{ backgroundColor: "rgba(212,166,79,0.1)", color: "#D4A64F" }}
+              title="This venue has a real StageReach account"
+            >
+              ⭐ On StageReach
+            </span>
+          )}
           <span className={cn("text-xs px-2 py-1 rounded-full font-medium", STAGE_COLORS[venue.stage])}>
             {STAGES.find((s) => s.key === venue.stage)?.label}
           </span>
