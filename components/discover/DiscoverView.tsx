@@ -24,6 +24,7 @@ type DiscoverResult = {
   review_count: number;
   live_music_tagged: boolean;
   already_in_pipeline: boolean;
+  venue_profile_id: string | null;
 };
 
 export default function DiscoverView() {
@@ -98,6 +99,7 @@ export default function DiscoverView() {
         website: venue.website,
         contact_phone: venue.phone,
         stage: "discovered",
+        venue_profile_id: venue.venue_profile_id,
       }),
     });
 
@@ -304,6 +306,16 @@ export default function DiscoverView() {
                               {typeLabel(venue.type)}
                             </span>
                           </div>
+
+                          {venue.venue_profile_id && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full self-start"
+                              style={{ backgroundColor: "rgba(212,166,79,0.15)", color: "#D4A64F", border: "1px solid #D4A64F44" }}
+                              title="This venue has a real StageReach account"
+                            >
+                              ⭐ On StageReach
+                            </span>
+                          )}
 
                           {venue.live_music_tagged && (
                             <span
