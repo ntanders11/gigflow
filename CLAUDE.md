@@ -66,7 +66,7 @@ If a session involves significant decisions, research, or direction changes (not
 
   Key Flows
 
-  Authentication — proxy.ts is the Next.js middleware. It uses the Supabase SSR client (cookie-based sessions) to protect all routes except /login, /signup, /profile/[id] (public artist profile), /api/calendar/ics, and /api/auth/validate-code.
+  Authentication — proxy.ts is the Next.js middleware. It uses the Supabase SSR client (cookie-based sessions) to protect all routes except /login, /signup, /venues, /venues/signup, /profile/[id] (public artist profile), /api/calendar/ics, and /api/auth/validate-code. It also checks whether a logged-in user is a venue account (has a venue_profiles row) before the artist-onboarding check — see Venue Accounts below.
 
   Multi-User Sign-up — /signup (public) validates an invite code then creates a Supabase auth user, with emailRedirectTo pointed at the production domain so confirmation links never land on localhost. A SECURITY DEFINER DB trigger (handle_new_user) auto-creates a profiles row on auth.users INSERT. New users are then routed to /onboarding to complete their profile.
 

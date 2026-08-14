@@ -98,6 +98,18 @@ export async function proxy(request: NextRequest) {
         url.pathname = "/venues/signup";
         return NextResponse.redirect(url);
       }
+      // A fully-provisioned venue account's entire app surface (for now)
+      // is /venue/profile — this catches every OTHER protected path a
+      // venue might land on, most importantly /dashboard, which every
+      // login goes through first (app/login/page.tsx always pushes
+      // there). Without this, a venue signing back in after their first
+      // session would render the artist dashboard instead — the wizard's
+      // own explicit redirect on first signup only covers that one path.
+      if (venueProfile.venue_name && pathname !== "/venue/profile") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/venue/profile";
+        return NextResponse.redirect(url);
+      }
       return supabaseResponse;
     }
 
