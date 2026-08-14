@@ -36,6 +36,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/profile/") ||
     pathname === "/api/calendar/ics" ||
     pathname === "/api/auth/validate-code" ||
+    pathname === "/api/auth/confirm" ||
     pathname === "/signup" ||
     pathname === "/venues" ||
     pathname === "/venues/signup";

@@ -37,6 +37,7 @@ export default function VenueSignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
 
   // Step 1
   const [email, setEmail] = useState("");
@@ -59,20 +60,43 @@ export default function VenueSignupPage() {
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
 
-  // If a venue already created their account (step 1) but never finished
-  // the wizard, proxy.ts will route them back here on their next visit.
-  // Re-running signUp() for an already-registered email would just error
-  // with no way forward, so check for an existing blank venue_profiles
-  // row on mount and skip straight to step 2 if one exists.
+  // Supabase requires email confirmation on this project (no session is
+  // granted immediately from signUp() — confirmed directly against the
+  // live auth settings, not an assumption). That means there's no session
+  // to authenticate a "create the placeholder profile" call at the moment
+  // signUp() resolves — that only becomes possible once the venue clicks
+  // the confirmation link in their email. emailRedirectTo points at
+  // /api/auth/confirm?next=/venues/signup, which exchanges the link's
+  // code for a real session server-side and then redirects back to this
+  // page — so by the time this page (re)mounts after that click, a
+  // session already exists. This mount effect is where the placeholder
+  // row actually gets created — not handleCreateAccount below. POST is
+  // idempotent (Task 4), so it's safe to call unconditionally here: with
+  // no session yet, it fails quietly and step 1's create-account form
+  // just shows as normal; with a session, it creates the row if needed
+  // and advances past account creation.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/venue-profile");
+        const res = await fetch("/api/venue-profile", { method: "POST" });
         if (res.ok) {
+          // A real session exists — clear any pending-confirmation marker
+          // from a prior visit and proceed past account creation.
+          sessionStorage.removeItem("venueSignupPendingEmail");
           const data = await res.json();
           if (!cancelled && !data?.venue_name) {
             setStep(2);
+          }
+        } else {
+          // No session yet. If this browser tab already signed up and is
+          // waiting on the confirmation email (tracked below in
+          // handleCreateAccount), restore that state so a refresh doesn't
+          // drop the venue back onto a blank "create account" form.
+          const pendingEmail = sessionStorage.getItem("venueSignupPendingEmail");
+          if (!cancelled && pendingEmail) {
+            setEmail(pendingEmail);
+            setAwaitingConfirmation(true);
           }
         }
       } catch {
@@ -96,7 +120,7 @@ export default function VenueSignupPage() {
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/venues/signup` },
+        options: { emailRedirectTo: `${window.location.origin}/api/auth/confirm?next=/venues/signup` },
       });
 
       if (signUpError) {
@@ -104,13 +128,14 @@ export default function VenueSignupPage() {
         return;
       }
 
-      const res = await fetch("/api/venue-profile", { method: "POST" });
-      if (!res.ok) {
-        setError("Something went wrong setting up your account — please try again.");
-        return;
-      }
-
-      setStep(2);
+      // No session exists yet at this point (email confirmation required)
+      // — nothing to authenticate a "create profile" call with. The venue
+      // needs to click the confirmation link in their email; the mount
+      // effect above picks up from there once they land back on this page
+      // with a real session. Persisted so a refresh while waiting doesn't
+      // drop them back onto a blank "create account" form.
+      sessionStorage.setItem("venueSignupPendingEmail", email);
+      setAwaitingConfirmation(true);
     } catch {
       setError("Something went wrong — please check your connection and try again.");
     } finally {
@@ -219,7 +244,16 @@ export default function VenueSignupPage() {
           </p>
         )}
 
-        {step === 1 && (
+        {step === 1 && awaitingConfirmation && (
+          <div className="space-y-4">
+            <h1 className="text-xl font-bold mb-1" style={{ color: "#F4E8D2" }}>Check your email</h1>
+            <p className="text-sm" style={labelStyle}>
+              We sent a confirmation link to <span style={{ color: "#F4E8D2" }}>{email}</span>. Click it to continue setting up your venue — this page will pick up right where you left off.
+            </p>
+          </div>
+        )}
+
+        {step === 1 && !awaitingConfirmation && (
           <form onSubmit={handleCreateAccount} className="space-y-4">
             <h1 className="text-xl font-bold mb-1" style={{ color: "#F4E8D2" }}>Set up your venue</h1>
             <p className="text-sm mb-4" style={labelStyle}>No invite code needed — just create a login.</p>
