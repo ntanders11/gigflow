@@ -33,6 +33,7 @@ export interface Zone {
   radius_mi: number;
   lat: number | null;
   lon: number | null;
+  geocode_failed: boolean;
   created_at: string;
 }
 
