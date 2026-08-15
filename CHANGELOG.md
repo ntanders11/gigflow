@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-14 (artist discovery for venues)
+- [Feature] Venues can now search for artists near them at stagereach.app/venue/discover — results prioritize artists whose genres match what the venue books, and every result links straight to that artist's full profile to reach out.
+
 ## 2026-08-14
 - [Feature] Venues can now create their own StageReach account at stagereach.app/venues — search to claim a listing an artist already has in their pipeline, or create a fresh one if nobody's found them yet. No invite code needed.
 - [Feature] Any venue with a real account now shows a "⭐ On StageReach" badge on your pipeline cards and venue detail page, and always appears first in Discover Venues search results.
