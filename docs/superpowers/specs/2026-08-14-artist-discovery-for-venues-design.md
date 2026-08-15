@@ -37,7 +37,7 @@ A client component, structurally similar to the existing `components/discover/Di
 - **Auto-search on load**, using the venue's own `city` (from their `venue_profiles` row) as the default search location — mirrors how the artist-side Discover Venues auto-searches using the artist's home zone.
 - Location input + radius slider (2–50 mi, matching the existing control) let the venue adjust and re-search manually.
 - Results render as two sections when the venue has at least one genre set:
-  - **"Matches your genres (…)"** — artists whose own `genres` array shares at least one entry with the venue's `genres`
+  - **"Matches your genres (…)"** — artists whose own `genres` array shares at least one entry with the venue's `genres`, compared case-insensitively with whitespace trimmed on both sides (genres are free-text tags typed by users on both the artist and venue side — no fixed list — so "Rock" and "rock" must still count as a match)
   - **"Other artists nearby"** — every other artist within the searched radius
 - If the venue's `genres` is empty, both sections collapse into one: **"Artists in your area"**.
 - Each result card shows: photo (or initial avatar, matching the existing pattern), artist name, and genre tags. No distance figure is shown, even though results are filtered to the searched radius.
@@ -49,15 +49,20 @@ A client component, structurally similar to the existing `components/discover/Di
 Mirrors the shape of the existing `GET /api/venues/discover`, but the reverse direction — searches StageReach's own `artist_profiles` + `zones` tables instead of external APIs.
 
 1. Requires an authenticated venue session (checks for a `venue_profiles` row, same pattern as the venue-only checks elsewhere — though note per the venue-accounts spec, this is a "should only be called by venues" convention enforced by what the UI does, not a hard server-side role gate; consistent with how `search-existing` already works).
-2. Geocodes the requested city (reusing the existing `geocodeCity` helper from `app/api/venues/discover/route.ts` — Google Geocoding first, Geoapify/Nominatim fallback).
-3. Reads every artist's `zones` row (`zip_code`, `radius_mi`) and geocodes each zip code to get a lat/lon (on-the-fly, no caching — acceptable given StageReach's current scale; worth revisiting if the artist count grows large enough to make repeated geocoding calls costly).
-4. Keeps artists whose zone falls within the searched radius.
-5. Joins in each matching artist's `artist_profiles` row (`display_name`, `genres`, `photo_url`, `user_id` — used to build the `/profile/[id]` link). Only artists with a non-empty `display_name` (i.e., who've actually completed onboarding) are eligible — matches the existing rule that an incomplete artist profile isn't real yet.
-6. Splits results into the two tiers described above, based on the requesting venue's own `genres`.
+2. Geocodes the requested city, reusing the same geocoding logic the existing Discover Venues route already has. That logic (`geocodeCity`) currently lives as a private, unexported function inside `app/api/venues/discover/route.ts` — this spec requires extracting it into a shared module (`lib/geocoding.ts`) that both routes import, rather than duplicating it.
+3. Reads every artist's `zones` row (`user_id`, `zip_code`, `radius_mi`, plus the new `lat`/`lon` columns below). `zones` RLS scopes reads to the owning artist (`auth.uid() = user_id`), so — like the venue-accounts search endpoint before it — this cross-user read requires the service-role client, not the venue's own RLS-scoped session.
+4. **Zone coordinates are cached, not geocoded fresh on every search.** `zones` gets two new nullable columns, `lat` and `lon`, populated once when a zone is geocoded for the first time (lazily: the first search that encounters a zone with no cached coordinates geocodes it and saves the result back to that row via the service-role client; every subsequent search reads the cached value instead of re-geocoding). Without this, a single venue search would geocode the venue's own city *plus every distinct artist zip code*, every time — with Google Geocoding capped at 200 calls/day project-wide (per CLAUDE.md), that's a multiplicative cost (searches × artists), not additive, and could exhaust the daily cap after only a handful of searches even with a small number of artists. Caching drops repeat cost to zero for any zone that's already been geocoded once.
+5. Keeps artists whose cached zone coordinates fall within the searched radius.
+6. Joins in each matching artist's `artist_profiles` row (`display_name`, `genres`, `photo_url`, `user_id` — used to build the `/profile/[id]` link). `artist_profiles` already has a public-read RLS policy (the same one that lets anyone view `/profile/[id]` without logging in), so this join can go through the venue's own RLS-respecting session — only the `zones` read in step 3 needs the service-role client. Only artists with a non-empty `display_name` (i.e., who've actually completed onboarding) are eligible — matches the existing rule that an incomplete artist profile isn't real yet.
+7. Splits results into the two tiers described above, based on the requesting venue's own `genres`, using the same case-insensitive/trimmed comparison.
 
 ### New venue navigation header
 
 A simple header component (new, not reusing the artist `Sidebar`) rendered on both `/venue/profile` and `/venue/discover`, with two links: "My Profile" and "Discover Artists". Minimal — no logo redesign, no additional nav items, matching the existing venue pages' plain dark/gold visual language.
+
+### Middleware update (required — not optional)
+
+`proxy.ts` currently redirects a fully-provisioned venue account to `/venue/profile` from *any* path that isn't exactly `/venue/profile` (added when fixing the "venue lands on the artist dashboard" bug during the first piece). As written, that would also redirect `/venue/discover` back to `/venue/profile` — the new page would be unreachable. The condition needs to widen from an exact match on `/venue/profile` to a prefix match on `/venue/` (i.e., any path under the venue namespace is allowed through), so this and any future venue-facing page work without needing another middleware change each time.
 
 ---
 
@@ -75,8 +80,11 @@ A simple header component (new, not reusing the artist `Sidebar`) rendered on bo
 
 | Area | Change |
 |---|---|
+| `supabase/migrations/017_zones_lat_lon.sql` (or next available number) | New — adds nullable `lat`, `lon` columns to `zones`, populated lazily on first use |
+| `lib/geocoding.ts` | New — `geocodeCity` extracted here from `app/api/venues/discover/route.ts` so both routes can import it |
+| `app/api/venues/discover/route.ts` | Modified — imports `geocodeCity` from the new shared module instead of defining it locally; otherwise unchanged |
 | `app/venue/discover/page.tsx` | New — the venue-side artist search page |
-| `app/api/venues/discover-artists/route.ts` | New — searches `artist_profiles` + `zones` by location, tiers by genre match against the requesting venue's own genres |
+| `app/api/venues/discover-artists/route.ts` | New — searches `artist_profiles` (via the venue's own RLS session) + `zones` (via service-role) by location, caches zone coordinates on first geocode, tiers results by genre match against the requesting venue's own genres |
 | `components/venue/VenueNav.tsx` (or similar) | New — simple two-link header ("My Profile" / "Discover Artists"), added to both venue pages |
 | `app/venue/profile/page.tsx` | Modified — renders the new nav header |
-| `app/api/venues/discover/route.ts` | Read from only — `geocodeCity` (or an extracted shared version of it) is reused, not duplicated |
+| `proxy.ts` | Modified — widen the venue-account redirect from an exact match on `/venue/profile` to a prefix match on `/venue/`, so `/venue/discover` (and future venue pages) are reachable |
