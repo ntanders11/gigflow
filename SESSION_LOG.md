@@ -1,5 +1,38 @@
 # StageReach - Session Log
 
+## Session: 2026-08-14 — Artist discovery ships; mutual ratings brainstorm started
+
+### Wrapped up from the prior session
+
+Merged `feature/artist-discovery-for-venues` to `main` (fast-forward, no conflicts), verified `npx tsc --noEmit` clean, deleted the merged branch, pushed to `origin/main` (`774e7c5`). Confirmed the new `zones.lat`/`lon`/`geocode_failed` migration (`017_zones_lat_lon.sql`) was applied and live by querying the table directly. Venue accounts & login and artist discovery for venues — the first two of three planned venue-portal pieces — are both fully shipped and live in production.
+
+### Test data cleanup
+
+Removed the 4 leftover test venue accounts from live-testing the venue-accounts feature (`ntayloranderson+venuetest`, `+venuetest4`, `+venuetest5`, `+venuetest6@gmail.com`). One of them ("Stickmen Brewing") had actually completed signup and was linked (via the linking sweep) to 2 real venue entries sitting in two different artists' actual pipelines. Rather than deleting those pipeline entries, unlinked them (`venue_profile_id` set back to null) so the real pipeline data is untouched and only the "⭐ On StageReach" badge disappears. Deleted the 4 auth accounts via Supabase's admin API; `profiles` rows cascade-deleted automatically. Verified nothing was left behind.
+
+### Mutual ratings — brainstorm in progress, not yet speced or built
+
+Taylor chose to build the mutual 1-5 star ratings system next (the third and final planned venue-portal piece, and the original feature request that kicked off the whole venue-portal effort), over the alternative option of booking/scheduling — booking remains explicitly deferred, still just "an idea for later."
+
+**Decisions made so far, via one-at-a-time clarifying questions:**
+- **Unlock condition:** a rating opportunity only exists once an artist has logged a gig, marked it "completed," **and** that pipeline venue is linked to a real StageReach venue account (i.e. verified real interaction on both sides) — not open to anyone, not based on unlinked/unverified gigs.
+- **Content:** star rating (1-5) required, written review optional.
+- **Reveal:** double-blind, Airbnb-style — neither side sees the other's rating until both have submitted.
+- **Frequency:** one rating per venue-artist relationship, ever — not one per gig, even if they play together repeatedly.
+- **Editing:** ratings are editable any time, **including after both sides have revealed to each other** — Taylor explicitly chose this despite the flagged tradeoff (it weakens the anti-retaliation protection double-blind is meant to provide, since someone could see the other side's rating and then edit theirs in response). This was a deliberate, informed choice, not an oversight — respect it going forward rather than re-litigating.
+- **Visibility:** ratings need to be publicly visible to be useful, which means venues need a public profile page for the first time — `/venue/profile` today is private/management-only. Taylor approved building a new public venue page as part of this feature (artist-side already has one: `/profile/[id]`).
+- **Entry point:** a dedicated "pending ratings" list page (not inline buttons scattered across existing pages) — works the same way for both artist and venue sides, and doubles as a history of ratings already given.
+- **Moderation:** a simple "Report" button on any review, emails Taylor (reusing the existing Resend sending infra) so she can manually remove it via Supabase directly — no admin dashboard needed for v1.
+- **Data model:** a single shared row per venue-artist relationship with two independent halves (`venue_stars`/`venue_review` and `artist_stars`/`artist_review`, each writable only by its own side) rather than two separate rating rows — chosen because it's simpler to query ("my pending ratings" = one table scan) and makes it structurally impossible for one side's rating to leak before both are in, no extra guard logic needed.
+
+**Left open for next session:**
+- Exact table schema/migration not yet written
+- Public venue profile page route naming not yet decided (leaning `/venues/[id]` to mirror the artist-side `/profile/[id]` pattern, but not confirmed with Taylor)
+- Whether average ratings should show as badges on Discover Venues / Discover Artists result cards (not yet asked)
+- Full design doc not yet written — no spec review, no implementation plan yet. This was interrupted mid-brainstorm (Taylor signed off for the night right after confirming the data model approach) — next session should resume the brainstorming skill from here rather than starting over, since all the above decisions already have Taylor's explicit approval.
+
+---
+
 ## Session: 2026-08-11 — Personal email sending via Gmail/Outlook OAuth
 
 ### The problem
