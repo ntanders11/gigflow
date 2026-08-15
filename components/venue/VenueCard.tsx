@@ -56,27 +56,39 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
             cursor: batchActive ? (batchDisabled ? "default" : "pointer") : "grab",
           }}
         >
-          {/* Batch mode indicator — checkbox if selectable, "No email" badge if not */}
-          {batchActive && (
-            batchDisabled ? (
+          {/* Top-right corner: On StageReach star, then batch mode indicator
+              (checkbox if selectable, "No email" badge if not) — grouped in
+              one flex row so both can appear together without overlapping */}
+          <div className="absolute top-2 right-2 flex items-center gap-1.5">
+            {venue.venue_profile_id && (
               <span
-                className="absolute top-2 right-2 text-xs px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: "#1e2128", color: "#5e5c58", fontSize: "10px", border: "1px solid rgba(255,255,255,0.07)" }}
+                title="This venue has a real StageReach account"
+                style={{ fontSize: "13px", lineHeight: 1, color: "#D4A64F" }}
               >
-                No email
+                ⭐
               </span>
-            ) : (
-              <div
-                className="absolute top-2 right-2 w-4 h-4 rounded flex items-center justify-center"
-                style={{
-                  backgroundColor: batchSelected ? "#D4A64F" : "transparent",
-                  border: `1px solid ${batchSelected ? "#D4A64F" : "rgba(255,255,255,0.2)"}`,
-                }}
-              >
-                {batchSelected && <span style={{ color: "#0E0E10", fontSize: "9px", fontWeight: 700 }}>✓</span>}
-              </div>
-            )
-          )}
+            )}
+            {batchActive && (
+              batchDisabled ? (
+                <span
+                  className="text-xs px-1.5 py-0.5 rounded"
+                  style={{ backgroundColor: "#1e2128", color: "#5e5c58", fontSize: "10px", border: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  No email
+                </span>
+              ) : (
+                <div
+                  className="w-4 h-4 rounded flex items-center justify-center"
+                  style={{
+                    backgroundColor: batchSelected ? "#D4A64F" : "transparent",
+                    border: `1px solid ${batchSelected ? "#D4A64F" : "rgba(255,255,255,0.2)"}`,
+                  }}
+                >
+                  {batchSelected && <span style={{ color: "#0E0E10", fontSize: "9px", fontWeight: 700 }}>✓</span>}
+                </div>
+              )
+            )}
+          </div>
           <Link href={`/venues/${venue.id}`} onClick={(e) => { e.stopPropagation(); if (batchActive) e.preventDefault(); }}>
             <p
               className="font-medium text-sm leading-snug hover:underline"
@@ -107,16 +119,6 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
             >
               {conf.label}
             </span>
-
-            {venue.venue_profile_id && (
-              <span
-                className="text-xs px-1.5 py-0.5 rounded border font-medium"
-                style={{ backgroundColor: "rgba(212,166,79,0.1)", color: "#D4A64F", borderColor: "rgba(212,166,79,0.3)" }}
-                title="This venue has a real StageReach account"
-              >
-                ⭐ On StageReach
-              </span>
-            )}
 
             {outreach && outreach.count > 0 && (
               <span className="text-xs" style={{ color: "#5e5c58" }}>
