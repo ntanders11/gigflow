@@ -31,6 +31,8 @@ export interface Zone {
   name: string;
   zip_code: string | null;
   radius_mi: number;
+  lat: number | null;
+  lon: number | null;
   created_at: string;
 }
 
