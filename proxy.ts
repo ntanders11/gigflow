@@ -106,7 +106,12 @@ export async function proxy(request: NextRequest) {
       // there). Without this, a venue signing back in after their first
       // session would render the artist dashboard instead — the wizard's
       // own explicit redirect on first signup only covers that one path.
-      if (venueProfile.venue_name && pathname !== "/venue/profile") {
+      // Widened from an exact match on "/venue/profile" to a prefix match
+      // on "/venue/" so new venue-facing pages (like /venue/discover) don't
+      // need a middleware change each time one's added. Safe against
+      // false-matching "/venues/signup" or "/venues" — those are a
+      // different path segment ("/venues/", plural) entirely.
+      if (venueProfile.venue_name && !pathname.startsWith("/venue/")) {
         const url = request.nextUrl.clone();
         url.pathname = "/venue/profile";
         return NextResponse.redirect(url);
