@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { VenueProfile } from "@/types";
+import VenueNav from "@/components/venue/VenueNav";
 
 const inputStyle = {
   background: "#1e2128",
@@ -82,6 +83,7 @@ export default function VenueProfilePage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0E0E10" }}>
+      <VenueNav />
       <div className="max-w-2xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold" style={{ color: "#F4E8D2" }}>{profile.venue_name}</h1>

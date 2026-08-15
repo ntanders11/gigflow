@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import VenueNav from "@/components/venue/VenueNav";
 
 type ArtistResult = {
   user_id: string;
@@ -104,93 +105,98 @@ export default function VenueDiscoverPage() {
   const combined = venueHasGenres ? null : [...matchingGenre, ...other];
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold mb-6" style={{ color: "#F4E8D2" }}>Discover Artists</h1>
+    <>
+      <VenueNav />
+      <div className="min-h-screen" style={{ backgroundColor: "#0E0E10" }}>
+        <div className="max-w-4xl mx-auto px-6 py-10">
+          <h1 className="text-2xl font-bold mb-6" style={{ color: "#F4E8D2" }}>Discover Artists</h1>
 
-      <form onSubmit={handleSearch} className="rounded-xl p-5 mb-6" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
-        <div className="flex gap-3 mb-4">
-          <div className="flex-1">
-            <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>Location</label>
-            <input
-              type="text"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="City, state or zip code"
-              className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
-              style={inputStyle}
-            />
-          </div>
-          <div style={{ width: "130px" }}>
-            <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>Radius: {radius} mi</label>
-            <input
-              type="range"
-              min={2}
-              max={50}
-              value={radius}
-              onChange={(e) => setRadius(Number(e.target.value))}
-              className="w-full mt-1"
-              style={{ accentColor: "#D4A64F", marginTop: "10px" }}
-            />
-          </div>
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
-          style={{ backgroundColor: "#D4A64F", color: "#0E0E10", opacity: loading ? 0.7 : 1 }}
-        >
-          {loading ? "Searching…" : "Search Artists"}
-        </button>
-        {error && <p className="mt-3 text-sm" style={{ color: "#e25c5c" }}>{error}</p>}
-      </form>
-
-      {loading && (
-        <div className="text-center py-16">
-          <p className="text-sm" style={{ color: "#5e5c58" }}>Searching for artists…</p>
-        </div>
-      )}
-
-      {searched && !loading && (
-        <>
-          {matchingGenre.length === 0 && other.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-sm font-medium" style={{ color: "#5e5c58" }}>No artists found in this area yet.</p>
-            </div>
-          ) : combined ? (
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#9a9591" }}>
-                Artists in your area
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {combined.map((a) => <ArtistCard key={a.user_id} artist={a} />)}
+          <form onSubmit={handleSearch} className="rounded-xl p-5 mb-6" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="flex gap-3 mb-4">
+              <div className="flex-1">
+                <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>Location</label>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City, state or zip code"
+                  className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ width: "130px" }}>
+                <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>Radius: {radius} mi</label>
+                <input
+                  type="range"
+                  min={2}
+                  max={50}
+                  value={radius}
+                  onChange={(e) => setRadius(Number(e.target.value))}
+                  className="w-full mt-1"
+                  style={{ accentColor: "#D4A64F", marginTop: "10px" }}
+                />
               </div>
             </div>
-          ) : (
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
+              style={{ backgroundColor: "#D4A64F", color: "#0E0E10", opacity: loading ? 0.7 : 1 }}
+            >
+              {loading ? "Searching…" : "Search Artists"}
+            </button>
+            {error && <p className="mt-3 text-sm" style={{ color: "#e25c5c" }}>{error}</p>}
+          </form>
+
+          {loading && (
+            <div className="text-center py-16">
+              <p className="text-sm" style={{ color: "#5e5c58" }}>Searching for artists…</p>
+            </div>
+          )}
+
+          {searched && !loading && (
             <>
-              {matchingGenre.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#9a9591" }}>
-                    Matches your genres
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {matchingGenre.map((a) => <ArtistCard key={a.user_id} artist={a} />)}
-                  </div>
+              {matchingGenre.length === 0 && other.length === 0 ? (
+                <div className="text-center py-16">
+                  <p className="text-sm font-medium" style={{ color: "#5e5c58" }}>No artists found in this area yet.</p>
                 </div>
-              )}
-              {other.length > 0 && (
+              ) : combined ? (
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#5e5c58" }}>
-                    Other artists nearby
+                  <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#9a9591" }}>
+                    Artists in your area
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {other.map((a) => <ArtistCard key={a.user_id} artist={a} />)}
+                    {combined.map((a) => <ArtistCard key={a.user_id} artist={a} />)}
                   </div>
                 </div>
+              ) : (
+                <>
+                  {matchingGenre.length > 0 && (
+                    <div className="mb-8">
+                      <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#9a9591" }}>
+                        Matches your genres
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {matchingGenre.map((a) => <ArtistCard key={a.user_id} artist={a} />)}
+                      </div>
+                    </div>
+                  )}
+                  {other.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#5e5c58" }}>
+                        Other artists nearby
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {other.map((a) => <ArtistCard key={a.user_id} artist={a} />)}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
-        </>
-      )}
-    </div>
+        </div>
+      </div>
+    </>
   );
 }
