@@ -100,9 +100,8 @@ If a session involves significant decisions, research, or direction changes (not
                                                             
   Supabase Clients
 
-  - lib/supabase/server.ts — server-side client (uses cookies, respects RLS)
+  - lib/supabase/server.ts — createClient() (cookie-based, respects RLS) and createServiceClient() (service role, bypasses RLS — used for cross-user reads/writes like CSV import, venue signup search, and the linking sweep). createServiceClient() deliberately does NOT use the @supabase/ssr cookie-aware helper, even though it looks like the natural choice — that helper recovers and reuses a session from cookies, and once a session exists, supabase-js authenticates requests as that session instead of the key passed at construction, silently defeating RLS bypass with no error. Discovered via live testing 2026-08-14 (cross-artist venue search was returning zero results despite matching data existing). Fixed by building it on the plain @supabase/supabase-js createClient() instead, with no cookie awareness and persistSession/autoRefreshToken both off.
   - lib/supabase/client.ts — browser-side client
-  - Import routes use the service role key directly to bypass RLS for bulk writes
                                                                                                                                                                     
   Path Aliases
                                                                                                                                                                     

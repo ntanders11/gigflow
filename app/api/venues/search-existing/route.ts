@@ -66,14 +66,5 @@ export async function GET(req: NextRequest) {
     candidates.push({ name, city, address: null, venue_type: null, status: "taken" });
   }
 
-  return NextResponse.json({
-    candidates,
-    _debug: {
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      serviceKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length ?? 0,
-      pipelineMatchesCount: pipelineMatches?.length ?? 0,
-      pipelineError: pipelineError ?? null,
-      dedupedCount: deduped.length,
-    },
-  });
+  return NextResponse.json({ candidates });
 }
