@@ -19,16 +19,19 @@ export default function VenueNav() {
       <div style={{ fontFamily: "serif", fontSize: "1rem", color: "#D4A64F", fontWeight: 600 }}>
         StageReach
       </div>
-      {links.map((link) => (
-        <Link
-          key={link.href}
-          href={link.href}
-          className="text-sm transition-all hover:brightness-125"
-          style={{ color: pathname === link.href ? "#D4A64F" : "#9a9591", fontWeight: pathname === link.href ? 600 : 400 }}
-        >
-          {link.label}
-        </Link>
-      ))}
+      {links.map((link) => {
+        const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="text-sm transition-all hover:brightness-125"
+            style={{ color: isActive ? "#D4A64F" : "#9a9591", fontWeight: isActive ? 600 : 400 }}
+          >
+            {link.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
