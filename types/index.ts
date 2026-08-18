@@ -222,3 +222,61 @@ export interface VenueMatchCandidate {
   venue_type: string | null;
   status: "claimable" | "taken";
 }
+
+// ============================================================
+// MUTUAL RATINGS
+// ============================================================
+
+// The raw shape of a venue_artist_ratings row as stored — used only
+// server-side. API responses never send this shape directly to a
+// client; they shape it into RatingView (below) so an unrevealed
+// half is never even present in the JSON, not just hidden in the UI.
+export interface VenueArtistRatingRow {
+  id: string;
+  venue_profile_id: string;
+  artist_user_id: string;
+  qualifying_gig_id: string | null;
+  venue_stars: number | null;
+  venue_review: string | null;
+  venue_rated_at: string | null;
+  artist_stars: number | null;
+  artist_review: string | null;
+  artist_rated_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// What an API route actually returns to a client — always includes the
+// caller's own half, includes the counterpart's half only if `revealed`.
+export interface RatingView {
+  id: string;
+  venue_profile_id: string;
+  artist_user_id: string;
+  revealed: boolean;
+  my_stars: number;
+  my_review: string | null;
+  their_stars: number | null;
+  their_review: string | null;
+  counterpart_name: string;
+  counterpart_photo_url: string | null;
+}
+
+export interface PendingRating {
+  venue_profile_id?: string;   // present on the artist's pending list
+  artist_user_id?: string;     // present on the venue's pending list
+  counterpart_name: string;
+  counterpart_photo_url: string | null;
+  qualifying_gig_id: string;
+  qualifying_gig_date: string;
+}
+
+export interface PublicRatingsResponse {
+  average: number | null;
+  count: number;
+  reviews: {
+    reviewer_name: string;
+    reviewer_photo_url: string | null;
+    stars: number;
+    review: string | null;
+  }[];
+}
