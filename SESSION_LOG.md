@@ -1,5 +1,46 @@
 # StageReach - Session Log
 
+## Session: 2026-08-18 — Mutual ratings: spec/plan finished, implementation in progress
+
+### Spec and plan
+
+Resumed the mutual-ratings brainstorm from 2026-08-14 (all 9 locked decisions from that session carried over unchanged — see that entry below for the full list: completed+linked-gig unlock, double-blind reveal, one rating per relationship ever, editable-anytime including post-reveal, new public venue page, dedicated pending-ratings list, simple report-to-Taylor moderation, shared-row/two-halves data model). Resolved the two items left open last time (route naming, Discover-card badges) plus one new one (email notifications) as part of finishing the design, then wrote the spec: `docs/superpowers/specs/2026-08-18-mutual-ratings-design.md`. Spec review went 3 rounds — real bugs caught and fixed: a route collision (`/venues/[id]` was already an existing *private* page — the new public venue page had to move to `/venues/profile/[id]`) that would have failed the build, and a middleware fix that would have accidentally exposed that same private page plus the existing private `/venues/import`.
+
+Implementation plan written next: `docs/superpowers/plans/2026-08-18-mutual-ratings.md`, 17 tasks. Plan review went 2 rounds — caught 5 more issues (report email dropped spec-required content/link, two nav pending-count badges were silently cut instead of implemented, a risky show-then-fix code block for a memoryless subagent, an invented placeholder variable name, an ambiguous insertion anchor). All fixed and the plan was approved on the second pass.
+
+### Implementation — in progress, paused mid-execution
+
+Worktree `.worktrees/mutual-ratings`, branch `feature/mutual-ratings`, using subagent-driven-development (fresh implementer subagent per task, two-stage review: spec compliance then code quality).
+
+**Done and fully reviewed (both stages passed) — Tasks 1-7:**
+1. Migration (`018_venue_artist_ratings.sql`) — one code-quality fix applied (missing index on `artist_user_id`)
+2. Types added to `types/index.ts`
+3. `lib/ratings/eligibility.ts` (eligibility + qualifying-gig validation helpers)
+4. `lib/email/rating-notifications.ts` — one code-quality fix applied (missing error logging on Supabase queries)
+5. Artist-side rating routes (`app/api/ratings/`, `app/api/ratings/pending/`) — one code-quality fix applied (try/catch around `validateQualifyingGig`)
+6. Venue-side rating routes (`app/api/venue/ratings/`, `app/api/venue/ratings/pending/`) — built the Task 5 fix in from the start, no fix loop needed
+7. Report endpoint (`app/api/ratings/[id]/report/route.ts`) — approved clean, no fixes needed
+
+**Implemented but NOT yet reviewed — Task 8:**
+Public rating read routes (`app/api/public/venues/[id]/ratings/route.ts`, `app/api/public/artists/[id]/ratings/route.ts`) — committed as `c2416f1`, spec-compliance and code-quality review still need to be dispatched before moving on.
+
+**Not started — Tasks 9-17:**
+9. Gig completion trigger (modifies `app/api/gigs/[id]/route.ts`) — flagged HIGH RISK, needs the two-Supabase-client pattern done correctly
+10. Middleware update (`proxy.ts`) — flagged HIGH RISK, scoped prefixes only, no blanket `/venues/`
+11. Public venue profile page (`app/venues/profile/[id]/page.tsx` + `components/ratings/RatingsSection.tsx`) — flagged HIGH RISK, must NOT collide with the existing private `/venues/[id]` page
+12. Artist profile ratings section (modifies `app/profile/[id]/page.tsx`)
+13. Artist pending-ratings page + Sidebar badge
+14. Venue pending-ratings page + VenueNav badge
+15. Discover Artists rating badge
+16. Discover Venues rating badge
+17. Documentation updates (CLAUDE.md, CHANGELOG.md)
+
+After Task 17, still needs: final whole-implementation review, then `finishing-a-development-branch` (merge/push), then ask Taylor to run the new migration in Supabase SQL Editor and do a live end-to-end walkthrough (mark a real completed+linked gig, confirm both notification emails, submit both ratings, confirm reveal, confirm public display + Discover badges).
+
+**Resume point:** dispatch spec-compliance and code-quality review for Task 8 first (implemented, not yet reviewed), then continue task-by-task from Task 9 using the exact task text in the plan document — do not re-derive it, the plan already has complete, ready-to-paste code for every remaining task.
+
+---
+
 ## Session: 2026-08-14 — Artist discovery ships; mutual ratings brainstorm started
 
 ### Wrapped up from the prior session
