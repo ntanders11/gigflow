@@ -968,8 +968,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { Resend } from "resend";
 
+type ReportableRating = {
+  id: string;
+  venue_profile_id: string;
+  artist_user_id: string;
+  venue_stars: number | null;
+  venue_review: string | null;
+  venue_rated_at: string | null;
+  artist_stars: number | null;
+  artist_review: string | null;
+  artist_rated_at: string | null;
+};
+
+// Builds a Supabase Studio SQL Editor deep link pre-filled with a query
+// selecting exactly this row — Studio's `content` query param prefills the
+// editor, so this is a genuine "go straight to this row" link, not just a
+// pointer at the table in general. Falls back to null if the project ref
+// can't be parsed out of the Supabase URL (shouldn't happen in practice).
+function buildRowLink(ratingId: string): string | null {
+  const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim();
+  const match = supabaseUrl.match(/^https:\/\/([a-z0-9]+)\.supabase\.co/);
+  if (!match) return null;
+  const projectRef = match[1];
+  const query = `select * from venue_artist_ratings where id = '${ratingId}';`;
+  return `https://supabase.com/dashboard/project/${projectRef}/sql/new?content=${encodeURIComponent(query)}`;
+}
+
 async function notifyTaylorOfReport(
-  ratingId: string,
+  rating: ReportableRating,
   reporterUserId: string,
   reason: string | null
 ): Promise<void> {
@@ -979,12 +1005,24 @@ async function notifyTaylorOfReport(
     console.error("report route: Resend not configured, skipping notification email");
     return;
   }
+  const rowLink = buildRowLink(rating.id);
   const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
     from: `StageReach <${fromEmail}>`,
     to: fromEmail,
     subject: "A rating was reported on StageReach",
-    text: `Rating ${ratingId} was reported by user ${reporterUserId}.\n\nReason: ${reason ?? "(none given)"}\n\nLook it up directly in Supabase (venue_artist_ratings table) to review and remove if warranted.`,
+    text: [
+      `Rating ${rating.id} was reported by user ${reporterUserId}.`,
+      `Reason: ${reason ?? "(none given)"}`,
+      "",
+      `Venue's rating: ${rating.venue_stars ?? "(not yet given)"} stars`,
+      rating.venue_review ? `Venue's review: ${rating.venue_review}` : "Venue's review: (none)",
+      "",
+      `Artist's rating: ${rating.artist_stars ?? "(not yet given)"} stars`,
+      rating.artist_review ? `Artist's review: ${rating.artist_review}` : "Artist's review: (none)",
+      "",
+      rowLink ? `View/remove this row: ${rowLink}` : "Look this row up directly in Supabase (venue_artist_ratings table) to review and remove if warranted.",
+    ].join("\n"),
   });
   if (error) console.error("report route: failed to send notification email", error);
 }
@@ -1004,7 +1042,7 @@ export async function POST(
   const service = await createServiceClient();
   const { data: rating, error } = await service
     .from("venue_artist_ratings")
-    .select("id, venue_profile_id, artist_user_id, venue_rated_at, artist_rated_at")
+    .select("id, venue_profile_id, artist_user_id, venue_stars, venue_review, venue_rated_at, artist_stars, artist_review, artist_rated_at")
     .eq("id", id)
     .maybeSingle();
 
@@ -1037,7 +1075,7 @@ export async function POST(
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
 
   try {
-    await notifyTaylorOfReport(rating.id as string, user.id, reason);
+    await notifyTaylorOfReport(rating as ReportableRating, user.id, reason);
   } catch (err) {
     console.error("report route: failed to send notification email", err);
   }
@@ -1530,13 +1568,29 @@ Add the import near the top of `app/profile/[id]/page.tsx`:
 import RatingsSection from "@/components/ratings/RatingsSection";
 ```
 
-Find the end of the page's returned JSX (after the existing bio/social/packages/videos sections, before the closing tags of the outer container) and add:
+The page's right-hand column (a `<div className="flex-1 flex flex-col gap-6">`, sibling to the left sidebar) ends with a "Footer note" paragraph. Find this exact block near the end of the file:
 
 ```typescript
-        <RatingsSection endpoint={`/api/public/artists/${id}/ratings`} />
+          {/* Footer note */}
+          <p style={{ color: "#5e5c58", fontSize: "11px", textAlign: "center" as const }}>
+            Profile powered by StageReach · All pricing is approximate and subject to change
+          </p>
+
+        </div>
 ```
 
-(The exact insertion point depends on the current JSX structure — place it as the last section before the page's closing container tag, consistent with how the new public venue page in Task 11 places it last.)
+Insert `<RatingsSection />` immediately after the Footer note paragraph, still inside that same right-column `</div>` (i.e. before it, not after) — this keeps the ratings section in the wider right column, not the narrow left sidebar:
+
+```typescript
+          {/* Footer note */}
+          <p style={{ color: "#5e5c58", fontSize: "11px", textAlign: "center" as const }}>
+            Profile powered by StageReach · All pricing is approximate and subject to change
+          </p>
+
+          <RatingsSection endpoint={`/api/public/artists/${id}/ratings`} />
+
+        </div>
+```
 
 - [ ] **Step 2: Verify it compiles**
 
@@ -1722,7 +1776,9 @@ export default function RatingsPage() {
 }
 ```
 
-- [ ] **Step 2: Add "Ratings" to the Sidebar**
+- [ ] **Step 2: Add "Ratings" to the Sidebar, with a live pending-count badge**
+
+The spec requires a pending-count badge on this nav entry — not optional polish. `mainLinks` is a plain module-level array with a static `badge: null` per entry, so the badge value needs to be computed at render time instead, only for the `/ratings` link.
 
 In `components/layout/Sidebar.tsx`, add a new entry to `mainLinks` (after `"Invoices"`):
 
@@ -1731,7 +1787,59 @@ In `components/layout/Sidebar.tsx`, add a new entry to `mainLinks` (after `"Invo
   { href: "/ratings",    label: "Ratings",           icon: "★", badge: null, comingSoon: false },
 ```
 
-The `badge` field already exists in the `mainLinks` type shape and is already rendered conditionally (see the existing `{link.badge && (...)}` block) — leave it `null` for now. A live pending-count badge is a reasonable follow-up but isn't required for this page to work; wiring live state into a link array defined as a static const would need its own small refactor, better scoped as a fast-follow than bundled into this already-large plan.
+Add a new state variable alongside the existing `displayName`/`photoUrl` state at the top of the `Sidebar` component:
+
+```typescript
+  const [pendingRatingsCount, setPendingRatingsCount] = useState(0);
+```
+
+Add a fetch for it inside the existing `useEffect` that already loads the profile — right after the `loadProfile()` call and before the `window.addEventListener` line:
+
+```typescript
+    loadProfile();
+
+    fetch("/api/ratings/pending")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setPendingRatingsCount(data?.pending?.length ?? 0))
+      .catch(() => {});
+
+    // The Artist Profile page dispatches this after a successful save, since
+```
+
+(That last comment line is the existing comment already in the file, right before `window.addEventListener(...)` — shown here only so the insertion point is unambiguous. Do not duplicate it.)
+
+Find the existing render block inside the main-nav `.map()`:
+
+```typescript
+                <span className="flex-1 truncate">{link.label}</span>
+                {link.badge && (
+                  <span
+                    style={{
+                      backgroundColor: "#D4A64F",
+                      color: "#0E0E10",
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      borderRadius: "999px",
+                      minWidth: "18px",
+                      height: "18px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0 5px",
+                    }}
+                  >
+                    {link.badge}
+                  </span>
+                )}
+```
+
+Replace `{link.badge && (` with a computed value that overrides `link.badge` for the `/ratings` link specifically. Add this one line immediately before the `return (` inside the `.map()` callback (right after the existing `const isActive = ...` line):
+
+```typescript
+            const badgeValue = link.href === "/ratings" ? (pendingRatingsCount > 0 ? pendingRatingsCount : null) : link.badge;
+```
+
+Then change `{link.badge && (` to `{badgeValue && (`, and change the inner `{link.badge}` to `{badgeValue}`, leaving everything else in that block (styles, structure) exactly as it already is.
 
 - [ ] **Step 3: Verify it compiles**
 
@@ -1919,16 +2027,80 @@ export default function VenueRatingsPage() {
 }
 ```
 
-- [ ] **Step 2: Add "Ratings" to VenueNav**
+- [ ] **Step 2: Add "Ratings" to VenueNav, with a live pending-count badge**
 
-In `components/venue/VenueNav.tsx`, update `links`:
+The spec requires a pending-count badge here too. The current `VenueNav.tsx` has no fetch/state at all (it's a pure `usePathname` component) and no existing badge concept to extend, unlike the artist Sidebar — so this replaces the full file rather than patching pieces of it.
+
+Replace the full contents of `components/venue/VenueNav.tsx` with:
 
 ```typescript
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+
 const links = [
   { href: "/venue/profile", label: "My Profile" },
   { href: "/venue/discover", label: "Discover Artists" },
   { href: "/venue/ratings", label: "Ratings" },
 ];
+
+export default function VenueNav() {
+  const pathname = usePathname();
+  const [pendingRatingsCount, setPendingRatingsCount] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/venue/ratings/pending")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setPendingRatingsCount(data?.pending?.length ?? 0))
+      .catch(() => {});
+  }, []);
+
+  return (
+    <nav
+      className="px-6 py-3 flex items-center gap-6"
+      style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", backgroundColor: "#16181c" }}
+    >
+      <div style={{ fontFamily: "serif", fontSize: "1rem", color: "#D4A64F", fontWeight: 600 }}>
+        StageReach
+      </div>
+      {links.map((link) => {
+        const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+        const badge = link.href === "/venue/ratings" && pendingRatingsCount > 0 ? pendingRatingsCount : null;
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="flex items-center gap-1.5 text-sm transition-all hover:brightness-125"
+            style={{ color: isActive ? "#D4A64F" : "#9a9591", fontWeight: isActive ? 600 : 400 }}
+          >
+            {link.label}
+            {badge && (
+              <span
+                style={{
+                  backgroundColor: "#D4A64F",
+                  color: "#0E0E10",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  borderRadius: "999px",
+                  minWidth: "18px",
+                  height: "18px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "0 5px",
+                }}
+              >
+                {badge}
+              </span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 ```
 
 - [ ] **Step 3: Verify it compiles**
@@ -1968,11 +2140,36 @@ type ArtistResult = {
 };
 ```
 
-After the existing `artists` fetch (the block using `artist_profiles` and building `matchingGenre`/`other`), add a ratings lookup right before the `for (const artist of artists ?? [])` loop:
+Find this exact block in the file (it's the final section of the `GET` handler):
+
+```typescript
+  const matchingGenre: ArtistResult[] = [];
+  const other: ArtistResult[] = [];
+
+  for (const artist of artists ?? []) {
+    if (!artist.display_name) continue; // onboarding not complete — not a real artist yet
+    const result: ArtistResult = {
+      user_id: artist.user_id,
+      display_name: artist.display_name,
+      genres: artist.genres ?? [],
+      photo_url: artist.photo_url,
+    };
+    const artistGenres = new Set(result.genres.map(normalizeGenre));
+    const hasMatch = venueHasGenres && [...artistGenres].some((g) => venueGenres.has(g));
+    (hasMatch ? matchingGenre : other).push(result);
+  }
+
+  return NextResponse.json({ matchingGenre, other, venueHasGenres });
+```
+
+Replace it with (the only changes: a ratings lookup inserted before the loop, and two new fields on `result`):
 
 ```typescript
   const artistUserIdsForRatings = (artists ?? []).map((a) => a.user_id as string);
-  const { data: ratingRows } = await supabase
+  // venue_artist_ratings has no client-facing RLS policies — this read MUST
+  // use `service` (already in scope earlier in this file), not `supabase`
+  // (the venue's own RLS session), or it will silently return zero rows.
+  const { data: ratingRows } = await service
     .from("venue_artist_ratings")
     .select("artist_user_id, venue_stars")
     .in("artist_user_id", artistUserIdsForRatings.length > 0 ? artistUserIdsForRatings : [""])
@@ -1985,31 +2182,28 @@ After the existing `artists` fetch (the block using `artist_profiles` and buildi
     list.push(row.venue_stars as number);
     ratingsByArtist.set(row.artist_user_id as string, list);
   }
-```
 
-Note: this uses `supabase` (the venue's own RLS session), not the `service` client — `venue_artist_ratings` has no client-facing policies at all, so this read must actually go through `service` instead. Correct it to:
+  const matchingGenre: ArtistResult[] = [];
+  const other: ArtistResult[] = [];
 
-```typescript
-  const { data: ratingRows } = await service
-    .from("venue_artist_ratings")
-    ...
-```
-
-Then, inside the existing `for (const artist of artists ?? [])` loop, where `result` is constructed, add the two new fields:
-
-```typescript
+  for (const artist of artists ?? []) {
+    if (!artist.display_name) continue; // onboarding not complete — not a real artist yet
     const stars = ratingsByArtist.get(artist.user_id) ?? [];
     const result: ArtistResult = {
       user_id: artist.user_id,
       display_name: artist.display_name,
-      genres: result_genres, // keep existing line as-is; this is illustrative only
+      genres: artist.genres ?? [],
       photo_url: artist.photo_url,
       avg_rating: stars.length > 0 ? stars.reduce((a, b) => a + b, 0) / stars.length : null,
       rating_count: stars.length,
     };
-```
+    const artistGenres = new Set(result.genres.map(normalizeGenre));
+    const hasMatch = venueHasGenres && [...artistGenres].some((g) => venueGenres.has(g));
+    (hasMatch ? matchingGenre : other).push(result);
+  }
 
-(Adjust to fit the exact existing variable names in that block — the two new fields are the only actual change; everything else in the object literal stays as it already is.)
+  return NextResponse.json({ matchingGenre, other, venueHasGenres });
+```
 
 - [ ] **Step 2: Show the badge in `app/venue/discover/page.tsx`**
 
