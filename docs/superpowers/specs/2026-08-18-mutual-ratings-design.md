@@ -58,6 +58,8 @@ create table venue_artist_ratings (
 );
 ```
 
+**First-submission validation is required, not optional.** When `POST /api/ratings` or `POST /api/venue/ratings` receives a first submission for a relationship (the row doesn't exist yet), the server must verify the supplied `qualifying_gig_id` actually proves eligibility for *this specific* relationship — not just that the caller owns some completed gig somewhere. Concretely: the gig's `status` must be `"completed"`, the gig's `user_id` must equal the calling artist (for artist submissions) or the gig's `venue_id` must resolve to a `venues` row whose `venue_profile_id` equals the calling venue's own id (for venue submissions). Without this check, a caller could attach an unrelated completed gig they own to rate a venue/artist they never actually worked with.
+
 - **Revealed** means both `venue_rated_at` and `artist_rated_at` are non-null. This is computed at read time, not stored as a separate flag — there's nothing to keep in sync.
 - **Eligibility is computed live, not pre-materialized.** No background job creates rows in advance. When an artist or venue asks "who can I rate," the API finds every completed gig at a linked venue, groups by the relationship, and excludes any relationship where that caller's half is already filled in. This is simpler than pre-creating rows and avoids any "did the row get created yet" sync bug.
 - **First submission requires proof of eligibility** (`qualifying_gig_id` — a completed gig the caller is actually party to); later edits to an existing row don't need this since the row already exists.
@@ -69,7 +71,7 @@ create table venue_artist_ratings (
 create table venue_artist_rating_reports (
   id uuid primary key default gen_random_uuid(),
   rating_id uuid not null references venue_artist_ratings(id) on delete cascade,
-  reporter_user_id uuid not null,
+  reporter_user_id uuid not null references profiles(id),
   reason text,
   created_at timestamptz not null default now()
 );
@@ -91,13 +93,19 @@ create table venue_artist_rating_reports (
 
 ### Shared / public routes
 
-- `POST /api/ratings/[id]/report` — either party (or, since revealed ratings are public, StageReach's own visitors are not able to report — only the two involved parties can, since reporting requires being logged in as one of them) inserts a report row and triggers an email to Taylor with the review content and a direct link to the row
-- `GET /api/venues/[id]/ratings` — public, no login required; returns only revealed ratings for a venue plus the aggregate (average, count) — powers the new `/venues/[id]` page
-- `GET /api/artists/[id]/ratings` — public, no login required; same shape for an artist — powers a new section on the existing `/profile/[id]` page
+- `POST /api/ratings/[id]/report` — only the two parties on that specific rating can report it (verified server-side against `venue_profile_id`/`artist_user_id`). The rating must also already be **revealed** (both `*_rated_at` set) — the UI only ever shows a Report link once revealed, and the server enforces the same rule, so a rating can't be reported before the reporter has actually seen it. A valid report inserts a row and emails Taylor the review content plus a direct link to the row.
+- `GET /api/public/venues/[id]/ratings` — public, no login required; returns only revealed ratings for a venue plus the aggregate (average, count) — powers the new `/venues/[id]` page
+- `GET /api/public/artists/[id]/ratings` — public, no login required; same shape for an artist — powers a new section on the existing `/profile/[id]` page
+
+Both public read routes live under a dedicated `/api/public/` prefix rather than nesting under `/api/venues/` or `/api/artists/` — this keeps `proxy.ts`'s public-route allowlist a single simple prefix check (`pathname.startsWith("/api/public/")`) instead of a route-specific regex, and avoids any risk of accidentally exposing other, non-public routes that happen to share the `/api/venues/...` or `/api/artists/...` path shape (e.g. `/api/venues/discover-artists` must stay behind login).
 
 ### New public page: `/venues/[id]`
 
 Venues don't have any public page today — `/venue/profile` is private management only. This new route (plural `/venues`, matching the existing public `/venues` landing page — distinct from the private singular `/venue/profile`) shows a venue's public info (name, city, type, genres, description, photo — everything already in `venue_profiles`) plus a new ratings section: average stars, review count, and the list of individual revealed reviews, each linking to the reviewing artist's own `/profile/[id]`.
+
+### Middleware update (required — not optional)
+
+`proxy.ts`'s `isPublicRoute` check currently only exact-matches `pathname === "/venues"` and `pathname === "/venues/signup"` — there's no prefix match for anything under `/venues/`, and neither of the new `/api/public/...` routes is listed at all. As written, an unauthenticated visitor would be redirected to `/login` before ever reaching the new public venue page or either public ratings endpoint. Two additions are needed: a prefix match on `pathname.startsWith("/venues/")` (safe — `/venues/signup` already matches this prefix, so the existing explicit check for it becomes redundant but harmless), and a prefix match on `pathname.startsWith("/api/public/")` for the two new public API routes.
 
 ### Existing page changed: `/profile/[id]`
 
@@ -117,8 +125,8 @@ Both existing search endpoints (`GET /api/venues/discover` and `GET /api/venues/
 
 Both reuse the existing shared Resend sender (`booking@stagereach.app`, the verified domain from the 2026-07-15 deliverability fix) — these are platform notifications about the user's own account, not pitch emails sent on an artist's behalf, so they don't go through the personal Gmail/Outlook sending path.
 
-1. **"You have a new gig to rate"** — triggered inside the existing `PATCH /api/gigs/[id]` handler, the moment a gig's `status` changes to `"completed"` (from something else) on a gig whose venue is linked (`venue_profile_id` set). Sent to both the artist and the venue account holder — recipient emails looked up via the Supabase service-role admin API (the same mechanism already used for the recent test-account cleanup), since that's the reliable login-email source for both account types.
-2. **"Your rating was revealed"** — triggered inside `POST /api/ratings` and `POST /api/venue/ratings`, the moment a submission causes the *second* half to become filled in (checked by comparing the row's state before and after the update). Sent only to whichever side had already submitted and was waiting.
+1. **"You have a new gig to rate"** — triggered inside the existing `PATCH /api/gigs/[id]` handler, the moment a gig's `status` changes to `"completed"` (from something else) on a gig whose venue is linked (`venue_profile_id` set). Before sending to either side, the handler checks whether that side has already rated this relationship (their half of the `venue_artist_ratings` row, if one exists, is already filled in) — if so, this gig isn't a new opportunity for them (one rating per relationship, ever), and they're skipped. This matters in particular for a venue and artist who work together repeatedly: without this check, every subsequent completed gig would re-send "new gig to rate" even after that relationship was already fully rated. Recipient emails are read from `profiles.email` — the same lookup already used by the existing automated follow-up cron (`app/api/venues/follow-up/route.ts`), populated for every account (artist or venue) by the `handle_new_user` trigger on signup.
+2. **"Your rating was revealed"** — triggered inside `POST /api/ratings` and `POST /api/venue/ratings`, the moment a submission causes the *second* half to become filled in (checked by comparing the row's state before and after the update). Sent only to whichever side had already submitted and was waiting. Recipient email uses the same `profiles.email` lookup as above.
 
 ---
 
@@ -145,9 +153,10 @@ Both reuse the existing shared Resend sender (`booking@stagereach.app`, the veri
 | `app/api/ratings/[id]/report/route.ts` | New — report endpoint, shared by both sides |
 | `app/api/venue/ratings/route.ts` | New — venue's `GET`/`POST` |
 | `app/api/venue/ratings/pending/route.ts` | New — venue's pending list |
-| `app/api/venues/[id]/ratings/route.ts` | New — public, revealed ratings + aggregate for a venue |
-| `app/api/artists/[id]/ratings/route.ts` | New — public, revealed ratings + aggregate for an artist |
-| `app/api/gigs/[id]/route.ts` | Modified — fires the "new gig to rate" email when status transitions to `completed` on a linked venue |
+| `app/api/public/venues/[id]/ratings/route.ts` | New — public, revealed ratings + aggregate for a venue |
+| `app/api/public/artists/[id]/ratings/route.ts` | New — public, revealed ratings + aggregate for an artist |
+| `app/api/gigs/[id]/route.ts` | Modified — fires the "new gig to rate" email when status transitions to `completed` on a linked venue, skipping any side that's already rated this relationship |
+| `proxy.ts` | Modified — adds `/venues/` and `/api/public/` as public-route prefixes so the new public page and endpoints are reachable without login |
 | `app/venues/[id]/page.tsx` | New — public venue profile page |
 | `app/profile/[id]/page.tsx` | Modified — adds the ratings section |
 | `app/ratings/page.tsx` | New — artist pending-ratings page |
