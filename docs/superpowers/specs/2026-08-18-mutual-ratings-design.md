@@ -77,7 +77,7 @@ create table venue_artist_rating_reports (
 );
 ```
 
-**Access pattern — why no RLS-based double-blind:** Postgres RLS controls which *rows* a query can see, not which *columns* — there's no way to express "hide the venue's half of this specific row until the artist's half is also filled in" using row-level policies alone. So `venue_artist_ratings` and its reports table get RLS enabled with no client-facing policies (same pattern as `invite_codes` — "no RLS, queried only via service role"). Every read and write goes through a server API route using the service-role client, which decides in code what to return and what to allow — the same approach already used for cross-user reads elsewhere (the venue-signup search, the linking sweep).
+**Access pattern — why no RLS-based double-blind:** Postgres RLS controls which *rows* a query can see, not which *columns* — there's no way to express "hide the venue's half of this specific row until the artist's half is also filled in" using row-level policies alone. So `venue_artist_ratings` and its reports table get RLS enabled with no client-facing policies granted — stricter than `invite_codes` (which has no RLS at all) but the same practical effect: nothing is reachable except through a server route using the service-role client. Every read and write goes through a server API route using the service-role client, which decides in code what to return and what to allow — the same approach already used for cross-user reads elsewhere (the venue-signup search, the linking sweep).
 
 ### New API routes (artist side)
 
