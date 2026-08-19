@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-18
+- [Feature] Mutual ratings — venues and artists can now rate each other 1-5 stars (plus an optional written review) once they've actually worked together (a completed, linked gig). Ratings stay hidden from the other side until both have submitted, then show publicly on profiles and search results.
+
 ## 2026-08-14 (artist discovery for venues)
 - [Feature] Venues can now search for artists near them at stagereach.app/venue/discover — results prioritize artists whose genres match what the venue books, and every result links straight to that artist's full profile to reach out.
 
