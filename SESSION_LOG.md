@@ -1,5 +1,30 @@
 # StageReach - Session Log
 
+## Session: 2026-08-18 (continued) — Mutual ratings: all 17 tasks built, final review found 3 more issues, fix in progress (uncommitted)
+
+Continued straight from the entry below (spec/plan were already finished; this picks up mid-implementation). Finished the remaining subagent-driven-development work:
+
+**Tasks 8-17 all implemented and passed both review stages**, including the two flagged HIGH RISK tasks:
+- Task 9 (gig-completion email trigger) — the two-Supabase-client requirement verified correct on both reviews.
+- Task 11 (new public venue page) — verified via an actual `next build` (not just `tsc`) that there's no routing collision with the pre-existing private `/venues/[id]` page.
+- Task 10 (middleware) — verified the scoped prefixes don't leak `/venues/import` or `/venues/[id]`.
+- Task 13 caught and fixed a real gap mid-implementation: the plan put the artist pending-ratings page at a bare `app/ratings/page.tsx`, outside the `(protected)` route group that provides the Sidebar/nav chrome — moved to `app/(protected)/ratings/page.tsx`. (Task 14's venue-side page didn't have this problem — venue pages render their own nav directly, no route-group dependency.)
+
+**Final whole-implementation review** (dispatched after Task 17) found one more real gap that had slipped through every individual task review: the spec's "Ratings you've given" list was supposed to show an Edit link and a Report link per rating, but the built pages left that list read-only — the backend for both fully worked, there was just no UI to trigger either. Fixed with a new `GivenRow` component on both `/ratings` and `/venue/ratings`, re-reviewed and approved. Committed as `81b243e`.
+
+**A second final-review pass** (after the Edit/Report fix) found 3 more real issues, still uncommitted in the worktree as of pausing:
+1. **Wrong column (bug, most important of the three):** `app/api/venues/discover/route.ts`'s `fetchVenueRatingsMap()` was averaging `venue_stars` (stars the venue gave OUT to artists) instead of `artist_stars` (stars the venue actually received) — so the Discover Venues rating badge would have shown a venue's own outgoing ratings as if they were its reputation. Caught by comparing against the public venue-ratings route, which correctly uses `artist_stars`.
+2. **Dead end:** the new public venue page (`/venues/profile/[id]`) had zero inbound links anywhere in the app — reachable only by hand-typing a UUID.
+3. **Spec deviation:** the spec requires each revealed review to link to the reviewer's own profile; `RatingsSection` rendered reviewer names as plain text with no id even available to link with.
+
+A fix was dispatched covering all three (correct the column; add `reviewer_id` to `PublicRatingsResponse` and both public routes; add a `reviewerLinkPrefix` prop to `RatingsSection` so it can link each reviewer to `/profile/{id}` or `/venues/profile/{id}` depending on which page it's rendered on; wrap the existing "⭐ On StageReach" badge on Discover Venues cards in a link to the new public venue page, closing the dead-end). **The subagent finished the edits and `npx tsc --noEmit` is clean — but it was interrupted before running the commit step.** As of pausing, these changes sit uncommitted in the worktree at `/Users/tayloranderson/gigflow/.worktrees/mutual-ratings` (`git status --short` shows exactly 8 modified files: both public rating routes, `discover/route.ts`, both profile pages, `DiscoverView.tsx`, `RatingsSection.tsx`, `types/index.ts`).
+
+**Resume point:** in the worktree, review the uncommitted diff (`git diff`), confirm it matches the fix as described, then commit it (suggested message: "fix: correct venue rating badge column, link reviews to reviewer profiles, link Discover Venues badge to public venue page") and dispatch one more review pass on that commit specifically before considering the feature done. After that: final `npx tsc --noEmit` + `npx eslint` across the whole project one more time, then `finishing-a-development-branch` (merge to main, likely option 1 given the pattern from both prior venue-portal features), then tell Taylor to run `supabase/migrations/018_venue_artist_ratings.sql` in the Supabase SQL Editor (required from the start, unlike the artist-discovery migration — nothing in this feature works until it's applied) and do a live end-to-end walkthrough (real completed+linked gig, both notification emails, both ratings submitted, reveal, public display on both profile pages, Discover badges on both sides, and now also the reviewer-profile links and the Discover Venues → public venue page link).
+
+Two low-severity items from the final review were deliberately left as-is (not bugs, not worth fixing right now): two new `react-hooks/set-state-in-effect` ESLint warnings on the two ratings pages (matches ~20 pre-existing instances of the same warning elsewhere in this codebase — an accepted pattern here, not a new class of problem), and `CLAUDE.md`'s Authentication paragraph not yet mentioning the two new public route prefixes or the `venue_artist_rating_reports` table (worth a follow-up doc touch-up, not urgent).
+
+---
+
 ## Session: 2026-08-18 — Mutual ratings: spec/plan finished, implementation in progress
 
 ### Spec and plan
