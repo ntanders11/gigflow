@@ -49,6 +49,8 @@ type DiscoverResult = {
   live_music_tagged: boolean;
   already_in_pipeline: boolean;
   venue_profile_id: string | null;
+  avg_rating: number | null;
+  rating_count: number;
 };
 
 // Fetches every real venue account's name+city, keyed for matching against
@@ -80,19 +82,53 @@ async function fetchStageReachProfileMap(): Promise<Map<string, string>> {
 // change to one that already existed.
 function applyStageReachMatches(
   results: DiscoverResult[],
-  profileByKey: Map<string, string>
+  profileByKey: Map<string, string>,
+  ratingsByProfileId: Map<string, { avg: number; count: number }>
 ): DiscoverResult[] {
   if (results.length === 0 || profileByKey.size === 0) return results;
 
-  const tagged = results.map((r) => ({
-    ...r,
-    venue_profile_id: profileByKey.get(normalizeMatchKey(r.name, r.city)) ?? null,
-  }));
+  const tagged = results.map((r) => {
+    const venueProfileId = profileByKey.get(normalizeMatchKey(r.name, r.city)) ?? null;
+    const rating = venueProfileId ? ratingsByProfileId.get(venueProfileId) : undefined;
+    return {
+      ...r,
+      venue_profile_id: venueProfileId,
+      avg_rating: rating?.avg ?? null,
+      rating_count: rating?.count ?? 0,
+    };
+  });
 
   return tagged.sort((a, b) => {
     if (!!a.venue_profile_id === !!b.venue_profile_id) return 0;
     return a.venue_profile_id ? -1 : 1;
   });
+}
+
+async function fetchVenueRatingsMap(): Promise<Map<string, { avg: number; count: number }>> {
+  const service = await createServiceClient();
+  const { data: rows, error } = await service
+    .from("venue_artist_ratings")
+    .select("venue_profile_id, venue_stars")
+    .not("venue_rated_at", "is", null)
+    .not("artist_rated_at", "is", null);
+
+  if (error) {
+    console.error("fetchVenueRatingsMap: failed", error);
+    return new Map();
+  }
+
+  const starsByProfile = new Map<string, number[]>();
+  for (const row of rows ?? []) {
+    const list = starsByProfile.get(row.venue_profile_id as string) ?? [];
+    list.push(row.venue_stars as number);
+    starsByProfile.set(row.venue_profile_id as string, list);
+  }
+
+  const result = new Map<string, { avg: number; count: number }>();
+  for (const [profileId, stars] of starsByProfile) {
+    result.set(profileId, { avg: stars.reduce((a, b) => a + b, 0) / stars.length, count: stars.length });
+  }
+  return result;
 }
 
 export async function GET(req: NextRequest) {
@@ -104,6 +140,7 @@ export async function GET(req: NextRequest) {
   // concurrently with geocoding and the Google/Geoapify searches below,
   // instead of stacking its latency on top of them.
   const profileMapPromise = fetchStageReachProfileMap();
+  const ratingsMapPromise = fetchVenueRatingsMap();
 
   const { searchParams } = req.nextUrl;
   const cityParam = searchParams.get("city");
@@ -169,13 +206,13 @@ export async function GET(req: NextRequest) {
   }
 
   if (merged.length > 0) {
-    return NextResponse.json({ results: applyStageReachMatches(merged, await profileMapPromise) });
+    return NextResponse.json({ results: applyStageReachMatches(merged, await profileMapPromise, await ratingsMapPromise) });
   }
 
   // ── 3. Overpass fallback — only if both of the above came up empty ─────────
   try {
     const results = await searchWithOverpass(lat, lon, radiusMeters, existingNames);
-    return NextResponse.json({ results: applyStageReachMatches(results, await profileMapPromise) });
+    return NextResponse.json({ results: applyStageReachMatches(results, await profileMapPromise, await ratingsMapPromise) });
   } catch {
     return NextResponse.json({ error: "Search unavailable — please try again." }, { status: 502 });
   }
@@ -274,6 +311,8 @@ async function searchWithGoogle(
       live_music_tagged: placeTypes.includes("live_music_venue"),
       already_in_pipeline: existingNames.has(name.toLowerCase().trim()),
       venue_profile_id: null,
+      avg_rating: null,
+      rating_count: 0,
     });
   }
 
@@ -332,6 +371,8 @@ async function searchWithGeoapify(
       live_music_tagged: false,
       already_in_pipeline: existingNames.has(name.toLowerCase().trim()),
       venue_profile_id: null,
+      avg_rating: null,
+      rating_count: 0,
     });
   }
 
@@ -420,6 +461,8 @@ async function searchWithOverpass(
       live_music_tagged: !!tags.live_music,
       already_in_pipeline: existingNames.has(tags.name.toLowerCase().trim()),
       venue_profile_id: null,
+      avg_rating: null,
+      rating_count: 0,
     };
   }).slice(0, 80);
 }
