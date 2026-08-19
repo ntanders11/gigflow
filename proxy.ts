@@ -34,6 +34,10 @@ export async function proxy(request: NextRequest) {
   // Public routes that don't require authentication
   const isPublicRoute =
     pathname.startsWith("/profile/") ||
+    // Scoped narrowly to /venues/profile/ — NOT a blanket "/venues/" prefix, which
+    // would also expose the private /venues/import and /venues/[id] pages.
+    pathname.startsWith("/venues/profile/") ||
+    pathname.startsWith("/api/public/") ||
     pathname === "/api/calendar/ics" ||
     pathname === "/api/auth/validate-code" ||
     pathname === "/api/auth/confirm" ||
