@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ArtistProfile, Package, VideoSample, SocialLinks, EmailConnection } from "@/types";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
@@ -35,6 +36,7 @@ function formatPrice(min: number | null, max: number | null): string {
 
 export default function ArtistProfilePage() {
   const supabase = createClient();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState<ArtistProfile | null>(null);
@@ -255,6 +257,12 @@ export default function ArtistProfilePage() {
   const videos = profile?.video_samples || [];
   const social = profile?.social_links || DEFAULT_SOCIAL;
 
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
     <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
       {cropSrc && (
@@ -276,7 +284,12 @@ export default function ArtistProfilePage() {
             Your EPK and booking profile — fill it in, then share the link with venues.
           </p>
         </div>
-        {saving && <span style={{ color: "#5e5c58", fontSize: "11px" }}>Saving…</span>}
+        <div className="flex items-center gap-3">
+          {saving && <span style={{ color: "#5e5c58", fontSize: "11px" }}>Saving…</span>}
+          <button onClick={handleSignOut} className="text-xs" style={{ color: "#5e5c58" }}>
+            Sign out
+          </button>
+        </div>
       </div>
 
       {/* Two-column layout */}

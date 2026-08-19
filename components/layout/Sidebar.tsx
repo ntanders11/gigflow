@@ -259,6 +259,7 @@ export function MobileBottomNav() {
     { href: "/discover",   label: "Discover",  icon: "⊕" },
     { href: "/calendar",   label: "Calendar",  icon: "☐" },
     { href: "/invoices",   label: "Invoices",  icon: "$" },
+    { href: "/artist-profile", label: "Profile", icon: "☺" },
   ];
 
   return (
