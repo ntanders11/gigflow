@@ -7,6 +7,8 @@ type ArtistResult = {
   display_name: string;
   genres: string[];
   photo_url: string | null;
+  avg_rating: number | null;
+  rating_count: number;
 };
 
 // Haversine distance in miles between two lat/lon points.
@@ -141,16 +143,37 @@ export async function GET(req: NextRequest) {
 
   if (artistsError) return NextResponse.json({ error: artistsError.message }, { status: 500 });
 
+  const artistUserIdsForRatings = (artists ?? []).map((a) => a.user_id as string);
+  // venue_artist_ratings has no client-facing RLS policies — this read MUST
+  // use `service` (already in scope earlier in this file), not `supabase`
+  // (the venue's own RLS session), or it will silently return zero rows.
+  const { data: ratingRows } = await service
+    .from("venue_artist_ratings")
+    .select("artist_user_id, venue_stars")
+    .in("artist_user_id", artistUserIdsForRatings.length > 0 ? artistUserIdsForRatings : [""])
+    .not("venue_rated_at", "is", null)
+    .not("artist_rated_at", "is", null);
+
+  const ratingsByArtist = new Map<string, number[]>();
+  for (const row of ratingRows ?? []) {
+    const list = ratingsByArtist.get(row.artist_user_id as string) ?? [];
+    list.push(row.venue_stars as number);
+    ratingsByArtist.set(row.artist_user_id as string, list);
+  }
+
   const matchingGenre: ArtistResult[] = [];
   const other: ArtistResult[] = [];
 
   for (const artist of artists ?? []) {
     if (!artist.display_name) continue; // onboarding not complete — not a real artist yet
+    const stars = ratingsByArtist.get(artist.user_id) ?? [];
     const result: ArtistResult = {
       user_id: artist.user_id,
       display_name: artist.display_name,
       genres: artist.genres ?? [],
       photo_url: artist.photo_url,
+      avg_rating: stars.length > 0 ? stars.reduce((a, b) => a + b, 0) / stars.length : null,
+      rating_count: stars.length,
     };
     const artistGenres = new Set(result.genres.map(normalizeGenre));
     const hasMatch = venueHasGenres && [...artistGenres].some((g) => venueGenres.has(g));
