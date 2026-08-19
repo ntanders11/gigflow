@@ -250,6 +250,20 @@ export default function VenueSignupPage() {
             <p className="text-sm" style={labelStyle}>
               We sent a confirmation link to <span style={{ color: "#F4E8D2" }}>{email}</span>. Click it to continue setting up your venue — this page will pick up right where you left off.
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem("venueSignupPendingEmail");
+                setAwaitingConfirmation(false);
+                setEmail("");
+                setPassword("");
+                setError(null);
+              }}
+              className="text-xs underline"
+              style={labelStyle}
+            >
+              Wrong email or need to start over? Use a different email
+            </button>
           </div>
         )}
 
