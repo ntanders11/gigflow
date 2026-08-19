@@ -274,6 +274,7 @@ export interface PublicRatingsResponse {
   average: number | null;
   count: number;
   reviews: {
+    reviewer_id: string;
     reviewer_name: string;
     reviewer_photo_url: string | null;
     stars: number;

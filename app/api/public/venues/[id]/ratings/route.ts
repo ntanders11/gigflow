@@ -29,6 +29,7 @@ export async function GET(
   const reviews = (rows ?? []).map((r) => {
     const artist = artistById.get(r.artist_user_id as string);
     return {
+      reviewer_id: r.artist_user_id as string,
       reviewer_name: (artist?.display_name as string | null) ?? "Artist",
       reviewer_photo_url: (artist?.photo_url as string | null) ?? null,
       stars: r.artist_stars as number,

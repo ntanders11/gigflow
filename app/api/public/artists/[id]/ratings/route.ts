@@ -29,6 +29,7 @@ export async function GET(
   const reviews = (rows ?? []).map((r) => {
     const venue = venueById.get(r.venue_profile_id as string);
     return {
+      reviewer_id: r.venue_profile_id as string,
       reviewer_name: (venue?.venue_name as string | null) ?? "Venue",
       reviewer_photo_url: (venue?.photo_url as string | null) ?? null,
       stars: r.venue_stars as number,

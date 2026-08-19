@@ -310,13 +310,16 @@ export default function DiscoverView() {
                           </div>
 
                           {venue.venue_profile_id && (
-                            <span
-                              className="text-xs px-2 py-0.5 rounded-full self-start"
+                            <a
+                              href={`/venues/profile/${venue.venue_profile_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs px-2 py-0.5 rounded-full self-start hover:brightness-110 transition-all"
                               style={{ backgroundColor: "rgba(212,166,79,0.15)", color: "#D4A64F", border: "1px solid #D4A64F44" }}
-                              title="This venue has a real StageReach account"
+                              title="This venue has a real StageReach account — click to view their public profile and ratings"
                             >
                               ⭐ On StageReach
-                            </span>
+                            </a>
                           )}
 
                           {venue.rating_count > 0 && (

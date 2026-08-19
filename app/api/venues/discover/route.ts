@@ -108,7 +108,7 @@ async function fetchVenueRatingsMap(): Promise<Map<string, { avg: number; count:
   const service = await createServiceClient();
   const { data: rows, error } = await service
     .from("venue_artist_ratings")
-    .select("venue_profile_id, venue_stars")
+    .select("venue_profile_id, artist_stars")
     .not("venue_rated_at", "is", null)
     .not("artist_rated_at", "is", null);
 
@@ -120,7 +120,7 @@ async function fetchVenueRatingsMap(): Promise<Map<string, { avg: number; count:
   const starsByProfile = new Map<string, number[]>();
   for (const row of rows ?? []) {
     const list = starsByProfile.get(row.venue_profile_id as string) ?? [];
-    list.push(row.venue_stars as number);
+    list.push(row.artist_stars as number);
     starsByProfile.set(row.venue_profile_id as string, list);
   }
 

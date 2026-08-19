@@ -2,9 +2,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { PublicRatingsResponse } from "@/types";
 
-export default function RatingsSection({ endpoint }: { endpoint: string }) {
+export default function RatingsSection({ endpoint, reviewerLinkPrefix }: { endpoint: string; reviewerLinkPrefix: string }) {
   const [data, setData] = useState<PublicRatingsResponse | null>(null);
 
   useEffect(() => {
@@ -30,17 +31,19 @@ export default function RatingsSection({ endpoint }: { endpoint: string }) {
         {data.reviews.map((r, i) => (
           <div key={i} className="rounded-lg p-3" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
             <div className="flex items-center gap-2 mb-1">
-              {r.reviewer_photo_url ? (
-                <img src={r.reviewer_photo_url} alt={r.reviewer_name} className="w-6 h-6 rounded-full object-cover" />
-              ) : (
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{ background: "linear-gradient(135deg, #D4A64F 0%, #6C5CE7 100%)", color: "#fff" }}
-                >
-                  {r.reviewer_name.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <span className="text-sm font-medium" style={{ color: "#F4E8D2" }}>{r.reviewer_name}</span>
+              <Link href={`${reviewerLinkPrefix}${r.reviewer_id}`} className="flex items-center gap-2 hover:brightness-125 transition-all">
+                {r.reviewer_photo_url ? (
+                  <img src={r.reviewer_photo_url} alt={r.reviewer_name} className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{ background: "linear-gradient(135deg, #D4A64F 0%, #6C5CE7 100%)", color: "#fff" }}
+                  >
+                    {r.reviewer_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-sm font-medium" style={{ color: "#F4E8D2" }}>{r.reviewer_name}</span>
+              </Link>
               <span className="text-xs" style={{ color: "#D4A64F" }}>
                 {"★".repeat(r.stars)}{"☆".repeat(5 - r.stars)}
               </span>

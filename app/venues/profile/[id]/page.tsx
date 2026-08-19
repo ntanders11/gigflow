@@ -72,7 +72,7 @@ export default async function PublicVenueProfilePage({
           </div>
         )}
 
-        <RatingsSection endpoint={`/api/public/venues/${id}/ratings`} />
+        <RatingsSection endpoint={`/api/public/venues/${id}/ratings`} reviewerLinkPrefix="/profile/" />
       </div>
     </div>
   );

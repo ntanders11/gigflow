@@ -264,7 +264,7 @@ export default async function PublicProfilePage({
             Profile powered by StageReach · All pricing is approximate and subject to change
           </p>
 
-          <RatingsSection endpoint={`/api/public/artists/${id}/ratings`} />
+          <RatingsSection endpoint={`/api/public/artists/${id}/ratings`} reviewerLinkPrefix="/venues/profile/" />
 
         </div>
       </div>
