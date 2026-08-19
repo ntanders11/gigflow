@@ -89,6 +89,149 @@ function PendingRow({ item, onSubmitted }: { item: PendingRating; onSubmitted: (
   );
 }
 
+function GivenRow({ rating, onUpdated }: { rating: RatingView; onUpdated: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [stars, setStars] = useState(rating.my_stars);
+  const [review, setReview] = useState(rating.my_review ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const [reporting, setReporting] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reported, setReported] = useState(false);
+  const [reportError, setReportError] = useState("");
+
+  async function saveEdit() {
+    if (stars < 1) return;
+    setSaving(true);
+    setError("");
+    const res = await fetch("/api/ratings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        venue_profile_id: rating.venue_profile_id,
+        stars,
+        review: review.trim() || undefined,
+      }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      setEditing(false);
+      onUpdated();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Couldn't save — please try again.");
+    }
+  }
+
+  async function submitReport() {
+    setReportSubmitting(true);
+    setReportError("");
+    const res = await fetch(`/api/ratings/${rating.id}/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason: reportReason.trim() || undefined }),
+    });
+    setReportSubmitting(false);
+    if (res.ok) {
+      setReported(true);
+      setReporting(false);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setReportError(data.error ?? "Couldn't submit report — please try again.");
+    }
+  }
+
+  return (
+    <div className="rounded-xl p-4" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
+      <div className="text-sm font-semibold mb-1" style={{ color: "#F4E8D2" }}>{rating.counterpart_name}</div>
+
+      {editing ? (
+        <>
+          <StarPicker value={stars} onChange={setStars} />
+          <textarea
+            rows={2}
+            placeholder="Optional review"
+            value={review}
+            onChange={(e) => setReview(e.target.value)}
+            className="w-full mt-2 rounded-lg px-3 py-2 text-sm outline-none resize-none"
+            style={{ backgroundColor: "#1e2128", border: "1px solid rgba(255,255,255,0.07)", color: "#F4E8D2" }}
+          />
+          {error && <p className="text-xs mt-1" style={{ color: "#e25c5c" }}>{error}</p>}
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={saveEdit}
+              disabled={stars < 1 || saving}
+              className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
+              style={{ backgroundColor: "#D4A64F", color: "#0E0E10", opacity: stars < 1 || saving ? 0.6 : 1 }}
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+            <button
+              onClick={() => { setEditing(false); setStars(rating.my_stars); setReview(rating.my_review ?? ""); setError(""); }}
+              className="px-4 py-1.5 rounded-lg text-xs font-semibold"
+              style={{ color: "#9a9591" }}
+            >
+              Cancel
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-xs" style={{ color: "#D4A64F" }}>
+            Your rating: {"★".repeat(rating.my_stars)}{"☆".repeat(5 - rating.my_stars)}
+          </p>
+          {rating.revealed ? (
+            <p className="text-xs mt-1" style={{ color: "#9a9591" }}>
+              Their rating: {"★".repeat(rating.their_stars ?? 0)}{"☆".repeat(5 - (rating.their_stars ?? 0))}
+            </p>
+          ) : (
+            <p className="text-xs mt-1" style={{ color: "#5e5c58" }}>Awaiting their response</p>
+          )}
+          <div className="flex gap-3 mt-2">
+            <button onClick={() => setEditing(true)} className="text-xs" style={{ color: "#5b9bd5" }}>
+              Edit
+            </button>
+            {rating.revealed && !reported && (
+              <button onClick={() => setReporting(true)} className="text-xs" style={{ color: "#e25c5c" }}>
+                Report
+              </button>
+            )}
+            {reported && <span className="text-xs" style={{ color: "#5e5c58" }}>Reported</span>}
+          </div>
+          {reporting && (
+            <div className="mt-2">
+              <textarea
+                rows={2}
+                placeholder="Optional reason"
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-none"
+                style={{ backgroundColor: "#1e2128", border: "1px solid rgba(255,255,255,0.07)", color: "#F4E8D2" }}
+              />
+              {reportError && <p className="text-xs mt-1" style={{ color: "#e25c5c" }}>{reportError}</p>}
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={submitReport}
+                  disabled={reportSubmitting}
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
+                  style={{ backgroundColor: "#e25c5c", color: "#fff", opacity: reportSubmitting ? 0.6 : 1 }}
+                >
+                  {reportSubmitting ? "Submitting…" : "Submit Report"}
+                </button>
+                <button onClick={() => { setReporting(false); setReportReason(""); setReportError(""); }} className="px-4 py-1.5 rounded-lg text-xs font-semibold" style={{ color: "#9a9591" }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function RatingsPage() {
   const [pending, setPending] = useState<PendingRating[]>([]);
   const [given, setGiven] = useState<RatingView[]>([]);
@@ -134,19 +277,7 @@ export default function RatingsPage() {
       ) : (
         <div className="space-y-3">
           {given.map((r) => (
-            <div key={r.id} className="rounded-xl p-4" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
-              <div className="text-sm font-semibold mb-1" style={{ color: "#F4E8D2" }}>{r.counterpart_name}</div>
-              <p className="text-xs" style={{ color: "#D4A64F" }}>
-                Your rating: {"★".repeat(r.my_stars)}{"☆".repeat(5 - r.my_stars)}
-              </p>
-              {r.revealed ? (
-                <p className="text-xs mt-1" style={{ color: "#9a9591" }}>
-                  Their rating: {"★".repeat(r.their_stars ?? 0)}{"☆".repeat(5 - (r.their_stars ?? 0))}
-                </p>
-              ) : (
-                <p className="text-xs mt-1" style={{ color: "#5e5c58" }}>Awaiting their response</p>
-              )}
-            </div>
+            <GivenRow key={r.id} rating={r} onUpdated={load} />
           ))}
         </div>
       )}
