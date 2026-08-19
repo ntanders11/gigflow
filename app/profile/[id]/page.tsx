@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { ArtistProfile, Package, VideoSample, SocialLinks } from "@/types";
+import RatingsSection from "@/components/ratings/RatingsSection";
 
 const SOCIAL_PLATFORMS: { key: keyof SocialLinks; label: string; color: string; icon: string }[] = [
   { key: "instagram", label: "Instagram", color: "#e1306c", icon: "IG" },
@@ -262,6 +263,8 @@ export default async function PublicProfilePage({
           <p style={{ color: "#5e5c58", fontSize: "11px", textAlign: "center" as const }}>
             Profile powered by StageReach · All pricing is approximate and subject to change
           </p>
+
+          <RatingsSection endpoint={`/api/public/artists/${id}/ratings`} reviewerLinkPrefix="/venues/profile/" />
 
         </div>
       </div>

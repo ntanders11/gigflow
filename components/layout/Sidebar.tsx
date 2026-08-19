@@ -13,6 +13,7 @@ const mainLinks = [
   { href: "/venues/import", label: "Outreach",       icon: "✉", badge: null, comingSoon: false },
   { href: "/calendar",   label: "Booking Calendar",  icon: "☐", badge: null, comingSoon: false },
   { href: "/invoices",   label: "Invoices",          icon: "$", badge: null, comingSoon: false },
+  { href: "/ratings",    label: "Ratings",           icon: "★", badge: null, comingSoon: false },
 ];
 
 const profileLinks = [
@@ -24,6 +25,7 @@ export default function Sidebar() {
   const router = useRouter();
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [pendingRatingsCount, setPendingRatingsCount] = useState(0);
 
   useEffect(() => {
     function loadProfile() {
@@ -39,6 +41,11 @@ export default function Sidebar() {
     }
 
     loadProfile();
+
+    fetch("/api/ratings/pending")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setPendingRatingsCount(data?.pending?.length ?? 0))
+      .catch(() => {});
 
     // The Artist Profile page dispatches this after a successful save, since
     // this sidebar keeps its own copy of name/photo and only loads it once on mount.
@@ -93,6 +100,8 @@ export default function Sidebar() {
               !link.comingSoon &&
               (pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href + "/")));
 
+            const badgeValue = link.href === "/ratings" ? (pendingRatingsCount > 0 ? pendingRatingsCount : null) : link.badge;
+
             return (
               <Link
                 key={link.label}
@@ -110,7 +119,7 @@ export default function Sidebar() {
                   {link.icon}
                 </span>
                 <span className="flex-1 truncate">{link.label}</span>
-                {link.badge && (
+                {badgeValue && (
                   <span
                     style={{
                       backgroundColor: "#D4A64F",
@@ -126,7 +135,7 @@ export default function Sidebar() {
                       padding: "0 5px",
                     }}
                   >
-                    {link.badge}
+                    {badgeValue}
                   </span>
                 )}
                 {link.comingSoon && (

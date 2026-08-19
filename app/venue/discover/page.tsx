@@ -9,6 +9,8 @@ type ArtistResult = {
   display_name: string;
   genres: string[];
   photo_url: string | null;
+  avg_rating: number | null;
+  rating_count: number;
 };
 
 const inputStyle = {
@@ -37,6 +39,12 @@ function ArtistCard({ artist }: { artist: ArtistResult }) {
       <div className="min-w-0">
         <div className="text-sm font-semibold truncate" style={{ color: "#F4E8D2" }}>{artist.display_name}</div>
         <div className="text-xs truncate" style={{ color: "#9a9591" }}>{artist.genres.join(" · ") || "—"}</div>
+        {artist.rating_count > 0 && (
+          <div className="text-xs mt-0.5" style={{ color: "#D4A64F" }}>
+            {"★".repeat(Math.round(artist.avg_rating ?? 0))}{"☆".repeat(5 - Math.round(artist.avg_rating ?? 0))}{" "}
+            {artist.avg_rating?.toFixed(1)} ({artist.rating_count})
+          </div>
+        )}
       </div>
     </Link>
   );
