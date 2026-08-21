@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import CalendarView from "@/components/calendar/CalendarView";
+import BookingRequestsSection from "@/components/calendar/BookingRequestsSection";
 
 export default async function CalendarPage() {
   const supabase = await createClient();
@@ -50,6 +51,8 @@ export default async function CalendarPage() {
           Booking Calendar
         </h1>
       </div>
+
+      <BookingRequestsSection />
 
       {/* iCloud subscription banner */}
       <div
