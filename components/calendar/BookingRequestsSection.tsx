@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PendingBookingRequest } from "@/types";
 
 function RequestCard({ r, onResponded }: { r: PendingBookingRequest; onResponded: () => void }) {
@@ -73,6 +74,7 @@ function RequestCard({ r, onResponded }: { r: PendingBookingRequest; onResponded
 }
 
 export default function BookingRequestsSection() {
+  const router = useRouter();
   const [pending, setPending] = useState<PendingBookingRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -95,7 +97,15 @@ export default function BookingRequestsSection() {
       </h2>
       <div className="space-y-3">
         {pending.map((r) => (
-          <RequestCard key={r.id} r={r} onResponded={load} />
+          <RequestCard
+            key={r.id}
+            r={r}
+            onResponded={() => {
+              load();
+              router.refresh();
+              window.dispatchEvent(new Event("stagereach:booking-request-updated"));
+            }}
+          />
         ))}
       </div>
     </div>

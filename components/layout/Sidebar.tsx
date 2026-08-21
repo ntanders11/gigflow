@@ -48,15 +48,25 @@ export default function Sidebar() {
       .then((data) => setPendingRatingsCount(data?.pending?.length ?? 0))
       .catch(() => {});
 
-    fetch("/api/booking-requests")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setPendingBookingRequestsCount(data?.pending?.length ?? 0))
-      .catch(() => {});
+    function loadPendingBookingRequests() {
+      fetch("/api/booking-requests")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => setPendingBookingRequestsCount(data?.pending?.length ?? 0))
+        .catch(() => {});
+    }
+
+    loadPendingBookingRequests();
 
     // The Artist Profile page dispatches this after a successful save, since
     // this sidebar keeps its own copy of name/photo and only loads it once on mount.
     window.addEventListener("stagereach:profile-updated", loadProfile);
-    return () => window.removeEventListener("stagereach:profile-updated", loadProfile);
+    // BookingRequestsSection dispatches this after an accept/decline, since
+    // this sidebar keeps its own copy of the pending count and only loads it once on mount.
+    window.addEventListener("stagereach:booking-request-updated", loadPendingBookingRequests);
+    return () => {
+      window.removeEventListener("stagereach:profile-updated", loadProfile);
+      window.removeEventListener("stagereach:booking-request-updated", loadPendingBookingRequests);
+    };
   }, []);
 
   async function handleSignOut() {

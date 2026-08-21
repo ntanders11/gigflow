@@ -23,6 +23,7 @@ export async function ensureLinkedBookedVenue(
     .select("id")
     .eq("user_id", opts.artistUserId)
     .eq("venue_profile_id", opts.venueProfileId)
+    .limit(1)
     .maybeSingle();
   if (linkedError) return { error: linkedError.message };
 
