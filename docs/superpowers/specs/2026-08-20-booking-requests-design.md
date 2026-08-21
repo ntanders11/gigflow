@@ -118,7 +118,7 @@ Two emails, both via the same shared Resend sender (`RESEND_FROM_EMAIL`) and `pr
 
 ## Files Touched (indicative — exact structure to be finalized in the implementation plan)
 
-**Migration numbering note:** the local `supabase/migrations/` folder is not a fully reliable source of truth for the live schema — `gigs.checklist` (used throughout `types/index.ts`, `components/venue/GigsSection.tsx`, and `/api/gigs`) has no corresponding migration file anywhere in this repo, meaning at least one schema change was applied directly in Supabase outside of a committed migration. `019` is the next free number by filename, but the implementation plan should confirm against Supabase's actual migration history (not just local files) before finalizing the number.
+**Migration numbering note:** the local `supabase/migrations/` folder is not a fully reliable source of truth for the live schema — `gigs.checklist` (used in `types/index.ts` and `components/venue/GigsSection.tsx`) has no corresponding migration file anywhere in this repo, meaning at least one schema change was applied directly in Supabase outside of a committed migration. `019` is the next free number by filename, but the implementation plan should confirm against Supabase's actual migration history (not just local files) before finalizing the number.
 
 | Area | Change |
 |---|---|
