@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-20
+- [Feature] Booking requests — venues can now request to book an artist for a specific date right from the artist's profile, instead of just emailing them. The artist accepts or declines from their Booking Calendar; once accepted, it's a real gig on their calendar like any other.
+
 ## 2026-08-18
 - [Feature] Mutual ratings — venues and artists can now rate each other 1-5 stars (plus an optional written review) once they've actually worked together (a completed, linked gig). Ratings stay hidden from the other side until both have submitted, then show publicly on profiles and search results.
 
