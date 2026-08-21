@@ -1,7 +1,8 @@
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { ArtistProfile, Package, VideoSample, SocialLinks } from "@/types";
 import RatingsSection from "@/components/ratings/RatingsSection";
+import RequestToBookButton from "@/components/booking/RequestToBookButton";
 
 const SOCIAL_PLATFORMS: { key: keyof SocialLinks; label: string; color: string; icon: string }[] = [
   { key: "instagram", label: "Instagram", color: "#e1306c", icon: "IG" },
@@ -32,6 +33,23 @@ export default async function PublicProfilePage({
     .single();
 
   if (!profile) notFound();
+
+  // Determine viewer type for the "Request to Book" control below. This
+  // page is otherwise fully public (it only used createServiceClient()
+  // before this) — adding an auth check here must not change that: a
+  // logged-out visitor still renders the whole page normally, just with
+  // viewerType "other".
+  const authSupabase = await createClient();
+  const { data: { user: viewer } } = await authSupabase.auth.getUser();
+  let viewerType: "venue" | "other" = "other";
+  if (viewer) {
+    const { data: viewerVenueProfile } = await authSupabase
+      .from("venue_profiles")
+      .select("venue_name")
+      .eq("user_id", viewer.id)
+      .maybeSingle();
+    if (viewerVenueProfile?.venue_name) viewerType = "venue";
+  }
 
   const p = profile as ArtistProfile;
   const packages: Package[] = p.packages || [];
@@ -138,13 +156,7 @@ export default async function PublicProfilePage({
           )}
 
           {/* Book button */}
-          <a
-            href={`mailto:${p.contact_email || ""}?subject=Booking Inquiry — ${p.display_name || "Artist"}`}
-            className="block w-full text-center rounded-lg py-2.5 text-sm font-bold transition-all hover:brightness-110"
-            style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
-          >
-            Send Booking Inquiry
-          </a>
+          <RequestToBookButton artistUserId={id} viewerType={viewerType} />
         </div>
 
         {/* ── RIGHT MAIN ── */}
