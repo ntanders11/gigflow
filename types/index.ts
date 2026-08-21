@@ -281,3 +281,47 @@ export interface PublicRatingsResponse {
     review: string | null;
   }[];
 }
+
+// ============================================================
+// BOOKING REQUESTS
+// ============================================================
+
+export type BookingRequestStatus = "pending" | "accepted" | "declined";
+
+// The raw shape of a booking_requests row as stored — server-side only.
+export interface BookingRequestRow {
+  id: string;
+  venue_profile_id: string;
+  artist_user_id: string;
+  date: string;
+  start_time: string | null;
+  end_time: string | null;
+  message: string | null;
+  status: BookingRequestStatus;
+  gig_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// What the artist's pending-list endpoint returns per request.
+export interface PendingBookingRequest {
+  id: string;
+  venue_name: string;
+  venue_photo_url: string | null;
+  date: string;
+  start_time: string | null;
+  end_time: string | null;
+  message: string | null;
+}
+
+// What the venue's sent-requests endpoint returns per request.
+export interface VenueBookingRequestView {
+  id: string;
+  artist_name: string;
+  artist_photo_url: string | null;
+  date: string;
+  start_time: string | null;
+  end_time: string | null;
+  message: string | null;
+  status: BookingRequestStatus;
+}
