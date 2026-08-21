@@ -64,9 +64,10 @@ create table public.booking_requests (
 ### New API routes (artist side)
 
 - `GET /api/booking-requests` — every pending request addressed to this artist (mirrors the ratings "pending" list pattern) — powers the new Booking Calendar section.
-- `PATCH /api/booking-requests/[id]` — accept or decline. Body: `{ status: "accepted" | "declined" }`. Only the artist the request is addressed to may call this, and only while it's still `pending`.
-  - **On accept:** finds or creates a pipeline `venues` row for this venue under this artist (see "Accepting a request," below), creates a real `Gig` on it with `status: "upcoming"`, sets `booking_requests.gig_id` to the new gig, sets `status: "accepted"`, and emails the venue that they're confirmed.
+- `PATCH /api/booking-requests/[id]` — accept or decline. Body: `{ status: "accepted" | "declined" }`. Only the artist the request is addressed to may call this. The route must also check the request is still `status: "pending"` before acting — re-accepting or re-declining an already-resolved request should be rejected (e.g. 409), not silently re-run.
+  - **On accept:** finds or creates a pipeline `venues` row for this venue under this artist (see "Accepting a request," below), creates a real `Gig` on it with `status: "upcoming"` — copying `date`, `start_time`, `end_time` directly onto the matching Gig columns, and `message` onto `Gig.notes` — sets `booking_requests.gig_id` to the new gig, sets `status: "accepted"`, and emails the venue that they're confirmed.
   - **On decline:** sets `status: "declined"` and emails the venue.
+  - **Conflicting pending requests are left alone, on purpose.** If a second venue's pending request for the same date exists when the first gets accepted, it is NOT auto-declined or flagged — it just sits as `pending` until the artist manually declines it (or, in principle, accepts it too, which this spec doesn't attempt to prevent). This matches the Non-Goals decision that pending requests never blocked anything in the first place; it's a deliberate simplification, not an oversight.
 
 ### Public route
 
@@ -80,22 +81,24 @@ If the artist doesn't already have a `venues` pipeline row linked to this `venue
 
 A new section on the existing Booking Calendar (`app/(protected)/calendar/page.tsx`) showing pending requests — venue name, requested date/time, their note, and **Accept**/**Decline** buttons per request. Same visual pattern as the ratings feature's "Awaiting your rating" list. Once responded to, a request drops out of this list (accepted ones simply become a normal gig, visible the same way any other gig already is).
 
+`components/layout/Sidebar.tsx` already has a live pending-count badge on the "Ratings" nav link (fed by `/api/ratings/pending`) — the same pattern extends to the "Booking Calendar" link here, fed by `GET /api/booking-requests`'s pending count, so a new request is actually noticeable without opening the Calendar page first. This is a deliberate extension of an existing convention, not an afterthought — `Sidebar.tsx` is in Files Touched for exactly this.
+
 ### New page: Bookings (venue side)
 
-`/venue/bookings` — every request this venue has sent and its status (pending/accepted/declined), added to `VenueNav` alongside Ratings.
+`/venue/bookings` — every request this venue has sent and its status (pending/accepted/declined), added to `VenueNav` alongside Ratings. Unlike the artist-side Ratings/Calendar badges, this link gets **no pending-count badge** — there's nothing actionable for the venue to do here (they're just checking status, not responding to anything), so a badge would have nothing meaningful to count. This is a deliberate difference from the Ratings-link badge pattern already in `VenueNav.tsx`, not an oversight.
 
 ### Artist public profile: replacing "Send Booking Inquiry"
 
-On `/profile/[id]`, the existing `mailto:` link is replaced with a **"Request to Book"** button. What it shows depends on the viewer:
+On `/profile/[id]`, the existing `mailto:` link is replaced with a **"Request to Book"** button. What it shows depends on the viewer, and this is where the viewer-identity check needs to actually live: `app/profile/[id]/page.tsx` is currently a fully public server component with no auth check at all (it only ever uses `createServiceClient()`). This page needs to additionally call `auth.getUser()` and, if a user is present, check for a completed `venue_profiles` row (`venue_name` set) for that user — then pass a simple viewer-type value (`"venue" | "other"`) as a prop into the new client button/modal, which renders one of:
 
 - **Logged-in venue with a completed account:** the button opens the request form (date picker with unavailable dates greyed out via the new public availability endpoint, start/end time, optional note).
 - **Anyone else** (logged out, or logged in as an artist): a simpler prompt — "Are you a venue? Sign up to request a booking," linking to `/venues/signup`. Nothing is sent from this state; it's just a path in.
 
-This is a strict improvement over the mailto link in one respect worth noting: the old link silently produced a broken `mailto:` if the artist had no `contact_email` set. The new flow doesn't depend on that field at all — notifications go through the same system-email pattern as ratings (`profiles.email` lookup, sent from `booking@stagereach.app`).
+This is a strict improvement over the mailto link in one respect worth noting: the old link silently produced a broken `mailto:` if the artist had no `contact_email` set. The new flow doesn't depend on that field at all — notifications go through the same system-email pattern as ratings (`profiles.email` lookup, sent from the shared `RESEND_FROM_EMAIL` sender — currently `booking@stagereach.app` — same as every other platform notification email).
 
 ### Notifications
 
-Two emails, both via the same shared Resend sender and `profiles.email` lookup pattern already established for ratings — these are platform notifications, not artist-identity pitches, so they don't go through `sendArtistEmail`.
+Two emails, both via the same shared Resend sender (`RESEND_FROM_EMAIL`) and `profiles.email` lookup pattern already established for ratings — these are platform notifications, not artist-identity pitches, so they don't go through `sendArtistEmail`.
 
 1. **"You have a new booking request"** — sent to the artist the moment a venue submits a request.
 2. **"Your booking request was accepted" / "...was declined"** — sent to the venue the moment the artist responds.
@@ -115,6 +118,8 @@ Two emails, both via the same shared Resend sender and `profiles.email` lookup p
 
 ## Files Touched (indicative — exact structure to be finalized in the implementation plan)
 
+**Migration numbering note:** the local `supabase/migrations/` folder is not a fully reliable source of truth for the live schema — `gigs.checklist` (used throughout `types/index.ts`, `components/venue/GigsSection.tsx`, and `/api/gigs`) has no corresponding migration file anywhere in this repo, meaning at least one schema change was applied directly in Supabase outside of a committed migration. `019` is the next free number by filename, but the implementation plan should confirm against Supabase's actual migration history (not just local files) before finalizing the number.
+
 | Area | Change |
 |---|---|
 | `supabase/migrations/019_booking_requests.sql` | New — `booking_requests` table, RLS enabled with no client policies |
@@ -126,7 +131,8 @@ Two emails, both via the same shared Resend sender and `profiles.email` lookup p
 | `lib/email/booking-request-notifications.ts` | New — the two notification emails, same pattern as `lib/email/rating-notifications.ts` |
 | `app/(protected)/calendar/page.tsx` | Modified — adds the pending Booking Requests section |
 | `components/calendar/BookingRequestsSection.tsx` | New — the pending-requests list + accept/decline UI |
-| `app/venue/bookings/page.tsx` | New — venue's sent-requests list |
-| `components/venue/VenueNav.tsx` | Modified — adds "Bookings" nav link |
+| `components/layout/Sidebar.tsx` | Modified — extends the existing pending-count badge pattern to the Booking Calendar nav link |
+| `app/venue/bookings/page.tsx` | New — venue's sent-requests list, no pending-count badge (nothing actionable) |
+| `components/venue/VenueNav.tsx` | Modified — adds "Bookings" nav link (no badge, deliberately) |
 | `app/profile/[id]/page.tsx` | Modified — replaces the mailto "Send Booking Inquiry" link with the new "Request to Book" control |
 | `components/booking/RequestBookingModal.tsx` | New — the client-side request form (date picker, time, note), embedded in the server-rendered profile page |
