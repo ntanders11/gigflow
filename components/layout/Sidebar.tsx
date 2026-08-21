@@ -26,6 +26,7 @@ export default function Sidebar() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [pendingRatingsCount, setPendingRatingsCount] = useState(0);
+  const [pendingBookingRequestsCount, setPendingBookingRequestsCount] = useState(0);
 
   useEffect(() => {
     function loadProfile() {
@@ -45,6 +46,11 @@ export default function Sidebar() {
     fetch("/api/ratings/pending")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => setPendingRatingsCount(data?.pending?.length ?? 0))
+      .catch(() => {});
+
+    fetch("/api/booking-requests")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setPendingBookingRequestsCount(data?.pending?.length ?? 0))
       .catch(() => {});
 
     // The Artist Profile page dispatches this after a successful save, since
@@ -100,7 +106,10 @@ export default function Sidebar() {
               !link.comingSoon &&
               (pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href + "/")));
 
-            const badgeValue = link.href === "/ratings" ? (pendingRatingsCount > 0 ? pendingRatingsCount : null) : link.badge;
+            const badgeValue =
+              link.href === "/ratings" ? (pendingRatingsCount > 0 ? pendingRatingsCount : null) :
+              link.href === "/calendar" ? (pendingBookingRequestsCount > 0 ? pendingBookingRequestsCount : null) :
+              link.badge;
 
             return (
               <Link
