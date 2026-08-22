@@ -90,7 +90,11 @@ function PendingRow({ item, onSubmitted }: { item: PendingRating; onSubmitted: (
   );
 }
 
-function GivenRow({ rating, onUpdated }: { rating: RatingView; onUpdated: () => void }) {
+function GivenRow({ rating, onUpdated, onToggleFeatured }: {
+  rating: RatingView;
+  onUpdated: () => void;
+  onToggleFeatured: (ratingId: string) => Promise<{ error: string | null }>;
+}) {
   const [editing, setEditing] = useState(false);
   const [stars, setStars] = useState(rating.my_stars);
   const [review, setReview] = useState(rating.my_review ?? "");
@@ -102,6 +106,9 @@ function GivenRow({ rating, onUpdated }: { rating: RatingView; onUpdated: () => 
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reported, setReported] = useState(false);
   const [reportError, setReportError] = useState("");
+
+  const [featuredSaving, setFeaturedSaving] = useState(false);
+  const [featuredError, setFeaturedError] = useState("");
 
   async function saveEdit() {
     if (stars < 1) return;
@@ -184,9 +191,28 @@ function GivenRow({ rating, onUpdated }: { rating: RatingView; onUpdated: () => 
             Your rating: {"★".repeat(rating.my_stars)}{"☆".repeat(5 - rating.my_stars)}
           </p>
           {rating.revealed ? (
-            <p className="text-xs mt-1" style={{ color: "#9a9591" }}>
-              Their rating: {"★".repeat(rating.their_stars ?? 0)}{"☆".repeat(5 - (rating.their_stars ?? 0))}
-            </p>
+            <>
+              <p className="text-xs mt-1" style={{ color: "#9a9591" }}>
+                Their rating: {"★".repeat(rating.their_stars ?? 0)}{"☆".repeat(5 - (rating.their_stars ?? 0))}
+              </p>
+              <div className="mt-1">
+                <button
+                  onClick={async () => {
+                    setFeaturedSaving(true);
+                    setFeaturedError("");
+                    const result = await onToggleFeatured(rating.id);
+                    setFeaturedSaving(false);
+                    if (result.error) setFeaturedError(result.error);
+                  }}
+                  disabled={featuredSaving}
+                  className="text-xs"
+                  style={{ color: rating.featured_rank !== null ? "#D4A64F" : "#5b9bd5", opacity: featuredSaving ? 0.6 : 1 }}
+                >
+                  {rating.featured_rank !== null ? "★ Featured" : "☆ Feature this review"}
+                </button>
+                {featuredError && <p className="text-xs mt-1" style={{ color: "#e25c5c" }}>{featuredError}</p>}
+              </div>
+            </>
           ) : (
             <p className="text-xs mt-1" style={{ color: "#5e5c58" }}>Awaiting their response</p>
           )}
@@ -251,6 +277,35 @@ export default function VenueRatingsPage() {
 
   useEffect(() => { load(); }, []);
 
+  async function toggleFeatured(ratingId: string): Promise<{ error: string | null }> {
+    // Order matters here: this has to reflect the caller's actual saved
+    // rank order (1, 2, 3), not `given`'s fetch order (which is sorted by
+    // rating date, unrelated to feature rank) — otherwise a toggle can
+    // silently re-rank existing picks out of the order the caller set them in.
+    const currentlyFeatured = given
+      .filter((r) => r.featured_rank !== null)
+      .sort((a, b) => (a.featured_rank as number) - (b.featured_rank as number))
+      .map((r) => r.id);
+    const isFeatured = currentlyFeatured.includes(ratingId);
+    const next = isFeatured
+      ? currentlyFeatured.filter((id) => id !== ratingId)
+      : [...currentlyFeatured, ratingId];
+    if (next.length > 3) {
+      return { error: "Un-feature one first — you can only feature up to 3" };
+    }
+    const res = await fetch("/api/venue/ratings/featured", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ratingIds: next }),
+    });
+    if (res.ok) {
+      await load();
+      return { error: null };
+    }
+    const data = await res.json().catch(() => ({}));
+    return { error: data.error ?? "Couldn't update — please try again." };
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0E0E10" }}>
       <VenueNav />
@@ -279,7 +334,7 @@ export default function VenueRatingsPage() {
           ) : (
             <div className="space-y-3">
               {given.map((r) => (
-                <GivenRow key={r.id} rating={r} onUpdated={load} />
+                <GivenRow key={r.id} rating={r} onUpdated={load} onToggleFeatured={toggleFeatured} />
               ))}
             </div>
           )}
