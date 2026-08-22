@@ -20,6 +20,23 @@ export async function POST() {
 
   if (existing) return NextResponse.json(existing);
 
+  // An already-authenticated artist landing on /venues/signup (e.g. just
+  // clicking around while logged in) must not silently become a venue too
+  // — a real StageReach account was found with both an artist_profiles AND
+  // a venue_profiles row this way, permanently mis-routing every future
+  // login for that account into the venue side. Block it here instead.
+  const { data: artistProfile } = await supabase
+    .from("artist_profiles")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (artistProfile) {
+    return NextResponse.json(
+      { error: "This is already an artist account — sign out first to create a separate venue account." },
+      { status: 403 }
+    );
+  }
+
   const { data, error } = await supabase
     .from("venue_profiles")
     .insert({ user_id: user.id })

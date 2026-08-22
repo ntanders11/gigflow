@@ -38,6 +38,7 @@ export default function VenueSignupPage() {
   const [saving, setSaving] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  const [blockedAsArtist, setBlockedAsArtist] = useState(false);
 
   // Step 1
   const [email, setEmail] = useState("");
@@ -88,6 +89,13 @@ export default function VenueSignupPage() {
           if (!cancelled && !data?.venue_name) {
             setStep(2);
           }
+        } else if (res.status === 403) {
+          // A session exists, but it already belongs to an artist account
+          // — don't fall through to a blank "create account" form, since
+          // submitting it would just be confusing (the account creating it
+          // is already signed in as something else). See the matching
+          // guard in POST /api/venue-profile for why this check exists.
+          if (!cancelled) setBlockedAsArtist(true);
         } else {
           // No session yet. If this browser tab already signed up and is
           // waiting on the confirmation email (tracked below in
@@ -229,6 +237,19 @@ export default function VenueSignupPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-6 py-12" style={{ backgroundColor: "#0E0E10" }}>
         <p className="text-sm" style={labelStyle}>Loading…</p>
+      </div>
+    );
+  }
+
+  if (blockedAsArtist) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 py-12" style={{ backgroundColor: "#0E0E10" }}>
+        <div className="max-w-md w-full text-center space-y-3">
+          <h1 className="text-xl font-bold" style={{ color: "#F4E8D2" }}>You&apos;re signed in as an artist</h1>
+          <p className="text-sm" style={labelStyle}>
+            This account already has a StageReach artist profile. To create a separate venue account, sign out first, then come back to this page.
+          </p>
+        </div>
       </div>
     );
   }
