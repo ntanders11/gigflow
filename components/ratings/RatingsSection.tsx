@@ -7,6 +7,7 @@ import { PublicRatingsResponse } from "@/types";
 
 export default function RatingsSection({ endpoint, reviewerLinkPrefix }: { endpoint: string; reviewerLinkPrefix: string }) {
   const [data, setData] = useState<PublicRatingsResponse | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     fetch(endpoint)
@@ -16,6 +17,8 @@ export default function RatingsSection({ endpoint, reviewerLinkPrefix }: { endpo
   }, [endpoint]);
 
   if (!data || data.count === 0) return null;
+
+  const visibleReviews = expanded ? data.reviews : data.reviews.slice(0, 3);
 
   return (
     <div className="mt-8 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
@@ -28,7 +31,7 @@ export default function RatingsSection({ endpoint, reviewerLinkPrefix }: { endpo
         {data.average?.toFixed(1)} · {data.count} rating{data.count !== 1 ? "s" : ""}
       </p>
       <div className="space-y-3">
-        {data.reviews.map((r, i) => (
+        {visibleReviews.map((r, i) => (
           <div key={i} className="rounded-lg p-3" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
             <div className="flex items-center gap-2 mb-1">
               <Link href={`${reviewerLinkPrefix}${r.reviewer_id}`} className="flex items-center gap-2 hover:brightness-125 transition-all">
@@ -52,6 +55,15 @@ export default function RatingsSection({ endpoint, reviewerLinkPrefix }: { endpo
           </div>
         ))}
       </div>
+      {!expanded && data.reviews.length > 3 && (
+        <button
+          onClick={() => setExpanded(true)}
+          className="text-xs mt-3"
+          style={{ color: "#5b9bd5" }}
+        >
+          Load more reviews
+        </button>
+      )}
     </div>
   );
 }
