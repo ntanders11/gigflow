@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-22 (account-type bug)
+- [Fix] Fixed the public artist profile page rendering broken on mobile (pricing cards were cut off), and a bug where an already-logged-in artist could accidentally turn their own account into a venue account too by visiting the venue signup page — which then permanently sent every future login to the wrong place.
+
 ## 2026-08-22 (featured reviews)
 - [Feature] Artists and venues can now pick up to 3 of their favorite reviews to feature at the top of their public profile — everything else is one click away behind a "Load more reviews" button.
 
