@@ -242,6 +242,8 @@ export interface VenueArtistRatingRow {
   artist_stars: number | null;
   artist_review: string | null;
   artist_rated_at: string | null;
+  featured_by_artist_rank: number | null;
+  featured_by_venue_rank: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -257,6 +259,7 @@ export interface RatingView {
   my_review: string | null;
   their_stars: number | null;
   their_review: string | null;
+  featured_rank: number | null;
   counterpart_name: string;
   counterpart_photo_url: string | null;
 }
