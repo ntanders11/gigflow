@@ -12,6 +12,7 @@ async function shapeRow(
     id: string; venue_profile_id: string; artist_user_id: string;
     venue_stars: number | null; venue_review: string | null; venue_rated_at: string | null;
     artist_stars: number | null; artist_review: string | null; artist_rated_at: string | null;
+    featured_by_artist_rank: number | null; featured_by_venue_rank: number | null;
   }
 ): Promise<RatingView> {
   const revealed = !!(row.venue_rated_at && row.artist_rated_at);
@@ -32,6 +33,7 @@ async function shapeRow(
     their_review: revealed ? row.venue_review : null,
     counterpart_name: (venueProfile?.venue_name as string | null) ?? "A venue",
     counterpart_photo_url: (venueProfile?.photo_url as string | null) ?? null,
+    featured_rank: row.featured_by_artist_rank,
   };
 }
 
