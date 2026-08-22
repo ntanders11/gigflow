@@ -1,5 +1,15 @@
 # StageReach - Session Log
 
+## Session: 2026-08-22 — Booking requests shipped; home-screen icon added; Outlook bug logged
+
+**Booking requests merged and live.** All 12 tasks from `docs/superpowers/plans/2026-08-20-booking-requests.md` built via subagent-driven-development with two-stage review, including two real races found and fixed during review: a concurrent double-accept race on `PATCH /api/booking-requests/[id]` (fixed with conditional `.eq("status","pending")` updates plus orphaned-gig cleanup on the losing side), and a `router.refresh()`-doesn't-touch-client-state bug where the Sidebar's pending-request badge stayed stale after an accept/decline (fixed with the same custom-event pattern already used for the profile-photo badge). Final whole-implementation review clean. Merged `feature/booking-requests` into `main`, pushed.
+
+**Home-screen icon added.** Taylor asked whether the app could show its real icon instead of a generic screenshot when saved to a phone's home screen. Found an existing, already-well-designed square icon asset (`public/stagereach-icon.svg`) and used the project's existing `sharp` dependency to rasterize it into `app/apple-icon.png`, `app/icon.png`, and `public/icons/icon-{192,512}.png`. Added `app/manifest.ts` (Next.js's auto-served web app manifest) and a `viewport`/`appleWebApp` block in `app/layout.tsx`. Caught and fixed a real bug during verification (not user-reported): `proxy.ts`'s auth middleware was redirecting `/manifest.webmanifest` to `/login` for logged-out visitors, since only static image extensions were excluded from the middleware matcher, not `.webmanifest` — confirmed via `curl` (307→/login before, 200+correct JSON after fix). Verified locally end-to-end; not yet reported to Taylor as complete/pushed as of this entry.
+
+**Outlook OAuth bug logged, not yet fixed — needs Taylor to check Vercel.** Taylor hit `AADSTS90102: 'redirect_uri' value must be a valid absolute URI` trying to connect Outlook on the live site. Root cause traced to `process.env.NEXT_PUBLIC_APP_URL`, used to build the redirect URI in both `app/api/auth/outlook/connect/route.ts` and `app/api/auth/callback/outlook/route.ts` — almost certainly missing or wrong in Vercel's **production** Environment Variables (local `.env.local` correctly has `http://localhost:3000`, which is right for dev but would be wrong in prod). I have no Vercel access to check or fix this myself. **Next step:** Taylor needs to check Vercel → gigflow project → Settings → Environment Variables → confirm `NEXT_PUBLIC_APP_URL` is set to `https://stagereach.app` for the Production environment, then retry connecting Outlook.
+
+---
+
 ## Session: 2026-08-18/19 (continued) — Mutual ratings shipped and live; live-testing fixes; Supabase auth-email branding started
 
 ### Mutual ratings: merged, deployed, migration confirmed live

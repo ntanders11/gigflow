@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-22
+- [Feature] StageReach now shows its own icon when saved to a phone's home screen (iPhone or Android), instead of a generic browser screenshot.
+
 ## 2026-08-20
 - [Feature] Booking requests — venues can now request to book an artist for a specific date right from the artist's profile, instead of just emailing them. The artist accepts or declines from their Booking Calendar; once accepted, it's a real gig on their calendar like any other.
 
