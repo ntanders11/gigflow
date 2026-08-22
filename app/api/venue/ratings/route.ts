@@ -37,7 +37,7 @@ async function shapeRow(
   };
 }
 
-async function getOwnVenueProfileId(supabase: SupabaseClient, userId: string): Promise<string | null> {
+export async function getOwnVenueProfileId(supabase: SupabaseClient, userId: string): Promise<string | null> {
   const { data } = await supabase
     .from("venue_profiles")
     .select("id")

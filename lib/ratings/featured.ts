@@ -22,15 +22,15 @@ export async function setFeaturedRatings(
   party: FeaturedParty,
   ownerId: string,
   ratingIds: string[]
-): Promise<{ error: string } | { success: true }> {
+): Promise<{ error: string; status: number } | { success: true }> {
   const rankColumn = RANK_COLUMN[party];
   const ownerColumn = OWNER_COLUMN[party];
 
   if (ratingIds.length > 3) {
-    return { error: "You can feature at most 3 reviews" };
+    return { error: "You can feature at most 3 reviews", status: 400 };
   }
   if (new Set(ratingIds).size !== ratingIds.length) {
-    return { error: "That list has a duplicate review in it" };
+    return { error: "That list has a duplicate review in it", status: 400 };
   }
 
   if (ratingIds.length > 0) {
@@ -38,15 +38,17 @@ export async function setFeaturedRatings(
       .from("venue_artist_ratings")
       .select(`id, venue_rated_at, artist_rated_at, ${ownerColumn}`)
       .in("id", ratingIds);
-    if (error) return { error: error.message };
+    if (error) return { error: error.message, status: 500 };
 
     const byId = new Map((rows ?? []).map((r) => [r.id as string, r]));
     for (const id of ratingIds) {
       const row = byId.get(id) as Record<string, unknown> | undefined;
-      if (!row) return { error: "One of these reviews no longer exists" };
-      if (row[ownerColumn] !== ownerId) return { error: "You can only feature your own reviews" };
+      if (!row) return { error: "One of these reviews no longer exists", status: 400 };
+      if (row[ownerColumn] !== ownerId) {
+        return { error: "You can only feature your own reviews", status: 403 };
+      }
       const revealed = !!(row.venue_rated_at && row.artist_rated_at);
-      if (!revealed) return { error: "You can only feature a review that's been revealed" };
+      if (!revealed) return { error: "You can only feature a review that's been revealed", status: 400 };
     }
   }
 
@@ -54,19 +56,33 @@ export async function setFeaturedRatings(
   // staying in the new selection — so the second step below never collides
   // with a still-live rank on the partial unique index. See Task 2's
   // context note for why this order matters.
-  const { error: clearError } = await service
-    .from("venue_artist_ratings")
-    .update({ [rankColumn]: null })
-    .eq(ownerColumn, ownerId)
-    .not(rankColumn, "is", null);
-  if (clearError) return { error: clearError.message };
+  const clearAll = () =>
+    service
+      .from("venue_artist_ratings")
+      .update({ [rankColumn]: null })
+      .eq(ownerColumn, ownerId)
+      .not(rankColumn, "is", null);
+
+  const { error: clearError } = await clearAll();
+  if (clearError) return { error: clearError.message, status: 500 };
 
   for (let i = 0; i < ratingIds.length; i++) {
     const { error: writeError } = await service
       .from("venue_artist_ratings")
       .update({ [rankColumn]: i + 1 })
       .eq("id", ratingIds[i]);
-    if (writeError) return { error: writeError.message };
+    if (writeError) {
+      // The documented failure guarantee is that a mid-loop failure leaves
+      // the caller's featured picks cleared, not partially written. Best-
+      // effort re-run of the same clear-all used above; if that ALSO fails,
+      // log it but still surface the original write error to the caller —
+      // a cleanup failure should never mask the real problem.
+      const { error: cleanupError } = await clearAll();
+      if (cleanupError) {
+        console.error("setFeaturedRatings: cleanup after partial write failure also failed", cleanupError);
+      }
+      return { error: writeError.message, status: 500 };
+    }
   }
 
   return { success: true };
