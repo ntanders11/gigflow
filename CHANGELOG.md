@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-22 (featured reviews)
+- [Feature] Artists and venues can now pick up to 3 of their favorite reviews to feature at the top of their public profile — everything else is one click away behind a "Load more reviews" button.
+
 ## 2026-08-22
 - [Feature] StageReach now shows its own icon when saved to a phone's home screen (iPhone or Android), instead of a generic browser screenshot.
 
