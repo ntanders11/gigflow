@@ -71,10 +71,10 @@ export default async function PublicProfilePage({
         <div style={{ color: "#5e5c58", fontSize: "11px" }}>Booking Profile</div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-10 flex gap-8 items-start">
+      <div className="max-w-4xl mx-auto px-6 py-10 flex flex-col md:flex-row gap-8 items-start">
 
         {/* ── LEFT SIDEBAR ── */}
-        <div className="w-56 shrink-0 flex flex-col gap-4 sticky top-10">
+        <div className="w-full md:w-56 md:shrink-0 flex flex-col gap-4 md:sticky md:top-10">
 
           {/* Avatar + Name */}
           <div className="text-center">
@@ -242,7 +242,7 @@ export default async function PublicProfilePage({
               >
                 Rates &amp; Packages
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {packages.map((pkg) => (
                   <div
                     key={pkg.id}
