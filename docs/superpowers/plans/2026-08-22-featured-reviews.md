@@ -46,15 +46,15 @@ In `types/index.ts`, inside the `VenueArtistRatingRow` interface (currently line
   featured_by_venue_rank: number | null;
 ```
 
-- [ ] **Step 3: Add a `featured` flag to `RatingView`**
+- [ ] **Step 3: Add a `featured_rank` field to `RatingView`**
 
 In `types/index.ts`, inside the `RatingView` interface (currently lines 251-262), add after `their_review`:
 
 ```typescript
-  featured: boolean;
+  featured_rank: number | null;
 ```
 
-This is the flag the *owner's own* private ratings view uses to show "★ Featured" vs "☆ Feature this review" — it's computed server-side from whichever rank column belongs to the caller (see Task 2).
+This is the caller's own rank for this review (1, 2, or 3 — whichever rank column belongs to the caller, see Task 2), or `null` if not featured. The actual rank — not just a yes/no flag — has to reach the client: Task 4's toggle logic needs to know the *order* of the caller's current picks to correctly re-send them, not just which ones are featured.
 
 - [ ] **Step 4: Type-check**
 
@@ -240,17 +240,17 @@ In `app/api/ratings/route.ts`, the `shapeRow` function's `row` parameter type (l
 And in the returned object (lines 24-35), add before the closing brace:
 
 ```typescript
-    featured: row.featured_by_artist_rank !== null,
+    featured_rank: row.featured_by_artist_rank,
 ```
 
 (The artist's own private view cares about *their own* featuring choice, which lives in `featured_by_artist_rank` — not the venue's.)
 
-- [ ] **Step 5: Wire `featured` into the venue's `shapeRow`**
+- [ ] **Step 5: Wire `featured_rank` into the venue's `shapeRow`**
 
 Same change in `app/api/venue/ratings/route.ts`'s `shapeRow`: add the two new fields to the `row` parameter type, and add to the returned object:
 
 ```typescript
-    featured: row.featured_by_venue_rank !== null,
+    featured_rank: row.featured_by_venue_rank,
 ```
 
 - [ ] **Step 6: Type-check**
@@ -347,7 +347,14 @@ In `app/(protected)/ratings/page.tsx`, inside `RatingsPage` (after the `load` fu
 
 ```typescript
   async function toggleFeatured(ratingId: string): Promise<{ error: string | null }> {
-    const currentlyFeatured = given.filter((r) => r.featured).map((r) => r.id);
+    // Order matters here: this has to reflect the caller's actual saved
+    // rank order (1, 2, 3), not `given`'s fetch order (which is sorted by
+    // rating date, unrelated to feature rank) — otherwise a toggle can
+    // silently re-rank existing picks out of the order the caller set them in.
+    const currentlyFeatured = given
+      .filter((r) => r.featured_rank !== null)
+      .sort((a, b) => (a.featured_rank as number) - (b.featured_rank as number))
+      .map((r) => r.id);
     const isFeatured = currentlyFeatured.includes(ratingId);
     const next = isFeatured
       ? currentlyFeatured.filter((id) => id !== ratingId)
@@ -412,9 +419,9 @@ Add the button inside the `rating.revealed` block, right after the "Their rating
                   }}
                   disabled={featuredSaving}
                   className="text-xs"
-                  style={{ color: rating.featured ? "#D4A64F" : "#5b9bd5", opacity: featuredSaving ? 0.6 : 1 }}
+                  style={{ color: rating.featured_rank !== null ? "#D4A64F" : "#5b9bd5", opacity: featuredSaving ? 0.6 : 1 }}
                 >
-                  {rating.featured ? "★ Featured" : "☆ Feature this review"}
+                  {rating.featured_rank !== null ? "★ Featured" : "☆ Feature this review"}
                 </button>
                 {featuredError && <p className="text-xs mt-1" style={{ color: "#e25c5c" }}>{featuredError}</p>}
               </div>
