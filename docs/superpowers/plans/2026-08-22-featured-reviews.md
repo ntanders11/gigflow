@@ -59,7 +59,7 @@ This is the caller's own rank for this review (1, 2, or 3 — whichever rank col
 - [ ] **Step 4: Type-check**
 
 Run: `npx tsc --noEmit`
-Expected: New errors only where `RatingView` object literals are missing the new `featured` field — this is expected until Task 2 fills it in. If you see errors anywhere else, stop and investigate before continuing.
+Expected: New errors only where `RatingView` object literals are missing the new `featured_rank` field — this is expected until Task 2 fills it in. If you see errors anywhere else, stop and investigate before continuing.
 
 - [ ] **Step 5: Commit**
 
@@ -339,7 +339,7 @@ git commit -m "feat: sort featured reviews first on public ratings routes"
 - Modify: `app/(protected)/ratings/page.tsx`
 - Modify: `app/venue/ratings/page.tsx`
 
-**Context:** Both pages already duplicate a `GivenRow` component in full (this codebase's existing pattern for this feature — not something to refactor here, per the spec's Non-Goals). Add the same toggle to both, each pointed at its own PUT endpoint. `rating.id` and `rating.revealed` are already present on every `RatingView`; `rating.featured` was added in Task 2.
+**Context:** Both pages already duplicate a `GivenRow` component in full (this codebase's existing pattern for this feature — not something to refactor here, per the spec's Non-Goals). Add the same toggle to both, each pointed at its own PUT endpoint. `rating.id` and `rating.revealed` are already present on every `RatingView`; `rating.featured_rank` was added in Task 2.
 
 - [ ] **Step 1: Add a `toggleFeatured` handler to the artist ratings page**
 
