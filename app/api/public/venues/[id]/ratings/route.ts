@@ -12,21 +12,30 @@ export async function GET(
 
   const { data: rows, error } = await service
     .from("venue_artist_ratings")
-    .select("artist_user_id, artist_stars, artist_review")
+    .select("artist_user_id, artist_stars, artist_review, featured_by_venue_rank")
     .eq("venue_profile_id", id)
     .not("venue_rated_at", "is", null)
     .not("artist_rated_at", "is", null);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const artistIds = (rows ?? []).map((r) => r.artist_user_id as string);
+  const sortedRows = [...(rows ?? [])].sort((a, b) => {
+    const rankA = a.featured_by_venue_rank as number | null;
+    const rankB = b.featured_by_venue_rank as number | null;
+    if (rankA !== null && rankB !== null) return rankA - rankB;
+    if (rankA !== null) return -1;
+    if (rankB !== null) return 1;
+    return 0;
+  });
+
+  const artistIds = sortedRows.map((r) => r.artist_user_id as string);
   const { data: artists } = await service
     .from("artist_profiles")
     .select("user_id, display_name, photo_url")
     .in("user_id", artistIds.length > 0 ? artistIds : [""]);
   const artistById = new Map((artists ?? []).map((a) => [a.user_id as string, a]));
 
-  const reviews = (rows ?? []).map((r) => {
+  const reviews = sortedRows.map((r) => {
     const artist = artistById.get(r.artist_user_id as string);
     return {
       reviewer_id: r.artist_user_id as string,
