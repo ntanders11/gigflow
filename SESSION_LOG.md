@@ -1,5 +1,17 @@
 # StageReach - Session Log
 
+## Session: 2026-08-23 — Outlook OAuth fixed live; profile pages cleaned up; a UI change tried and reverted
+
+**Outlook OAuth finally fixed and confirmed working in production.** The Vercel Environment Variables for Outlook (`NEXT_PUBLIC_APP_URL`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`) turned out to be missing from Vercel entirely, not just wrong — walked Taylor through adding all four from her phone. First attempt still failed with the same `AADSTS90102` error even after redeploying; root cause was a stray trailing newline pasted into the `NEXT_PUBLIC_APP_URL` value (invisible in the Vercel UI until she scrolled the textarea). Fixed, redeployed, confirmed working — Taylor reported "Connection success!"
+
+**Public artist profile page reorganized** (`app/profile/[id]/page.tsx`) to match the venue public profile's simpler single-column layout — no more sidebar, plain section headers instead of boxed cards, Request to Book button moved to the top. Verified live at real mobile viewport sizes before and after.
+
+**Private artist-profile editing page also fixed for mobile** (`app/(protected)/artist-profile/page.tsx`) — same underlying fixed-sidebar-plus-flex-1-main bug as the public page had, found from Taylor's own screenshot of the page looking cramped/cut-off on her phone. Fixed the same way (responsive stacking), plus fixed the header row squishing "Sign out" onto two lines. Could not live-test this one myself (no login credentials for Taylor's real account in this environment) — Taylor confirmed it looked good after deploy.
+
+**Discover Venues change built, then explicitly reverted per Taylor's feedback.** Taylor asked to "combine" the venue search and info-capture steps into one. Investigation found the capture (email/phone scraping) already ran automatically and silently whenever a venue was added from search — the "separate step" she meant was a distinct "Find Contact Info" button on the Pipeline page she'd sometimes visit afterward to check. Built a change to surface the automatic capture directly on the Discover Venues card (button label "Adding & finding contact info…", plus an inline "✓ Found contact: X" line once done). Taylor's response: "the add to pipeline button was fine, I don't think we need to make it more complicated" — reverted immediately via `git revert` (commits `7a11e38`, `f63d531`), confirmed clean, pushed. Saved as a feedback memory: default to minimal visible UI change and confirm before adding new state/copy to an already-working control, even for well-intentioned visibility improvements.
+
+---
+
 ## Session: 2026-08-22 (continued) — Mobile profile layout fixed; dual-account-type bug found and fixed
 
 **Public artist profile page fixed for mobile.** Taylor screenshotted her own profile on her phone — the sidebar/main layout (`app/profile/[id]/page.tsx`) was a fixed `flex` row with no responsive breakpoint, so the 3-column pricing grid got squeezed into a sliver of space with text cut off. Added `flex-col md:flex-row` and `grid-cols-1 sm:grid-cols-3` so both stack full-width below the `md`/`sm` breakpoints. Verified live at a real phone viewport size (375×812) before and after.
