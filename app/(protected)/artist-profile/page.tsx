@@ -275,7 +275,7 @@ export default function ArtistProfilePage() {
         />
       )}
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 max-w-5xl">
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-6 max-w-5xl">
         <div>
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>
             My Artist Profile
@@ -284,19 +284,19 @@ export default function ArtistProfilePage() {
             Your EPK and booking profile — fill it in, then share the link with venues.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {saving && <span style={{ color: "#5e5c58", fontSize: "11px" }}>Saving…</span>}
-          <button onClick={handleSignOut} className="text-xs" style={{ color: "#5e5c58" }}>
+          <button onClick={handleSignOut} className="text-xs whitespace-nowrap" style={{ color: "#5e5c58" }}>
             Sign out
           </button>
         </div>
       </div>
 
-      {/* Two-column layout */}
-      <div className="flex gap-5 max-w-5xl items-start">
+      {/* Two-column layout on larger screens, stacked on mobile */}
+      <div className="flex flex-col md:flex-row gap-5 max-w-5xl items-start">
 
         {/* ── LEFT SIDEBAR ── */}
-        <div className="w-52 shrink-0 flex flex-col gap-3 sticky top-8">
+        <div className="w-full md:w-52 md:shrink-0 flex flex-col gap-3 md:sticky md:top-8">
 
           {/* Photo + Name */}
           <div
@@ -912,7 +912,7 @@ export default function ArtistProfilePage() {
             >
               Rates &amp; Packages
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {packages.map((pkg) => {
                 const isEditing = editingPackageId === pkg.id;
                 const current = isEditing ? { ...pkg, ...packageEdits } : pkg;
