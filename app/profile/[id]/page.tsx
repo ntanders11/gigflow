@@ -71,214 +71,169 @@ export default async function PublicProfilePage({
         <div style={{ color: "#5e5c58", fontSize: "11px" }}>Booking Profile</div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-10 flex flex-col md:flex-row gap-8 items-start">
+      <div className="max-w-2xl mx-auto px-6 py-10">
 
-        {/* ── LEFT SIDEBAR ── */}
-        <div className="w-full md:w-56 md:shrink-0 flex flex-col gap-4 md:sticky md:top-10">
-
-          {/* Avatar + Name */}
-          <div className="text-center">
-            {p.photo_url ? (
-              <img
-                src={p.photo_url}
-                alt={p.display_name || "Artist"}
-                className="w-28 h-28 rounded-full object-cover mx-auto mb-4"
-              />
-            ) : (
-              <div
-                className="w-28 h-28 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4"
-                style={{ background: "linear-gradient(135deg, #D4A64F 0%, #6C5CE7 100%)", color: "#fff" }}
-              >
-                {p.display_name ? p.display_name.charAt(0).toUpperCase() : "?"}
-              </div>
-            )}
-            <h1 style={{ color: "#F4E8D2", fontSize: "18px", fontWeight: 700, marginBottom: "2px" }}>
-              {p.display_name || "Artist"}
-            </h1>
-            {p.phone && (
-              <p style={{ color: "#9a9591", fontSize: "12px", marginBottom: "12px" }}>{p.phone}</p>
-            )}
-
-            {/* Genre tags */}
-            {genres.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-                {genres.map((g) => (
-                  <span
-                    key={g}
-                    className="rounded-full px-2.5 py-0.5 text-xs"
-                    style={{ backgroundColor: "#1e2128", color: "#9a9591" }}
-                  >
-                    {g}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Social links */}
-          {hasSocialLinks && (
+        {/* Header: photo + name + phone, matching the venue profile's layout */}
+        <div className="flex items-start gap-4 mb-4">
+          {p.photo_url ? (
+            <img
+              src={p.photo_url}
+              alt={p.display_name || "Artist"}
+              className="w-16 h-16 rounded-xl object-cover shrink-0"
+            />
+          ) : (
             <div
-              className="rounded-xl p-4"
-              style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+              className="w-16 h-16 rounded-xl flex items-center justify-center text-xl font-bold shrink-0"
+              style={{ background: "linear-gradient(135deg, #D4A64F 0%, #6C5CE7 100%)", color: "#fff" }}
             >
-              <div
-                style={{
-                  fontSize: "9px", color: "#5e5c58", textTransform: "uppercase",
-                  letterSpacing: "0.1em", marginBottom: "8px",
-                }}
-              >
-                Links
-              </div>
-              <div className="flex flex-col gap-1">
-                {SOCIAL_PLATFORMS.map((sp) => {
-                  const val = social[sp.key];
-                  if (!val) return null;
-                  const href = val.startsWith("http") ? val : `https://${val}`;
-                  return (
-                    <a
-                      key={sp.key}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 rounded px-2 py-1.5 transition-all hover:brightness-125"
-                      style={{ backgroundColor: "#1e2128" }}
-                    >
-                      <span style={{ color: sp.color, fontSize: "11px", width: "18px", textAlign: "center" }}>
-                        {sp.icon}
-                      </span>
-                      <span style={{ color: "#9a9591", fontSize: "11px" }}>{sp.label}</span>
-                      <span style={{ color: "#5e5c58", fontSize: "10px", marginLeft: "auto" }}>↗</span>
-                    </a>
-                  );
-                })}
-              </div>
+              {p.display_name ? p.display_name.charAt(0).toUpperCase() : "?"}
             </div>
           )}
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: "#F4E8D2" }}>{p.display_name || "Artist"}</h1>
+            {p.phone && <p className="text-sm" style={{ color: "#9a9591" }}>{p.phone}</p>}
+          </div>
+        </div>
 
-          {/* Book button */}
+        {/* Genre tags */}
+        {genres.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-6">
+            {genres.map((g) => (
+              <span
+                key={g}
+                className="text-xs px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "rgba(212,166,79,0.12)", color: "#D4A64F" }}
+              >
+                {g}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Book button */}
+        <div className="mb-6">
           <RequestToBookButton artistUserId={id} viewerType={viewerType} />
         </div>
 
-        {/* ── RIGHT MAIN ── */}
-        <div className="flex-1 flex flex-col gap-6">
+        {/* Bio */}
+        {p.bio && (
+          <p className="text-sm mb-6" style={{ color: "#F4E8D2" }}>{p.bio}</p>
+        )}
 
-          {/* Bio */}
-          {p.bio && (
-            <div
-              className="rounded-xl p-6"
-              style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              <div
-                style={{
-                  fontSize: "9px", color: "#5e5c58", textTransform: "uppercase",
-                  letterSpacing: "0.1em", marginBottom: "10px",
-                }}
-              >
-                About
-              </div>
-              <p style={{ color: "#9a9591", fontSize: "14px", lineHeight: 1.7 }}>{p.bio}</p>
-            </div>
-          )}
-
-          {/* Video & Music Samples */}
-          {videos.length > 0 && (
-            <div
-              className="rounded-xl p-6"
-              style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              <div
-                style={{
-                  fontSize: "9px", color: "#5e5c58", textTransform: "uppercase",
-                  letterSpacing: "0.1em", marginBottom: "12px",
-                }}
-              >
-                Video &amp; Music
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {videos.map((v) => {
-                  const isYT = v.platform === "youtube";
-                  const isSP = v.platform === "spotify";
-                  const platformColor = isYT ? "#ff0000" : isSP ? "#1db954" : "#9a9591";
-                  const platformIcon = isYT ? "▶" : isSP ? "♪" : "♫";
-                  return (
-                    <a
-                      key={v.id}
-                      href={v.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 rounded-lg px-4 py-3 transition-all hover:brightness-125"
-                      style={{ backgroundColor: "#1e2128", minWidth: "200px" }}
-                    >
-                      <div
-                        className="w-9 h-9 rounded flex items-center justify-center shrink-0 text-base font-bold"
-                        style={{ backgroundColor: platformColor, color: "#fff" }}
-                      >
-                        {platformIcon}
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium" style={{ color: "#F4E8D2" }}>
-                          {v.title || "Watch / Listen"}
-                        </div>
-                        <div style={{ color: "#5e5c58", fontSize: "10px" }}>Open ↗</div>
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Rates & Packages */}
-          {packages.length > 0 && (
-            <div
-              className="rounded-xl p-6"
-              style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              <div
-                style={{
-                  fontSize: "9px", color: "#5e5c58", textTransform: "uppercase",
-                  letterSpacing: "0.1em", marginBottom: "14px",
-                }}
-              >
-                Rates &amp; Packages
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {packages.map((pkg) => (
-                  <div
-                    key={pkg.id}
-                    className="rounded-lg p-4"
-                    style={{ backgroundColor: "#1e2128", borderTop: `2px solid ${pkg.color}` }}
+        {/* Social links */}
+        {hasSocialLinks && (
+          <div className="mb-6">
+            <h2 className="text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#5e5c58" }}>
+              Links
+            </h2>
+            <div className="flex flex-col gap-1">
+              {SOCIAL_PLATFORMS.map((sp) => {
+                const val = social[sp.key];
+                if (!val) return null;
+                const href = val.startsWith("http") ? val : `https://${val}`;
+                return (
+                  <a
+                    key={sp.key}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded px-2 py-1.5 transition-all hover:brightness-125"
+                    style={{ backgroundColor: "#1e2128" }}
                   >
-                    <div style={{ color: pkg.color, fontSize: "12px", fontWeight: 700, marginBottom: "6px" }}>
-                      {pkg.label}
-                    </div>
-                    <div style={{ color: "#F4E8D2", fontSize: "20px", fontWeight: 700, lineHeight: 1, marginBottom: "6px" }}>
-                      {formatPrice(pkg.price_min, pkg.price_max)}
-                    </div>
-                    {pkg.duration && (
-                      <div style={{ color: "#9a9591", fontSize: "11px", marginBottom: "6px" }}>
-                        {pkg.duration}
-                      </div>
-                    )}
-                    {pkg.description && (
-                      <div style={{ color: "#5e5c58", fontSize: "11px", lineHeight: 1.5 }}>
-                        {pkg.description}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                    <span style={{ color: sp.color, fontSize: "11px", width: "18px", textAlign: "center" }}>
+                      {sp.icon}
+                    </span>
+                    <span style={{ color: "#9a9591", fontSize: "11px" }}>{sp.label}</span>
+                    <span style={{ color: "#5e5c58", fontSize: "10px", marginLeft: "auto" }}>↗</span>
+                  </a>
+                );
+              })}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Footer note */}
-          <p style={{ color: "#5e5c58", fontSize: "11px", textAlign: "center" as const }}>
-            Profile powered by StageReach · All pricing is approximate and subject to change
-          </p>
+        {/* Video & Music Samples */}
+        {videos.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#5e5c58" }}>
+              Video &amp; Music
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {videos.map((v) => {
+                const isYT = v.platform === "youtube";
+                const isSP = v.platform === "spotify";
+                const platformColor = isYT ? "#ff0000" : isSP ? "#1db954" : "#9a9591";
+                const platformIcon = isYT ? "▶" : isSP ? "♪" : "♫";
+                return (
+                  <a
+                    key={v.id}
+                    href={v.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 transition-all hover:brightness-125"
+                    style={{ backgroundColor: "#1e2128", minWidth: "200px" }}
+                  >
+                    <div
+                      className="w-9 h-9 rounded flex items-center justify-center shrink-0 text-base font-bold"
+                      style={{ backgroundColor: platformColor, color: "#fff" }}
+                    >
+                      {platformIcon}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium" style={{ color: "#F4E8D2" }}>
+                        {v.title || "Watch / Listen"}
+                      </div>
+                      <div style={{ color: "#5e5c58", fontSize: "10px" }}>Open ↗</div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-          <RatingsSection endpoint={`/api/public/artists/${id}/ratings`} reviewerLinkPrefix="/venues/profile/" />
+        {/* Rates & Packages */}
+        {packages.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#5e5c58" }}>
+              Rates &amp; Packages
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {packages.map((pkg) => (
+                <div
+                  key={pkg.id}
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: "#1e2128", borderTop: `2px solid ${pkg.color}` }}
+                >
+                  <div style={{ color: pkg.color, fontSize: "12px", fontWeight: 700, marginBottom: "6px" }}>
+                    {pkg.label}
+                  </div>
+                  <div style={{ color: "#F4E8D2", fontSize: "20px", fontWeight: 700, lineHeight: 1, marginBottom: "6px" }}>
+                    {formatPrice(pkg.price_min, pkg.price_max)}
+                  </div>
+                  {pkg.duration && (
+                    <div style={{ color: "#9a9591", fontSize: "11px", marginBottom: "6px" }}>
+                      {pkg.duration}
+                    </div>
+                  )}
+                  {pkg.description && (
+                    <div style={{ color: "#5e5c58", fontSize: "11px", lineHeight: 1.5 }}>
+                      {pkg.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-        </div>
+        <RatingsSection endpoint={`/api/public/artists/${id}/ratings`} reviewerLinkPrefix="/venues/profile/" />
+
+        {/* Footer note */}
+        <p className="mt-6" style={{ color: "#5e5c58", fontSize: "11px", textAlign: "center" as const }}>
+          Profile powered by StageReach · All pricing is approximate and subject to change
+        </p>
+
       </div>
     </div>
   );
