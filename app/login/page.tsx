@@ -158,6 +158,12 @@ export default function LoginPage() {
             Create one
           </Link>
         </p>
+        <p className="text-center mt-2 text-sm" style={{ color: "#5e5c58" }}>
+          Are you a venue?{" "}
+          <Link href="/venues" style={{ color: "#D4A64F", textDecoration: "underline" }}>
+            Sign up here
+          </Link>
+        </p>
       </div>
     </div>
   );
