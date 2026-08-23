@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-23 (profile cleanup)
+- [Change] The public artist profile page has been reorganized to match the cleaner, single-column layout already used on venue profiles — no more sidebar, just one clean flow from photo/name down through bio, links, videos, and pricing. The "Request to Book" button now sits right at the top instead of tucked into a sidebar.
+
 ## 2026-08-22 (account-type bug)
 - [Fix] Fixed the public artist profile page rendering broken on mobile (pricing cards were cut off), and a bug where an already-logged-in artist could accidentally turn their own account into a venue account too by visiting the venue signup page — which then permanently sent every future login to the wrong place.
 
