@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-23 (discover venues)
+- [Change] Adding a venue from Discover Venues now shows right on the card whether a contact email was found — no more needing to check the Pipeline page's "Find Contact Info" button separately to see if it worked. The capture itself already happened automatically; this just makes it visible.
+
 ## 2026-08-23 (profile cleanup)
 - [Change] The public artist profile page has been reorganized to match the cleaner, single-column layout already used on venue profiles — no more sidebar, just one clean flow from photo/name down through bio, links, videos, and pricing. The "Request to Book" button now sits right at the top instead of tucked into a sidebar.
 
