@@ -38,6 +38,7 @@ export default function DiscoverView() {
   const [searched, setSearched] = useState(false);
   const [adding, setAdding]     = useState<Set<string>>(new Set());
   const [added, setAdded]       = useState<Set<string>>(new Set());
+  const [enrichResult, setEnrichResult] = useState<Map<string, { email: string | null; phone: string | null }>>(new Map());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
@@ -108,7 +109,10 @@ export default function DiscoverView() {
     if (res.ok) {
       const created = await res.json();
 
-      // 2. Auto-enrich — look up email, phone, address in background
+      // 2. Auto-enrich — look up email, phone, address before reporting done,
+      // so the UI can show what was actually found (not just a silent
+      // background patch) rather than leaving the artist to check the
+      // Pipeline page separately to see if contact info was captured.
       try {
         const params = new URLSearchParams({ name: venue.name });
         if (venue.city)    params.append("city", venue.city);
@@ -128,8 +132,16 @@ export default function DiscoverView() {
               body: JSON.stringify(patch),
             });
           }
+          setEnrichResult((prev) =>
+            new Map(prev).set(venue.osm_id, { email: data.email ?? null, phone: data.phone ?? null })
+          );
+        } else {
+          setEnrichResult((prev) => new Map(prev).set(venue.osm_id, { email: null, phone: null }));
         }
-      } catch { /* enrichment failure is non-critical */ }
+      } catch {
+        // enrichment failure is non-critical to whether the venue got added
+        setEnrichResult((prev) => new Map(prev).set(venue.osm_id, { email: null, phone: null }));
+      }
 
       setAdded((prev) => new Set(prev).add(venue.osm_id));
       setResults((prev) =>
@@ -264,7 +276,7 @@ export default function DiscoverView() {
                         style={{ backgroundColor: "#D4A64F", color: "#0E0E10", opacity: bulkProgress ? 0.7 : 1 }}
                       >
                         {bulkProgress
-                          ? `Adding ${bulkProgress.done}/${bulkProgress.total}…`
+                          ? `Adding & finding contact info ${bulkProgress.done}/${bulkProgress.total}…`
                           : selected.size > 0
                           ? `+ Add Selected Venues (${selected.size})`
                           : `+ Add All Venues (${newVenues.length})`}
@@ -275,6 +287,7 @@ export default function DiscoverView() {
                     {newVenues.map((venue) => {
                       const isAdding = adding.has(venue.osm_id);
                       const isAdded  = added.has(venue.osm_id);
+                      const enrich   = enrichResult.get(venue.osm_id);
                       const color    = typeColor(venue.type);
                       return (
                         <div
@@ -376,8 +389,15 @@ export default function DiscoverView() {
                               cursor: isAdded ? "default" : "pointer",
                             }}
                           >
-                            {isAdding ? "Adding…" : isAdded ? "✓ Added to Pipeline" : "+ Add to Pipeline"}
+                            {isAdding ? "Adding & finding contact info…" : isAdded ? "✓ Added to Pipeline" : "+ Add to Pipeline"}
                           </button>
+                          {isAdded && enrich && (
+                            <p className="text-xs" style={{ color: enrich.email ? "#4caf7d" : "#5e5c58" }}>
+                              {enrich.email
+                                ? `✓ Found contact: ${enrich.email}`
+                                : "No contact info found automatically — you can add it by hand from the Pipeline."}
+                            </p>
+                          )}
                         </div>
                       );
                     })}
