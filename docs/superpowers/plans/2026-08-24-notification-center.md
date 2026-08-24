@@ -37,9 +37,14 @@ create table public.notifications (
 );
 
 create index idx_notifications_user_unread on public.notifications (user_id, created_at desc) where read_at is null;
-```
 
-No RLS policies — matches the established pattern on `booking_requests` and `venue_artist_ratings` (every read/write goes through the service-role client from a server route that's already verified the caller's identity).
+-- RLS is enabled (required so PostgREST doesn't expose this table to
+-- anon/authenticated clients directly) but deliberately gets NO policies
+-- — every read/write goes through the service-role client from a server
+-- route that's already verified the caller's identity. Same pattern as
+-- booking_requests and venue_artist_ratings.
+alter table public.notifications enable row level security;
+```
 
 - [ ] **Step 2: Add the types**
 
@@ -790,6 +795,8 @@ git commit -m "feat: add GET /api/notifications and PATCH mark-read endpoints"
 
 **Context:** This is the biggest single task in the plan — read both nav files' current content directly before editing (line numbers below are from the versions read while writing this plan; re-verify against the actual files, they may have drifted slightly).
 
+The dropdown's `align`/`dropUp` props (added to `NotificationBell` in Step 1) matter here: the desktop Sidebar is only 224px wide, so its bell needs `align="left"` (a right-pinned 320px dropdown would run off the left edge of the screen). `MobileBottomNav` is pinned to the bottom of the viewport, so its bell needs `dropUp` (a below-anchored dropdown would render off-screen). `VenueNav`'s bell sits near the left edge of its bar too (right after the wordmark, before the links, in a bar with no spacer pushing content apart), so it also needs `align="left"` — no `dropUp` there, since that bar isn't pinned to the bottom of the viewport.
+
 - [ ] **Step 1: Write the component**
 
 ```tsx
@@ -817,24 +824,43 @@ function timeAgo(iso: string): string {
 // from venue-side code, so passing true there would just add two dead
 // listeners. See the design spec's "Known trade-off" section for why
 // this asymmetry is intentional, not a bug.
-export default function NotificationBell({ listenForRefreshEvents = false }: { listenForRefreshEvents?: boolean }) {
+//
+// align controls which side the dropdown's edge is pinned to — pass
+// "left" whenever the bell sits closer to the left side of its bar than
+// the right (the desktop Sidebar, and VenueNav's bar, which packs its
+// items to the left with no spacer), so the dropdown grows rightward
+// into open space instead of running off the left edge of the screen.
+// The "right" default suits a bell placed near the right edge of a bar
+// (no current call site does this yet, but it's there if one needs it).
+//
+// dropUp renders the dropdown above the bell instead of below — needed
+// for MobileBottomNav, which is pinned to the bottom of the viewport, so
+// a below-anchored dropdown would render off-screen.
+export default function NotificationBell({
+  listenForRefreshEvents = false,
+  align = "right",
+  dropUp = false,
+}: {
+  listenForRefreshEvents?: boolean;
+  align?: "left" | "right";
+  dropUp?: boolean;
+}) {
   const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationView[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  function load() {
-    fetch("/api/notifications")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        setNotifications(data?.notifications ?? []);
-        setUnreadCount(data?.unreadCount ?? 0);
-      })
-      .catch(() => {});
-  }
-
   useEffect(() => {
+    function load() {
+      fetch("/api/notifications")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          setNotifications(data?.notifications ?? []);
+          setUnreadCount(data?.unreadCount ?? 0);
+        })
+        .catch(() => {});
+    }
     load();
     if (!listenForRefreshEvents) return;
     window.addEventListener("stagereach:profile-updated", load);
@@ -901,7 +927,9 @@ export default function NotificationBell({ listenForRefreshEvents = false }: { l
         <div
           className="rounded-xl overflow-hidden"
           style={{
-            position: "absolute", top: "40px", right: "0",
+            position: "absolute",
+            ...(dropUp ? { bottom: "40px" } : { top: "40px" }),
+            ...(align === "left" ? { left: "0" } : { right: "0" }),
             width: "320px", maxWidth: "calc(100vw - 32px)", maxHeight: "400px", overflowY: "auto",
             backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)",
             zIndex: 50, boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
@@ -935,7 +963,9 @@ export default function NotificationBell({ listenForRefreshEvents = false }: { l
 
 - [ ] **Step 2: Wire into `Sidebar.tsx`'s desktop sidebar**
 
-Remove the `pendingRatingsCount`/`pendingBookingRequestsCount` state (lines 28-29), the two fetch blocks and the `loadPendingBookingRequests` function inside the `useEffect` (lines 44-58, keep `loadProfile()` and its call), and the two `window.addEventListener`/`removeEventListener` pairs for `stagereach:booking-request-updated` (keep the `stagereach:profile-updated` ones — `loadProfile` still needs them). Remove the `badgeValue` computation (lines 119-122) and simplify the badge render condition back to just `link.badge` (which is always `null` today — effectively removes the badge from these two links entirely, replaced by the bell).
+Remove the `pendingRatingsCount`/`pendingBookingRequestsCount` state (lines 28-29). Inside the `useEffect` (lines 31-70), keep the `loadProfile` function and its call, its `stagereach:profile-updated` listener, and the initial `loadProfile()` call — remove everything else: the `/api/ratings/pending` fetch block (lines 46-49), the `loadPendingBookingRequests` function and its call (lines 51-58), and the `stagereach:booking-request-updated` add/remove listener pair (lines 65 and 68).
+
+Remove `badge: null` from every entry in the `mainLinks` array (lines 10-16) — it's dead once the badge logic below is gone. Remove the `badgeValue` computation entirely (lines 119-122) and the `{badgeValue && (...)}` block that renders it (lines 141-159), rather than leaving an always-`null` reference around.
 
 Add the import:
 
@@ -943,7 +973,7 @@ Add the import:
 import NotificationBell from "@/components/notifications/NotificationBell";
 ```
 
-Add `<NotificationBell listenForRefreshEvents />` in the logo area, right after the `<Image>` closing tag and before the `</div>` that closes the logo section (around line 96-97), so it sits directly under the StageReach wordmark:
+Add `<NotificationBell listenForRefreshEvents align="left" />` in the logo area, right after the `<Image>` closing tag and before the `</div>` that closes the logo section (around line 96-97), so it sits directly under the StageReach wordmark:
 
 ```tsx
         <Image
@@ -955,7 +985,7 @@ Add `<NotificationBell listenForRefreshEvents />` in the logo area, right after 
           style={{ objectFit: "contain", objectPosition: "left" }}
         />
         <div className="flex justify-end mt-2">
-          <NotificationBell listenForRefreshEvents />
+          <NotificationBell listenForRefreshEvents align="left" />
         </div>
       </div>
 ```
@@ -984,22 +1014,22 @@ Add the same bell as a 7th item in the bottom nav bar, alongside the existing `L
         );
       })}
       <div className="flex flex-col items-center gap-0.5 px-3 py-1">
-        <NotificationBell listenForRefreshEvents />
+        <NotificationBell listenForRefreshEvents dropUp />
       </div>
     </nav>
 ```
 
-Note: `NotificationBell`'s dropdown is positioned `right: 0` relative to itself — in this bottom-right nav slot, that keeps it on-screen; the `maxWidth: calc(100vw - 32px)` already in the component handles narrow phones.
+`dropUp` renders the dropdown above the bell instead of below, since this nav bar is pinned to the bottom of the viewport — a below-anchored dropdown would render off-screen. `align` stays at its default (`"right"`), which keeps the dropdown on-screen horizontally in this bottom-right nav slot; `maxWidth: calc(100vw - 32px)` already in the component handles narrow phones.
 
 - [ ] **Step 4: Wire into `VenueNav.tsx`**
 
-Remove `pendingRatingsCount` state, its `useEffect` fetch, and the `badge` computation/render on the `/venue/ratings` link (the link itself stays, just loses its number badge). Add the import and render `<NotificationBell />` (no `listenForRefreshEvents` prop — leave it `false`, per the spec's documented asymmetry) inside the nav bar, after the `StageReach` wordmark and before the mapped links:
+Remove `pendingRatingsCount` state, its `useEffect` fetch, and the `badge` computation/render on the `/venue/ratings` link (the link itself stays, just loses its number badge). This also removes the only uses of `useState`/`useEffect` in this file — change `import { useState, useEffect } from "react";` to drop entirely (this file only ever used `usePathname` from `next/navigation` otherwise, which stays). Add the `NotificationBell` import and render `<NotificationBell align="left" />` (no `listenForRefreshEvents` prop — leave it `false`, per the spec's documented asymmetry) inside the nav bar, after the `StageReach` wordmark and before the mapped links. **Use `align="left"` here, not the component's default** — this nav bar is `flex items-center gap-6` with no spacer pushing content apart, so the bell ends up near the *left* edge of the bar (right after the wordmark, well before the links), not the right edge; a right-pinned dropdown at that position would run off the left edge of the screen, the same class of bug `align="left"` already fixes for the narrow desktop Sidebar:
 
 ```tsx
       <div style={{ fontFamily: "serif", fontSize: "1rem", color: "#D4A64F", fontWeight: 600 }}>
         StageReach
       </div>
-      <NotificationBell />
+      <NotificationBell align="left" />
       {links.map((link) => {
 ```
 
