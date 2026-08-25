@@ -1,5 +1,12 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { NotificationType } from "@/types";
+import { sendPushToUser } from "@/lib/push/send";
+
+const PUSHABLE_TYPES = new Set<NotificationType>([
+  "booking_request_received",
+  "booking_request_accepted",
+  "booking_request_declined",
+]);
 
 // Never throws — a failed notification insert must never affect whether
 // the email alongside it sends, or the action it's attached to. Uses the
@@ -19,4 +26,16 @@ export async function createNotification(
     link: params.link,
   });
   if (error) console.error("createNotification: insert failed", error);
+
+  if (PUSHABLE_TYPES.has(params.type)) {
+    try {
+      await sendPushToUser(service, params.userId, {
+        title: params.title,
+        body: params.body,
+        url: params.link,
+      });
+    } catch (err) {
+      console.error("createNotification: push send failed", err);
+    }
+  }
 }
