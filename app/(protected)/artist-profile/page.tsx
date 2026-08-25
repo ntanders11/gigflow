@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ArtistProfile, Package, VideoSample, SocialLinks, EmailConnection } from "@/types";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
+import PushToggle from "@/components/notifications/PushToggle";
 
 const DEFAULT_PACKAGES: Package[] = [
   { id: "solo", label: "Solo", price_min: null, price_max: null, description: "", duration: "", color: "#D4A64F" },
@@ -708,6 +709,7 @@ export default function ArtistProfilePage() {
                 })}
               </div>
             )}
+            <PushToggle />
           </div>
 
           {/* Bio */}

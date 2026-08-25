@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { VenueProfile } from "@/types";
 import VenueNav from "@/components/venue/VenueNav";
+import PushToggle from "@/components/notifications/PushToggle";
 
 const inputStyle = {
   background: "#1e2128",
@@ -88,6 +89,13 @@ export default function VenueProfilePage() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold" style={{ color: "#F4E8D2" }}>{profile.venue_name}</h1>
           <button onClick={handleSignOut} className="text-xs" style={labelStyle}>Sign out</button>
+        </div>
+
+        <div
+          className="rounded-xl p-4 mb-6"
+          style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <PushToggle />
         </div>
 
         {error && (
