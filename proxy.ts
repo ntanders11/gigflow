@@ -40,6 +40,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api/public/") ||
     pathname === "/api/calendar/ics" ||
     pathname === "/manifest.webmanifest" ||
+    pathname === "/sw.js" ||
     pathname === "/api/auth/validate-code" ||
     pathname === "/api/auth/confirm" ||
     pathname === "/signup" ||
