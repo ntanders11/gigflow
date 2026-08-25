@@ -3,11 +3,14 @@ import webpush from "web-push";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 let vapidConfigured = false;
+let missingEnvLogged = false;
 
 // Configures web-push with the VAPID keys on first real use, not at
 // module import time — see this file's header comment in the plan for
 // why an eager call here would be a serious problem. Returns false
-// (without throwing) if the required env vars aren't set, so callers
+// (without throwing) if the required env vars aren't set, or if the
+// values fail web-push's own validation (setVapidDetails throws on a
+// malformed subject/key rather than returning an error), so callers
 // can skip sending rather than crash.
 function ensureVapidConfigured(): boolean {
   if (vapidConfigured) return true;
@@ -15,10 +18,18 @@ function ensureVapidConfigured(): boolean {
   const privateKey = (process.env.VAPID_PRIVATE_KEY ?? "").trim();
   const subject = (process.env.VAPID_SUBJECT ?? "").trim();
   if (!publicKey || !privateKey || !subject) {
-    console.error("sendPushToUser: VAPID env vars not configured, skipping push send");
+    if (!missingEnvLogged) {
+      console.error("sendPushToUser: VAPID env vars not configured, skipping push send");
+      missingEnvLogged = true;
+    }
     return false;
   }
-  webpush.setVapidDetails(subject, publicKey, privateKey);
+  try {
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+  } catch (err) {
+    console.error("sendPushToUser: invalid VAPID configuration, skipping push send", err);
+    return false;
+  }
   vapidConfigured = true;
   return true;
 }
