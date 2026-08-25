@@ -351,7 +351,7 @@ and instead import it:
 ```typescript
 import { getOwnCompletedVenueProfile } from "@/lib/bookings/venue-auth";
 ```
-The `SupabaseClient` import in this file may now be unused if nothing else in the file references it directly — check before removing it (it's still used as a type annotation on `service` in a couple of spots, so it likely stays; just confirm with the type-checker in the next step rather than guessing).
+The `SupabaseClient` import in this file becomes unused once the local function is removed — it was only referenced there and in the import line itself. Remove the `import { SupabaseClient } from "@supabase/supabase-js";` line too. (`tsc` won't flag this since `noUnusedLocals` is off in this project's `tsconfig.json` — it would only show up as an ESLint warning, which Task 12 says not to chase — so don't rely on the type-checker to catch it; just remove it now.)
 
 - [ ] **Step 3: Also add `cancelled_by` to the GET response mapping**
 
