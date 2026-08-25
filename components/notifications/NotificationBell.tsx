@@ -22,13 +22,18 @@ function timeAgo(iso: string): string {
 // listeners.
 //
 // align controls which side the dropdown's edge is pinned to — pass
-// "left" whenever the bell sits closer to the left side of its bar than
-// the right (the desktop Sidebar, and VenueNav's bar, which packs its
-// items to the left with no spacer), so the dropdown grows rightward
-// into open space instead of running off the left edge of the screen.
-// The "right" default suits a bell placed near the right edge of a bar,
-// or one in a slot where growing rightward would run off-screen instead
-// (MobileBottomNav's bell, in the bottom-right corner, uses this default).
+// "left" whenever a right-pinned dropdown wouldn't fit (the desktop
+// Sidebar is only 224px wide, far narrower than the 320px dropdown; the
+// bell there sits at the sidebar's right edge, but "right"-pinning would
+// still push most of the dropdown off-screen to the left, so it's
+// pinned "left" instead to grow rightward into the main content area.
+// VenueNav's bell sits near the left of its bar with no spacer after it,
+// so "left" is also correct there for the more usual reason: growing
+// rightward is where the open space actually is).
+// The "right" default suits a bell placed near the right edge of a bar
+// with room to its left, or one in a slot where growing rightward would
+// run off-screen instead (MobileBottomNav's bell, in the bottom-right
+// corner, uses this default).
 //
 // dropUp renders the dropdown above the bell instead of below — needed
 // for MobileBottomNav, which is pinned to the bottom of the viewport, so
