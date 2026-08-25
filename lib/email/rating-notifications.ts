@@ -1,6 +1,7 @@
 // lib/email/rating-notifications.ts
 import { Resend } from "resend";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { createNotification } from "@/lib/notifications/create";
 
 async function sendSystemEmail(to: string, subject: string, text: string): Promise<void> {
   const apiKey = (process.env.RESEND_API_KEY ?? "").trim();
@@ -74,6 +75,17 @@ export async function maybeSendNewGigToRateEmails(
         `Your gig at ${venueName} is marked completed. Head to your Ratings page on StageReach to rate them — you'll see their rating of you once you've both submitted.`
       );
     }
+    try {
+      await createNotification(service, {
+        userId: opts.artistUserId,
+        type: "rating_available",
+        title: "You have a new gig to rate",
+        body: `Your gig at ${venueName} is marked completed.`,
+        link: "/ratings",
+      });
+    } catch (err) {
+      console.error("maybeSendNewGigToRateEmails: failed to create artist notification", err);
+    }
   }
 
   if (!venueAlreadyRated && venueProfile?.user_id) {
@@ -97,6 +109,17 @@ export async function maybeSendNewGigToRateEmails(
         "You have a new artist to rate on StageReach",
         `Your gig with ${artistName} is marked completed. Head to your Ratings page on StageReach to rate them — you'll see their rating of you once you've both submitted.`
       );
+    }
+    try {
+      await createNotification(service, {
+        userId: venueProfile.user_id as string,
+        type: "rating_available",
+        title: "You have a new artist to rate",
+        body: `Your gig with ${artistName} is marked completed.`,
+        link: "/venue/ratings",
+      });
+    } catch (err) {
+      console.error("maybeSendNewGigToRateEmails: failed to create venue notification", err);
     }
   }
 }
