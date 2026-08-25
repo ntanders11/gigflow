@@ -133,6 +133,14 @@ export default async function PublicProfilePage({
                 if (!val) return null;
                 const href = val.startsWith("http") ? val : `https://${val}`;
                 const Icon = sp.Icon;
+                // For "Website" specifically, show the actual domain the
+                // artist entered (e.g. "taylorandersonmusic.com") instead
+                // of the generic platform label — the icon already makes
+                // the other platforms self-explanatory, but "Website"
+                // alone tells a visitor nothing about where it goes.
+                const displayText = sp.key === "website"
+                  ? val.replace(/^https?:\/\//, "").replace(/\/$/, "")
+                  : sp.label;
                 return (
                   <a
                     key={sp.key}
@@ -145,7 +153,7 @@ export default async function PublicProfilePage({
                     <span style={{ color: sp.color, width: "18px", display: "flex", justifyContent: "center" }}>
                       <Icon size={15} />
                     </span>
-                    <span style={{ color: "#9a9591", fontSize: "11px" }}>{sp.label}</span>
+                    <span className="truncate" style={{ color: "#9a9591", fontSize: "11px" }}>{displayText}</span>
                     <span style={{ color: "#5e5c58", fontSize: "10px", marginLeft: "auto" }}>↗</span>
                   </a>
                 );
