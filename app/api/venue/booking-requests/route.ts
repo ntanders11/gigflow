@@ -54,6 +54,7 @@ export async function GET() {
       end_time: r.end_time,
       message: r.message,
       status: r.status,
+      cancelled_by: r.cancelled_by,
     };
   });
 

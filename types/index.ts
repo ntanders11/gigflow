@@ -289,7 +289,7 @@ export interface PublicRatingsResponse {
 // BOOKING REQUESTS
 // ============================================================
 
-export type BookingRequestStatus = "pending" | "accepted" | "declined";
+export type BookingRequestStatus = "pending" | "accepted" | "declined" | "cancelled";
 
 // The raw shape of a booking_requests row as stored — server-side only.
 export interface BookingRequestRow {
@@ -301,6 +301,7 @@ export interface BookingRequestRow {
   end_time: string | null;
   message: string | null;
   status: BookingRequestStatus;
+  cancelled_by: "artist" | "venue" | null;
   gig_id: string | null;
   created_at: string;
   updated_at: string;
@@ -327,6 +328,7 @@ export interface VenueBookingRequestView {
   end_time: string | null;
   message: string | null;
   status: BookingRequestStatus;
+  cancelled_by: "artist" | "venue" | null;
 }
 
 // ============================================================
@@ -337,6 +339,8 @@ export type NotificationType =
   | "booking_request_received"
   | "booking_request_accepted"
   | "booking_request_declined"
+  | "booking_cancelled_by_venue"
+  | "booking_cancelled_by_artist"
   | "rating_available"
   | "rating_revealed"
   | "follow_up_sent";
