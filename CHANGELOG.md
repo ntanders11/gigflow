@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-24 (notification center)
+- [Feature] A new notification bell in the nav (both artist and venue sides) covers new booking requests, accepted/declined responses, ratings becoming available or revealing, and automated follow-up emails sending — all of which previously only showed up as an email. Replaces the smaller number badges that used to live on the Calendar and Ratings nav links.
+
 ## 2026-08-23 (profile cleanup)
 - [Change] The public artist profile page has been reorganized to match the cleaner, single-column layout already used on venue profiles — no more sidebar, just one clean flow from photo/name down through bio, links, videos, and pricing. The "Request to Book" button now sits right at the top instead of tucked into a sidebar.
 
