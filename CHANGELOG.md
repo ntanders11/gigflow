@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-25 (push notifications)
+- [Feature] Real phone alerts, on top of the notification bell — a new booking request, or a response to one you sent, now buzzes your phone directly (if you've turned it on from your Profile page), even when StageReach isn't open. The other notification types stay bell-only for now.
+
 ## 2026-08-24 (notification center)
 - [Feature] A new notification bell in the nav (both artist and venue sides) covers new booking requests, accepted/declined responses, ratings becoming available or revealing, and automated follow-up emails sending — all of which previously only showed up as an email. Replaces the smaller number badges that used to live on the Calendar and Ratings nav links.
 
