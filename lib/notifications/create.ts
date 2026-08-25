@@ -6,6 +6,8 @@ const PUSHABLE_TYPES = new Set<NotificationType>([
   "booking_request_received",
   "booking_request_accepted",
   "booking_request_declined",
+  "booking_cancelled_by_venue",
+  "booking_cancelled_by_artist",
 ]);
 
 // Never throws — a failed notification insert must never affect whether
