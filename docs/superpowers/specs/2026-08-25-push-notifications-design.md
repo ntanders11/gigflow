@@ -74,7 +74,11 @@ const PUSHABLE_TYPES = new Set<NotificationType>([
 ]);
 ```
 
-When `params.type` is in this set, `createNotification` also calls `sendPushToUser(service, params.userId, { title: params.title, body: params.body, url: params.link })`, independently of whether the `notifications` row insert itself succeeded — a database hiccup on the in-app side shouldn't also silently kill the phone alert, and vice versa. This means **none of the six existing trigger-point call sites change at all** — the same integration principle already used for the in-app center (extend the shared helper, not each call site) applies here too.
+When `params.type` is in this set, `createNotification` also calls `sendPushToUser(service, params.userId, { title: params.title, body: params.body, url: params.link })`, independently of whether the `notifications` row insert itself succeeded — a database hiccup on the in-app side shouldn't also silently kill the phone alert, and vice versa. This means **none of `createNotification`'s existing eight call sites** (across `app/api/venues/follow-up/route.ts`, `app/api/venue/booking-requests/route.ts`, `app/api/booking-requests/[id]/route.ts` (two), and `lib/email/rating-notifications.ts` (four)) **need to change at all** — the same integration principle already used for the in-app center (extend the shared helper, not each call site) applies here too.
+
+**VAPID initialization must be lazy, not eager.** `lib/push/send.ts` will call the `web-push` package's `setVapidDetails(...)` using `VAPID_PRIVATE_KEY`/`VAPID_SUBJECT`. If that call runs at module top-level (the naive way to write it), importing `sendPushToUser` would throw the moment `VAPID_PRIVATE_KEY` is unset — e.g. in the window between this branch deploying and Taylor adding the new env vars to Vercel. Since `createNotification` statically imports from this file, an eager throw there would break notification creation for **all six types**, not just the three pushable ones. `setVapidDetails` must be called lazily, inside `sendPushToUser` itself (or guarded so a missing env var short-circuits with a logged warning rather than throwing), never at import time.
+
+**New dependency.** `web-push` is not yet in `package.json` — the implementation needs `npm install web-push` plus `@types/web-push` as a dev dependency, since `web-push` ships no bundled TypeScript types.
 
 ## Service Worker
 
