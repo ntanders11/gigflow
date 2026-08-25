@@ -328,3 +328,25 @@ export interface VenueBookingRequestView {
   message: string | null;
   status: BookingRequestStatus;
 }
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+export type NotificationType =
+  | "booking_request_received"
+  | "booking_request_accepted"
+  | "booking_request_declined"
+  | "rating_available"
+  | "rating_revealed"
+  | "follow_up_sent";
+
+export interface NotificationView {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  link: string;
+  read: boolean;
+  created_at: string;
+}
