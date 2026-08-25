@@ -1,8 +1,23 @@
 // app/api/booking-requests/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { ensureLinkedBookedVenue } from "@/lib/bookings/pipeline";
 import { sendBookingResponseEmail } from "@/lib/email/booking-request-notifications";
+import { createNotification } from "@/lib/notifications/create";
+
+async function resolveVenueUserId(service: SupabaseClient, venueProfileId: string): Promise<string | null> {
+  const { data, error } = await service
+    .from("venue_profiles")
+    .select("user_id")
+    .eq("id", venueProfileId)
+    .maybeSingle();
+  if (error) {
+    console.error("resolveVenueUserId: lookup failed", error);
+    return null;
+  }
+  return (data?.user_id as string | undefined) ?? null;
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -59,6 +74,21 @@ export async function PATCH(
     } catch (err) {
       console.error("PATCH /api/booking-requests: failed to send decline email", err);
     }
+
+    try {
+      const venueUserId = await resolveVenueUserId(service, updated.venue_profile_id);
+      if (venueUserId) {
+        await createNotification(service, {
+          userId: venueUserId,
+          type: "booking_request_declined",
+          title: "Your booking request was declined",
+          link: "/venue/bookings",
+        });
+      }
+    } catch (err) {
+      console.error("PATCH /api/booking-requests: failed to create decline notification", err);
+    }
+
     return NextResponse.json(updated);
   }
 
@@ -109,6 +139,20 @@ export async function PATCH(
     await sendBookingResponseEmail(service, updated, "accepted");
   } catch (err) {
     console.error("PATCH /api/booking-requests: failed to send accept email", err);
+  }
+
+  try {
+    const venueUserId = await resolveVenueUserId(service, updated.venue_profile_id);
+    if (venueUserId) {
+      await createNotification(service, {
+        userId: venueUserId,
+        type: "booking_request_accepted",
+        title: "Your booking request was accepted",
+        link: "/venue/bookings",
+      });
+    }
+  } catch (err) {
+    console.error("PATCH /api/booking-requests: failed to create accept notification", err);
   }
 
   return NextResponse.json(updated);
