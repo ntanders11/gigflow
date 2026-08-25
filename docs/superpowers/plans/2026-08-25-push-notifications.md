@@ -4,11 +4,11 @@
 
 **Goal:** Real phone lock-screen alerts for the two notification types worth interrupting someone for (new booking request, booking accepted/declined), on top of the already-shipped in-app notification center.
 
-**Architecture:** A new `push_subscriptions` table records one row per device a user has enabled alerts on. A service worker (`public/sw.js`) handles incoming push events and notification taps. `lib/notifications/create.ts`'s existing `createNotification` helper gets a small extension — when the notification type is one of the two-and-a-half "pushable" types, it also calls a new `sendPushToUser` — so none of its 8 existing call sites change at all. A new toggle component on both profile pages handles the subscribe/unsubscribe flow.
+**Architecture:** A new `push_subscriptions` table records one row per device a user has enabled alerts on. A service worker (`public/sw.js`) handles incoming push events and notification taps. `lib/notifications/create.ts`'s existing `createNotification` helper gets a small extension — when the notification type is one of the three "pushable" types (covering the two events worth a phone alert), it also calls a new `sendPushToUser` — so none of its 8 existing call sites change at all. A new toggle component on both profile pages handles the subscribe/unsubscribe flow.
 
 **Tech Stack:** Next.js App Router route handlers, Supabase (service-role client, no RLS — matches every other table this session), the `web-push` npm package, the browser's native Push API + Service Worker API.
 
-**No automated test suite exists in this project** (confirmed in `CLAUDE.md`). Verification throughout is `npx tsc --noEmit`, `npx eslint`, `npm run build`, and manual/live checks. **One important limit on this plan specifically:** unlike every other feature built this session, *actually receiving a push notification on a real phone* cannot be verified by whoever executes this plan — there's no real device, and OS-level notification permission can't be granted programmatically. Task 10 makes clear what's checkable without a device and what genuinely needs Taylor to do it herself afterward.
+**No automated test suite exists in this project** (confirmed in `CLAUDE.md`). Verification throughout is `npx tsc --noEmit`, `npx eslint`, `npm run build`, and manual/live checks. **One important limit on this plan specifically:** unlike every other feature built this session, *actually receiving a push notification on a real phone* cannot be verified by whoever executes this plan — there's no real device, and OS-level notification permission can't be granted programmatically. Task 9 makes clear what's checkable without a device and what genuinely needs Taylor to do it herself afterward.
 
 ---
 
@@ -477,7 +477,13 @@ import { useState, useEffect } from "react";
 
 type Status = "checking" | "unsupported" | "denied" | "off" | "on";
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+// Return type is deliberately Uint8Array<ArrayBuffer>, not the bare
+// Uint8Array TypeScript would otherwise infer (which widens to
+// ArrayBufferLike) — since TS 5.7, pushManager.subscribe()'s
+// applicationServerKey option requires ArrayBufferView<ArrayBuffer>
+// specifically, and the wider type fails tsc. Confirmed against this
+// project's actual TypeScript version.
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = atob(base64);
@@ -516,6 +522,11 @@ export default function PushToggle() {
     setError("");
     try {
       const registration = await navigator.serviceWorker.register("/sw.js");
+      // Wait for the worker to actually become active before subscribing
+      // — on a first-ever enable it's still "installing" immediately
+      // after register(), and pushManager.subscribe() throws
+      // InvalidStateError on a non-active registration in Chrome/Firefox.
+      await navigator.serviceWorker.ready;
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setStatus("denied");
@@ -669,7 +680,7 @@ git commit -m "feat: add PushToggle to artist and venue profile pages"
 
 - [ ] **Step 1: Update CLAUDE.md**
 
-In the Key Flows section, right after the "Notification Center" paragraph, add a new paragraph describing push notifications: a `push_subscriptions` table (migration `022_push_subscriptions.sql`, RLS enabled with no policies, one row per subscribed device); `lib/push/send.ts`'s `sendPushToUser` (lazily-initialized VAPID via the `web-push` package, deletes a subscription on a 404/410 "gone" response); wired into `lib/notifications/create.ts` for exactly two of the six notification types (`booking_request_received`, `booking_request_accepted`, `booking_request_declined`); a service worker at `public/sw.js` (allowlisted in `proxy.ts` alongside `/manifest.webmanifest`); subscribe/unsubscribe via `POST`/`DELETE /api/push/subscribe`; a `PushToggle` component on both the Artist Profile and Venue Profile pages. Note the iOS-must-be-installed-to-home-screen limitation.
+In the Key Flows section, right after the "Notification Center" paragraph, add a new paragraph describing push notifications: a `push_subscriptions` table (migration `022_push_subscriptions.sql`, RLS enabled with no policies, one row per subscribed device); `lib/push/send.ts`'s `sendPushToUser` (lazily-initialized VAPID via the `web-push` package, deletes a subscription on a 404/410 "gone" response); wired into `lib/notifications/create.ts` for three of the six notification types (`booking_request_received`, `booking_request_accepted`, `booking_request_declined`), covering the two events worth a phone alert (a new booking request, and a response to one); a service worker at `public/sw.js` (allowlisted in `proxy.ts` alongside `/manifest.webmanifest`); subscribe/unsubscribe via `POST`/`DELETE /api/push/subscribe`; a `PushToggle` component on both the Artist Profile and Venue Profile pages. Note the iOS-must-be-installed-to-home-screen limitation.
 
 Also add the three new environment variables (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`) to the Environment Variables section at the bottom of the file, following the existing format.
 
@@ -699,7 +710,7 @@ No automated test suite exists in this project, and **actually receiving a push 
 - [ ] Confirm `npx tsc --noEmit`, `npx eslint`, and `npm run build` are all clean across the whole project (not just touched files).
 - [ ] Confirm `curl` against `http://localhost:3000/sw.js` (with the dev server running) returns `200` with `Content-Type: application/javascript` or similar — not a redirect to `/login`, proving the `proxy.ts` allowlist change works.
 - [ ] Confirm `curl -X POST http://localhost:3000/api/push/subscribe` (no auth) returns `401`, and same for `DELETE` — proving both routes correctly require auth without crashing.
-- [ ] Confirm the app **still builds and runs correctly with the VAPID env vars unset** — this is the critical regression check from this plan's Task 3: temporarily comment out (or don't set) `VAPID_PRIVATE_KEY` in the local environment and confirm the dev server still starts and existing pages (e.g. a public profile page) still load without error, proving the lazy-init guarantee actually holds in practice, not just in code review.
+- [ ] Confirm the app **still creates in-app notifications correctly with the VAPID env vars unset** — this is the critical regression check from this plan's Task 3. `VAPID_PRIVATE_KEY` won't be set locally unless Task 1's generated keys were already added, so this is likely already the default state — confirm that first. A public profile page is NOT a useful check here (it never calls `createNotification`, so `lib/push/send.ts` is never even imported when loading one — the check would pass identically whether or not the lazy-init fix exists). Instead, exercise a real trigger point that DOES call `createNotification`: seed a `booking_requests` insert directly via the Supabase REST API (service-role key from `.env.local`, same technique used for other features this session) or trigger `POST /api/venue/booking-requests` through the actual flow if a test venue session is available, and confirm the resulting `notifications` row is still created successfully (once the migration has run) with no server error — proving a missing VAPID config degrades gracefully (skips the push, logs a warning) rather than breaking the in-app notification it's attached to.
 - [ ] Confirm `PushToggle` renders on the Artist Profile page without crashing (log in as any test artist, or check via a component-level read of the rendered HTML if a real login isn't available in this environment).
 
 **For Taylor, after this ships and the migration has run:**
