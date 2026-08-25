@@ -14,6 +14,7 @@ create table public.notifications (
 );
 
 create index idx_notifications_user_unread on public.notifications (user_id, created_at desc) where read_at is null;
+create index idx_notifications_user_created on public.notifications (user_id, created_at desc);
 
 -- RLS is enabled (required so PostgREST doesn't expose this table to
 -- anon/authenticated clients directly) but deliberately gets NO policies
