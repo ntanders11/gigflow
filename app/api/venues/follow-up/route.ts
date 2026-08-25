@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendArtistEmail } from "@/lib/email/send-artist-email";
+import { createNotification } from "@/lib/notifications/create";
 
 interface ArtistInfo {
   name: string;
@@ -141,6 +142,18 @@ export async function POST(request: NextRequest) {
         .eq("id", venue.id);
 
       results.push({ venue: venue.name, status: "sent" });
+
+      try {
+        await createNotification(supabase, {
+          userId: venue.user_id,
+          type: "follow_up_sent",
+          title: "Follow-up email sent",
+          body: `A follow-up went out to ${venue.name} automatically.`,
+          link: "/pipeline",
+        });
+      } catch (notifyErr) {
+        console.error(`follow-up: failed to create notification for venue ${venue.name}:`, notifyErr);
+      }
     } catch (err) {
       console.error(`follow-up: unexpected error for venue ${venue.name}:`, err);
       results.push({ venue: venue.name, status: `error: ${err}` });
