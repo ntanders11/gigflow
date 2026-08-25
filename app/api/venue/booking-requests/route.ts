@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { sendNewBookingRequestEmail } from "@/lib/email/booking-request-notifications";
+import { createNotification } from "@/lib/notifications/create";
 import { VenueBookingRequestView } from "@/types";
 
 async function getOwnCompletedVenueProfile(
@@ -104,6 +105,17 @@ export async function POST(request: NextRequest) {
     await sendNewBookingRequestEmail(service, created);
   } catch (err) {
     console.error("POST /api/venue/booking-requests: failed to send notification email", err);
+  }
+
+  try {
+    await createNotification(service, {
+      userId: created.artist_user_id,
+      type: "booking_request_received",
+      title: "New booking request",
+      link: "/calendar",
+    });
+  } catch (err) {
+    console.error("POST /api/venue/booking-requests: failed to create notification", err);
   }
 
   return NextResponse.json(created);
