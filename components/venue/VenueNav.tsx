@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 const links = [
   { href: "/venue/profile", label: "My Profile" },
@@ -13,14 +13,6 @@ const links = [
 
 export default function VenueNav() {
   const pathname = usePathname();
-  const [pendingRatingsCount, setPendingRatingsCount] = useState(0);
-
-  useEffect(() => {
-    fetch("/api/venue/ratings/pending")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setPendingRatingsCount(data?.pending?.length ?? 0))
-      .catch(() => {});
-  }, []);
 
   return (
     <nav
@@ -30,9 +22,9 @@ export default function VenueNav() {
       <div style={{ fontFamily: "serif", fontSize: "1rem", color: "#D4A64F", fontWeight: 600 }}>
         StageReach
       </div>
+      <NotificationBell align="left" />
       {links.map((link) => {
         const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-        const badge = link.href === "/venue/ratings" && pendingRatingsCount > 0 ? pendingRatingsCount : null;
         return (
           <Link
             key={link.href}
@@ -41,25 +33,6 @@ export default function VenueNav() {
             style={{ color: isActive ? "#D4A64F" : "#9a9591", fontWeight: isActive ? 600 : 400 }}
           >
             {link.label}
-            {badge && (
-              <span
-                style={{
-                  backgroundColor: "#D4A64F",
-                  color: "#0E0E10",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  borderRadius: "999px",
-                  minWidth: "18px",
-                  height: "18px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "0 5px",
-                }}
-              >
-                {badge}
-              </span>
-            )}
           </Link>
         );
       })}

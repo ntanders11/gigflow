@@ -5,15 +5,16 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 const mainLinks = [
-  { href: "/dashboard",  label: "Overview",         icon: "◆", badge: null, comingSoon: false },
-  { href: "/pipeline",   label: "Pipeline",          icon: "◎", badge: null, comingSoon: false },
-  { href: "/discover",   label: "Discover Venues",   icon: "⊕", badge: null, comingSoon: false },
-  { href: "/venues/import", label: "Outreach",       icon: "✉", badge: null, comingSoon: false },
-  { href: "/calendar",   label: "Booking Calendar",  icon: "☐", badge: null, comingSoon: false },
-  { href: "/invoices",   label: "Invoices",          icon: "$", badge: null, comingSoon: false },
-  { href: "/ratings",    label: "Ratings",           icon: "★", badge: null, comingSoon: false },
+  { href: "/dashboard",  label: "Overview",         icon: "◆", comingSoon: false },
+  { href: "/pipeline",   label: "Pipeline",          icon: "◎", comingSoon: false },
+  { href: "/discover",   label: "Discover Venues",   icon: "⊕", comingSoon: false },
+  { href: "/venues/import", label: "Outreach",       icon: "✉", comingSoon: false },
+  { href: "/calendar",   label: "Booking Calendar",  icon: "☐", comingSoon: false },
+  { href: "/invoices",   label: "Invoices",          icon: "$", comingSoon: false },
+  { href: "/ratings",    label: "Ratings",           icon: "★", comingSoon: false },
 ];
 
 const profileLinks = [
@@ -25,8 +26,6 @@ export default function Sidebar() {
   const router = useRouter();
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [pendingRatingsCount, setPendingRatingsCount] = useState(0);
-  const [pendingBookingRequestsCount, setPendingBookingRequestsCount] = useState(0);
 
   useEffect(() => {
     function loadProfile() {
@@ -43,29 +42,11 @@ export default function Sidebar() {
 
     loadProfile();
 
-    fetch("/api/ratings/pending")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setPendingRatingsCount(data?.pending?.length ?? 0))
-      .catch(() => {});
-
-    function loadPendingBookingRequests() {
-      fetch("/api/booking-requests")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => setPendingBookingRequestsCount(data?.pending?.length ?? 0))
-        .catch(() => {});
-    }
-
-    loadPendingBookingRequests();
-
     // The Artist Profile page dispatches this after a successful save, since
     // this sidebar keeps its own copy of name/photo and only loads it once on mount.
     window.addEventListener("stagereach:profile-updated", loadProfile);
-    // BookingRequestsSection dispatches this after an accept/decline, since
-    // this sidebar keeps its own copy of the pending count and only loads it once on mount.
-    window.addEventListener("stagereach:booking-request-updated", loadPendingBookingRequests);
     return () => {
       window.removeEventListener("stagereach:profile-updated", loadProfile);
-      window.removeEventListener("stagereach:booking-request-updated", loadPendingBookingRequests);
     };
   }, []);
 
@@ -94,6 +75,9 @@ export default function Sidebar() {
           className="w-full"
           style={{ objectFit: "contain", objectPosition: "left" }}
         />
+        <div className="flex justify-end mt-2">
+          <NotificationBell listenForRefreshEvents align="left" />
+        </div>
       </div>
 
       {/* Main nav */}
@@ -116,11 +100,6 @@ export default function Sidebar() {
               !link.comingSoon &&
               (pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href + "/")));
 
-            const badgeValue =
-              link.href === "/ratings" ? (pendingRatingsCount > 0 ? pendingRatingsCount : null) :
-              link.href === "/calendar" ? (pendingBookingRequestsCount > 0 ? pendingBookingRequestsCount : null) :
-              link.badge;
-
             return (
               <Link
                 key={link.label}
@@ -138,25 +117,6 @@ export default function Sidebar() {
                   {link.icon}
                 </span>
                 <span className="flex-1 truncate">{link.label}</span>
-                {badgeValue && (
-                  <span
-                    style={{
-                      backgroundColor: "#D4A64F",
-                      color: "#0E0E10",
-                      fontSize: "10px",
-                      fontWeight: 700,
-                      borderRadius: "999px",
-                      minWidth: "18px",
-                      height: "18px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "0 5px",
-                    }}
-                  >
-                    {badgeValue}
-                  </span>
-                )}
                 {link.comingSoon && (
                   <span
                     style={{
@@ -300,6 +260,9 @@ export function MobileBottomNav() {
           </Link>
         );
       })}
+      <div className="flex flex-col items-center gap-0.5 px-3 py-1">
+        <NotificationBell listenForRefreshEvents dropUp />
+      </div>
     </nav>
   );
 }
