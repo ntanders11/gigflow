@@ -830,8 +830,9 @@ function timeAgo(iso: string): string {
 // the right (the desktop Sidebar, and VenueNav's bar, which packs its
 // items to the left with no spacer), so the dropdown grows rightward
 // into open space instead of running off the left edge of the screen.
-// The "right" default suits a bell placed near the right edge of a bar
-// (no current call site does this yet, but it's there if one needs it).
+// The "right" default suits a bell placed near the right edge of a bar,
+// or one in a slot where growing rightward would run off-screen instead
+// (MobileBottomNav's bell, in the bottom-right corner, uses this default).
 //
 // dropUp renders the dropdown above the bell instead of below — needed
 // for MobileBottomNav, which is pinned to the bottom of the viewport, so
