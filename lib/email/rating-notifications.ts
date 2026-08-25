@@ -148,13 +148,23 @@ export async function sendRatingRevealedEmail(
       .eq("id", rating.artist_user_id)
       .maybeSingle();
     if (artistLoginError) console.error("sendRatingRevealedEmail: profiles (artist login email) lookup failed", artistLoginError);
+    const venueName = (venueProfile?.venue_name as string | null) ?? "A venue";
     if (artistLogin?.email) {
-      const venueName = (venueProfile?.venue_name as string | null) ?? "A venue";
       await sendSystemEmail(
         artistLogin.email as string,
         `${venueName} revealed their rating of you`,
         `Both ratings are in — head to your Ratings page on StageReach to see it.`
       );
+    }
+    try {
+      await createNotification(service, {
+        userId: rating.artist_user_id,
+        type: "rating_revealed",
+        title: `${venueName} revealed their rating of you`,
+        link: "/ratings",
+      });
+    } catch (err) {
+      console.error("sendRatingRevealedEmail: failed to create artist notification", err);
     }
   } else {
     // Venue was already waiting — notify them.
@@ -165,6 +175,7 @@ export async function sendRatingRevealedEmail(
       .eq("user_id", rating.artist_user_id)
       .maybeSingle();
     if (artistProfileError) console.error("sendRatingRevealedEmail: artist_profiles lookup failed", artistProfileError);
+    const artistName = (artistProfile?.display_name as string | null) ?? "An artist";
     const { data: venueLogin, error: venueLoginError } = await service
       .from("profiles")
       .select("email")
@@ -172,12 +183,21 @@ export async function sendRatingRevealedEmail(
       .maybeSingle();
     if (venueLoginError) console.error("sendRatingRevealedEmail: profiles (venue login email) lookup failed", venueLoginError);
     if (venueLogin?.email) {
-      const artistName = (artistProfile?.display_name as string | null) ?? "An artist";
       await sendSystemEmail(
         venueLogin.email as string,
         `${artistName} revealed their rating of you`,
         `Both ratings are in — head to your Ratings page on StageReach to see it.`
       );
+    }
+    try {
+      await createNotification(service, {
+        userId: venueProfile.user_id as string,
+        type: "rating_revealed",
+        title: `${artistName} revealed their rating of you`,
+        link: "/venue/ratings",
+      });
+    } catch (err) {
+      console.error("sendRatingRevealedEmail: failed to create venue notification", err);
     }
   }
 }
