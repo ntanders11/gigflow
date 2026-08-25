@@ -56,7 +56,7 @@ export default function PushToggle() {
       await navigator.serviceWorker.ready;
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        setStatus("denied");
+        setStatus(permission === "denied" ? "denied" : "off");
         return;
       }
       const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
@@ -133,7 +133,7 @@ export default function PushToggle() {
       </div>
       {status === "unsupported" && (
         <p style={{ color: "#5e5c58", fontSize: "10px", marginTop: "4px" }}>
-          Not available in this browser. On iPhone: add StageReach to your home screen first (Share → Add to Home Screen), then try again from there.
+          Not available in this browser or device. If you&apos;re on an iPhone, add StageReach to your home screen first (Share → Add to Home Screen), then try again from there.
         </p>
       )}
       {status === "denied" && (
