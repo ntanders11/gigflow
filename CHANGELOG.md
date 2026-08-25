@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-08-25 (profile page polish)
+- [Change] Your public artist profile now shows real Instagram/YouTube/website icons instead of text labels, and any YouTube or Spotify video/music links play right on the page instead of just linking out. Also removed the phone number from the public page — venues now reach out through Request to Book instead.
+
 ## 2026-08-25 (push notifications)
 - [Feature] Real phone alerts, on top of the notification bell — a new booking request, or a response to one you sent, now buzzes your phone directly (if you've turned it on from your Profile page), even when StageReach isn't open. The other notification types stay bell-only for now.
 
