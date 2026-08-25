@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { ArtistProfile, Package, VideoSample, SocialLinks } from "@/types";
 import RatingsSection from "@/components/ratings/RatingsSection";
 import RequestToBookButton from "@/components/booking/RequestToBookButton";
+import { InstagramIcon, SpotifyIcon, YouTubeIcon, WebsiteIcon } from "@/components/icons/SocialIcons";
+import { getEmbedUrl } from "@/lib/embeds";
 
-const SOCIAL_PLATFORMS: { key: keyof SocialLinks; label: string; color: string; icon: string }[] = [
-  { key: "instagram", label: "Instagram", color: "#e1306c", icon: "IG" },
-  { key: "spotify",   label: "Spotify",   color: "#1db954", icon: "SP" },
-  { key: "youtube",   label: "YouTube",   color: "#ff0000", icon: "YT" },
-  { key: "website",   label: "Website",   color: "#9a9591", icon: "🌐" },
+const SOCIAL_PLATFORMS: { key: keyof SocialLinks; label: string; color: string; Icon: typeof InstagramIcon }[] = [
+  { key: "instagram", label: "Instagram", color: "#e1306c", Icon: InstagramIcon },
+  { key: "spotify",   label: "Spotify",   color: "#1db954", Icon: SpotifyIcon },
+  { key: "youtube",   label: "YouTube",   color: "#ff0000", Icon: YouTubeIcon },
+  { key: "website",   label: "Website",   color: "#9a9591", Icon: WebsiteIcon },
 ];
 
 function formatPrice(min: number | null, max: number | null): string {
@@ -91,7 +93,6 @@ export default async function PublicProfilePage({
           )}
           <div>
             <h1 className="text-2xl font-bold" style={{ color: "#F4E8D2" }}>{p.display_name || "Artist"}</h1>
-            {p.phone && <p className="text-sm" style={{ color: "#9a9591" }}>{p.phone}</p>}
           </div>
         </div>
 
@@ -131,6 +132,7 @@ export default async function PublicProfilePage({
                 const val = social[sp.key];
                 if (!val) return null;
                 const href = val.startsWith("http") ? val : `https://${val}`;
+                const Icon = sp.Icon;
                 return (
                   <a
                     key={sp.key}
@@ -140,8 +142,8 @@ export default async function PublicProfilePage({
                     className="flex items-center gap-2 rounded px-2 py-1.5 transition-all hover:brightness-125"
                     style={{ backgroundColor: "#1e2128" }}
                   >
-                    <span style={{ color: sp.color, fontSize: "11px", width: "18px", textAlign: "center" }}>
-                      {sp.icon}
+                    <span style={{ color: sp.color, width: "18px", display: "flex", justifyContent: "center" }}>
+                      <Icon size={15} />
                     </span>
                     <span style={{ color: "#9a9591", fontSize: "11px" }}>{sp.label}</span>
                     <span style={{ color: "#5e5c58", fontSize: "10px", marginLeft: "auto" }}>↗</span>
@@ -158,8 +160,53 @@ export default async function PublicProfilePage({
             <h2 className="text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#5e5c58" }}>
               Video &amp; Music
             </h2>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-4">
               {videos.map((v) => {
+                const embedUrl = getEmbedUrl(v.platform, v.url);
+
+                if (embedUrl && v.platform === "youtube") {
+                  return (
+                    <div key={v.id}>
+                      {v.title && (
+                        <div className="text-sm font-medium mb-1.5" style={{ color: "#F4E8D2" }}>{v.title}</div>
+                      )}
+                      <div className="relative w-full rounded-lg overflow-hidden" style={{ aspectRatio: "16 / 9", backgroundColor: "#1e2128" }}>
+                        <iframe
+                          src={embedUrl}
+                          title={v.title || "YouTube video"}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="absolute inset-0 w-full h-full"
+                          style={{ border: 0 }}
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (embedUrl && v.platform === "spotify") {
+                  return (
+                    <div key={v.id}>
+                      {v.title && (
+                        <div className="text-sm font-medium mb-1.5" style={{ color: "#F4E8D2" }}>{v.title}</div>
+                      )}
+                      <iframe
+                        src={embedUrl}
+                        title={v.title || "Spotify"}
+                        width="100%"
+                        height="152"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                        className="rounded-lg"
+                        style={{ border: 0 }}
+                      />
+                    </div>
+                  );
+                }
+
+                // No embeddable URL (a non-embeddable "other" platform link,
+                // or a YouTube/Spotify URL that didn't match a recognized
+                // pattern) — fall back to a plain link, same as before.
                 const isYT = v.platform === "youtube";
                 const isSP = v.platform === "spotify";
                 const platformColor = isYT ? "#ff0000" : isSP ? "#1db954" : "#9a9591";
@@ -171,7 +218,7 @@ export default async function PublicProfilePage({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 rounded-lg px-4 py-3 transition-all hover:brightness-125"
-                    style={{ backgroundColor: "#1e2128", minWidth: "200px" }}
+                    style={{ backgroundColor: "#1e2128" }}
                   >
                     <div
                       className="w-9 h-9 rounded flex items-center justify-center shrink-0 text-base font-bold"
