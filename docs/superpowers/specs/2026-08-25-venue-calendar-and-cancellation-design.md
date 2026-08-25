@@ -33,10 +33,15 @@ New migration `supabase/migrations/023_booking_cancellation.sql`:
   `check (status in ('pending', 'accepted', 'declined', 'cancelled'))`.
 - Add a nullable column `cancelled_by text check (cancelled_by in ('artist', 'venue'))`, set only when `status` becomes `'cancelled'`.
 - No change needed to `gigs` — `status` already supports `'cancelled'` (migration `007_gigs_table.sql`); no code path writes it today, but the column and display styling already exist.
+- Also widen `notifications.type`'s check constraint (`supabase/migrations/021_notifications.sql`) to add the two new notification type values below. This is easy to miss: `createNotification` (`lib/notifications/create.ts`) never throws on a failed insert — it just logs and moves on to the push-send branch — so without this, the in-app bell notification for both cancellation flows would silently fail to be created (violating the old constraint) while push and email would still work fine, breaking the "bell + push + email" guarantee this feature depends on.
 
 ### New notification types
 
-Add two values to `NotificationType` (`types/index.ts`): `"booking_cancelled_by_venue"` and `"booking_cancelled_by_artist"`. Both are added to `PUSHABLE_TYPES` in `lib/notifications/create.ts` — a cancellation is time-sensitive news worth a phone alert, same tier as the three existing booking-related types.
+Add two values to `NotificationType` (`types/index.ts`): `"booking_cancelled_by_venue"` and `"booking_cancelled_by_artist"`. Both are added to `PUSHABLE_TYPES` in `lib/notifications/create.ts` — a cancellation is time-sensitive news worth a phone alert, same tier as the three existing booking-related types. (No exhaustive switch/icon lookup exists over `NotificationType` elsewhere — `NotificationBell.tsx` renders `title`/`body` generically — so this addition is otherwise safe and additive.)
+
+### Type update
+
+`BookingRequestStatus` (`types/index.ts`) is currently `"pending" | "accepted" | "declined"` and must be widened to include `"cancelled"` alongside the migration above. This isn't cosmetic: `app/venue/bookings/page.tsx` keys an exhaustive `Record<VenueBookingRequestView["status"], ...>` off this type for status-badge styling, and the new `VenueBookingsCalendar.tsx` (Part 1) reuses that same status-to-color mapping — neither will type-check with a `'cancelled'` value flowing through the API response until this type is updated.
 
 ### Venue cancels (pending or accepted)
 
