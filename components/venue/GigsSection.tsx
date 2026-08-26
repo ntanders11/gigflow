@@ -6,6 +6,7 @@ import { Gig } from "@/types";
 interface Props {
   venueId: string;
   initialGigs: Gig[];
+  venueOriginatedGigIds: string[];
 }
 
 const CHECKLIST_ITEMS = [
@@ -48,7 +49,7 @@ function fmtDate(dateStr: string) {
 const DEFAULT_START_TIME = "19:00";
 const DEFAULT_END_TIME = "21:00";
 
-export default function GigsSection({ venueId, initialGigs }: Props) {
+export default function GigsSection({ venueId, initialGigs, venueOriginatedGigIds }: Props) {
   const [gigs, setGigs] = useState<Gig[]>(initialGigs);
   const [showForm, setShowForm] = useState(false);
   const [expandedGigId, setExpandedGigId] = useState<string | null>(null);
@@ -230,6 +231,7 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
             const allDone = doneCount === total;
 
             const isEditing = editingGigId === gig.id;
+            const isVenueOriginated = venueOriginatedGigIds.includes(gig.id);
 
             return (
               <div
@@ -297,13 +299,30 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => startEditing(gig)}
-                      className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
-                      style={{ background: "rgba(255,255,255,0.05)", color: "#9a9591", border: "1px solid rgba(255,255,255,0.08)" }}
-                    >
-                      Edit
-                    </button>
+                    {/* A venue-originated gig's date/time belongs to the
+                        venue that booked it — they can change it from
+                        their own Bookings calendar, but the artist can't
+                        edit or delete it here (only cancel it). Enforced
+                        server-side too, in app/api/gigs/[id]/route.ts —
+                        this is just keeping the button from offering
+                        something the API will reject anyway. */}
+                    {isVenueOriginated ? (
+                      <span
+                        className="text-xs px-2 py-1 rounded-lg"
+                        style={{ color: "#5e5c58" }}
+                        title="This gig came from a venue's booking request — only the venue can change its date or time."
+                      >
+                        Set by venue
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => startEditing(gig)}
+                        className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+                        style={{ background: "rgba(255,255,255,0.05)", color: "#9a9591", border: "1px solid rgba(255,255,255,0.08)" }}
+                      >
+                        Edit
+                      </button>
+                    )}
                     {/* Checklist progress badge */}
                     {gig.status === "upcoming" && (
                       <button
@@ -347,13 +366,15 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
                         ✓ Completed
                       </span>
                     )}
-                    <button
-                      onClick={() => deleteGig(gig.id)}
-                      className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
-                      style={{ background: "rgba(226,92,92,0.1)", color: "#e25c5c" }}
-                    >
-                      ✕
-                    </button>
+                    {!isVenueOriginated && (
+                      <button
+                        onClick={() => deleteGig(gig.id)}
+                        className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+                        style={{ background: "rgba(226,92,92,0.1)", color: "#e25c5c" }}
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 </div>
 

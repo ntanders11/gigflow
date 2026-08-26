@@ -155,3 +155,39 @@ export async function sendCancellationEmail(
     );
   }
 }
+
+// Fired from PATCH /api/venue/booking-requests/[id] (action: "edit") right
+// after a venue changes a booking's date or time. Only venues can
+// reschedule — see the route's own comment for why the artist can't edit a
+// booking they didn't create — so this always sends venue → artist, unlike
+// sendCancellationEmail above which goes either direction.
+export async function sendRescheduleEmail(
+  service: SupabaseClient,
+  request: { venue_profile_id: string; artist_user_id: string; date: string; start_time: string | null; end_time: string | null }
+): Promise<void> {
+  const { data: artistLogin, error: loginError } = await service
+    .from("profiles")
+    .select("email")
+    .eq("id", request.artist_user_id)
+    .maybeSingle();
+  if (loginError) console.error("sendRescheduleEmail: artist login lookup failed", loginError);
+  if (!artistLogin?.email) return;
+
+  const { data: venueProfile, error: venueError } = await service
+    .from("venue_profiles")
+    .select("venue_name")
+    .eq("id", request.venue_profile_id)
+    .maybeSingle();
+  if (venueError) console.error("sendRescheduleEmail: venue profile lookup failed", venueError);
+  const venueName = (venueProfile?.venue_name as string | null) ?? "A venue";
+
+  const timeText = request.start_time
+    ? ` at ${request.start_time}${request.end_time ? `–${request.end_time}` : ""}`
+    : "";
+
+  await sendSystemEmail(
+    artistLogin.email as string,
+    "A booking's date or time changed",
+    `${venueName} updated your booking — it's now set for ${request.date}${timeText}. Your Booking Calendar has been updated to match.`
+  );
+}

@@ -15,6 +15,7 @@ interface Props {
   venue: Venue;
   interactions: Interaction[];
   initialGigs: Gig[];
+  venueOriginatedGigIds: string[];
 }
 
 const INTERACTION_LABELS: Record<InteractionType, string> = {
@@ -26,7 +27,7 @@ const INTERACTION_LABELS: Record<InteractionType, string> = {
   follow_up: "Follow-up",
 };
 
-export default function VenueDetail({ venue: initialVenue, interactions: initialInteractions, initialGigs }: Props) {
+export default function VenueDetail({ venue: initialVenue, interactions: initialInteractions, initialGigs, venueOriginatedGigIds }: Props) {
   const [venue, setVenue] = useState(initialVenue);
   const [interactions, setInteractions] = useState(initialInteractions);
   const [notes, setNotes] = useState(initialVenue.notes ?? "");
@@ -341,7 +342,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
       </div>
 
       {/* Gig Dates */}
-      <GigsSection venueId={venue.id} initialGigs={initialGigs} />
+      <GigsSection venueId={venue.id} initialGigs={initialGigs} venueOriginatedGigIds={venueOriginatedGigIds} />
 
       {/* Notes */}
       <div className="mb-8">

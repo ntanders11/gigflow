@@ -16,6 +16,30 @@ export async function PATCH(
 
   const body = await req.json();
 
+  // A gig linked to a venue's booking request can only have its
+  // date/time moved by the venue (via PATCH /api/venue/booking-requests/
+  // [id], action "edit") — the venue committed to that slot, so changing
+  // it is their call, not the artist's. Only checked when the PATCH
+  // actually touches one of these fields, so the common case (status
+  // changes, checklist toggles, notes) skips the extra lookup entirely.
+  // This mirrors the justCancelled lookup below: booking_requests carries
+  // no client-facing RLS, so it needs the service-role client to read.
+  const touchesDateOrTime = "date" in body || "start_time" in body || "end_time" in body;
+  if (touchesDateOrTime) {
+    const service = await createServiceClient();
+    const { data: linkedRequest } = await service
+      .from("booking_requests")
+      .select("id")
+      .eq("gig_id", id)
+      .maybeSingle();
+    if (linkedRequest) {
+      return NextResponse.json(
+        { error: "This gig's date and time can only be changed by the venue that booked it." },
+        { status: 403 }
+      );
+    }
+  }
+
   // Read the prior status before the update — the notification below only
   // fires on an actual transition INTO "completed", not on every PATCH
   // that happens to include status: "completed" again.
@@ -119,6 +143,24 @@ export async function DELETE(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Same reasoning as the date/time guard in PATCH above — a hard delete
+  // would silently unlink the venue's booking_requests row (its gig_id
+  // just goes null on delete) without cancelling it or telling the venue.
+  // The artist should cancel a venue-originated gig instead, which does
+  // both properly.
+  const service = await createServiceClient();
+  const { data: linkedRequest } = await service
+    .from("booking_requests")
+    .select("id")
+    .eq("gig_id", id)
+    .maybeSingle();
+  if (linkedRequest) {
+    return NextResponse.json(
+      { error: "This gig came from a venue booking request — cancel it instead so the venue is notified." },
+      { status: 403 }
+    );
+  }
 
   const { error } = await supabase
     .from("gigs")

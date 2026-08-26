@@ -34,10 +34,33 @@ function cancelledBySubLabel(r: VenueBookingRequestView): string | null {
   return r.cancelled_by === "artist" ? "Cancelled by the artist" : "Cancelled by you";
 }
 
+// Same reasoning as the artist-side add-gig form: a blank native
+// <input type="time"> can silently stay empty in Safari until every
+// segment is explicitly set, so the edit form starts on a real time
+// rather than blank.
+const DEFAULT_START_TIME = "19:00";
+const DEFAULT_END_TIME = "21:00";
+
+const inputStyle = {
+  background: "#262b33",
+  border: "1px solid rgba(255,255,255,0.08)",
+  color: "#F4E8D2",
+  borderRadius: "8px",
+  padding: "6px 10px",
+  fontSize: "13px",
+  outline: "none",
+};
+
 function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCancelled: () => void }) {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDate, setEditDate] = useState(r.date);
+  const [editStartTime, setEditStartTime] = useState(r.start_time || DEFAULT_START_TIME);
+  const [editEndTime, setEditEndTime] = useState(r.end_time || DEFAULT_END_TIME);
+  const [editSaving, setEditSaving] = useState(false);
   const canCancel = r.status === "pending" || r.status === "accepted";
+  const canEdit = r.status === "pending" || r.status === "accepted";
 
   async function cancel() {
     if (!window.confirm(r.status === "accepted"
@@ -59,6 +82,76 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
       const data = await res.json().catch(() => ({}));
       setError(data.error ?? "Couldn't cancel — please try again.");
     }
+  }
+
+  async function saveEdit() {
+    if (!editDate) return;
+    setEditSaving(true);
+    setError("");
+    const res = await fetch(`/api/venue/booking-requests/${r.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "edit",
+        date: editDate,
+        start_time: editStartTime || null,
+        end_time: editEndTime || null,
+      }),
+    });
+    setEditSaving(false);
+    if (res.ok) {
+      setIsEditing(false);
+      onCancelled(); // reuses the same "refresh the list" callback the cancel flow already had
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Couldn't save — please try again.");
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+      >
+        <div className="text-sm font-semibold" style={{ color: "#F4E8D2" }}>{r.artist_name}</div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Date *</label>
+            <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+          </div>
+          <div />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Start Time</label>
+            <input type="time" value={editStartTime} onChange={(e) => setEditStartTime(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+          </div>
+          <div>
+            <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>End Time</label>
+            <input type="time" value={editEndTime} onChange={(e) => setEditEndTime(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+          </div>
+        </div>
+        {error && <p className="text-xs" style={{ color: "#e25c5c" }}>{error}</p>}
+        <div className="flex gap-2">
+          <button
+            onClick={saveEdit}
+            disabled={!editDate || editSaving}
+            className="text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
+            style={{ background: "#D4A64F", color: "#0E0E10" }}
+          >
+            {editSaving ? "Saving…" : "Save Changes"}
+          </button>
+          <button
+            onClick={() => setIsEditing(false)}
+            className="text-xs px-4 py-1.5 rounded-lg"
+            style={{ color: "#9a9591" }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -96,16 +189,27 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
         {cancelledBySubLabel(r) && (
           <span className="text-xs" style={{ color: "#5e5c58" }}>{cancelledBySubLabel(r)}</span>
         )}
-        {canCancel && (
-          <button
-            onClick={cancel}
-            disabled={cancelling}
-            className="text-xs px-2.5 py-1 rounded-lg transition-all hover:brightness-125"
-            style={{ background: "rgba(226,92,92,0.1)", color: "#e25c5c", opacity: cancelling ? 0.6 : 1 }}
-          >
-            {cancelling ? "Cancelling…" : "Cancel booking"}
-          </button>
-        )}
+        <div className="flex gap-1.5">
+          {canEdit && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="text-xs px-2.5 py-1 rounded-lg transition-all hover:brightness-125"
+              style={{ background: "rgba(255,255,255,0.05)", color: "#9a9591", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              Edit
+            </button>
+          )}
+          {canCancel && (
+            <button
+              onClick={cancel}
+              disabled={cancelling}
+              className="text-xs px-2.5 py-1 rounded-lg transition-all hover:brightness-125"
+              style={{ background: "rgba(226,92,92,0.1)", color: "#e25c5c", opacity: cancelling ? 0.6 : 1 }}
+            >
+              {cancelling ? "Cancelling…" : "Cancel booking"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

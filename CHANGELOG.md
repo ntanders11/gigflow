@@ -1,5 +1,13 @@
 # StageReach Changelog
 
+## 2026-08-25 (booking reschedule & pipeline fixes)
+- [Fix] The public profile page had no way to get back into the app once you landed on it while signed in — the logo up top is now a real link that takes you back to your Bookings page (venue), your Dashboard (artist), or the public landing page (a stranger just viewing your profile).
+- [Change] The plain "StageReach" text in the venue nav bar, the profile page, and the signup/onboarding screens now shows the real logo image, matching what the login page and your own sidebar already used.
+- [Fix] Pipeline cards were showing "No email" on almost every Contacted-stage venue, even ones with a real email on file. Turns out most of those had already gotten a follow-up email, and the app was correctly stopping a duplicate send — it just mislabeled the reason. Now it says "Already followed up" when that's what's actually going on.
+- [Fix] Gig times weren't saving when added through "+ Add Gig Date" — a Safari quirk left the time field blank unless every part of it (hour, minute, AM/PM) was explicitly set. The field now starts pre-filled with a real time instead of blank, so there's nothing to leave half-set.
+- [Feature] Added an "Edit" button to each gig so a date, time, or note can be fixed after the fact.
+- [Feature] Only a venue can now change the date or time of a booking they sent you — from their own Bookings calendar — and it updates your calendar automatically. You can still cancel a venue's booking, and you can freely edit any gig you added yourself, but you can't move a date the venue committed to.
+
 ## 2026-08-25 (venue calendar & cancellation)
 - [Feature] Venue's Bookings page is now a calendar. `/venue/bookings` shows a month grid with color-coded dots for pending, accepted, declined, and cancelled bookings — tap a day to see full details, same as before.
 - [Feature] Cancel a booking from either side. A venue can cancel or withdraw a booking request right from the new calendar. An artist can now cancel a gig from the venue's page (next to "Done"), which was missing before. Whichever side cancels, the other person gets an email and an in-app/phone notification, so nobody's left wondering why a gig disappeared.

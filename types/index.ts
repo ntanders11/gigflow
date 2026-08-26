@@ -341,6 +341,7 @@ export type NotificationType =
   | "booking_request_declined"
   | "booking_cancelled_by_venue"
   | "booking_cancelled_by_artist"
+  | "booking_rescheduled"
   | "rating_available"
   | "rating_revealed"
   | "follow_up_sent";
