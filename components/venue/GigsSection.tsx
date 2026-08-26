@@ -38,15 +38,32 @@ function fmtDate(dateStr: string) {
   });
 }
 
+// A blank native <input type="time"> can silently keep reporting an
+// empty value in Safari until every segment (hour, minute, AM/PM) has
+// been explicitly set by the user — if any segment is left on its
+// placeholder, .value stays "" even though the field looks filled in.
+// Starting the field on an already-complete time (rather than blank)
+// means there's no "partially set" state to fall into: the user can
+// accept the default or adjust it, but the value is always valid.
+const DEFAULT_START_TIME = "19:00";
+const DEFAULT_END_TIME = "21:00";
+
 export default function GigsSection({ venueId, initialGigs }: Props) {
   const [gigs, setGigs] = useState<Gig[]>(initialGigs);
   const [showForm, setShowForm] = useState(false);
   const [expandedGigId, setExpandedGigId] = useState<string | null>(null);
   const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [startTime, setStartTime] = useState(DEFAULT_START_TIME);
+  const [endTime, setEndTime] = useState(DEFAULT_END_TIME);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [editingGigId, setEditingGigId] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editStartTime, setEditStartTime] = useState(DEFAULT_START_TIME);
+  const [editEndTime, setEditEndTime] = useState(DEFAULT_END_TIME);
+  const [editNotes, setEditNotes] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   async function addGig() {
     if (!date) return;
@@ -59,10 +76,41 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
     const data = await res.json();
     if (res.ok) {
       setGigs((prev) => [...prev, data].sort((a, b) => a.date.localeCompare(b.date)));
-      setDate(""); setStartTime(""); setEndTime(""); setNotes("");
+      setDate(""); setStartTime(DEFAULT_START_TIME); setEndTime(DEFAULT_END_TIME); setNotes("");
       setShowForm(false);
     }
     setSaving(false);
+  }
+
+  function startEditing(gig: Gig) {
+    setEditingGigId(gig.id);
+    setEditDate(gig.date);
+    setEditStartTime(gig.start_time || DEFAULT_START_TIME);
+    setEditEndTime(gig.end_time || DEFAULT_END_TIME);
+    setEditNotes(gig.notes || "");
+  }
+
+  async function saveEdit(id: string) {
+    if (!editDate) return;
+    setEditSaving(true);
+    const res = await fetch(`/api/gigs/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date: editDate,
+        start_time: editStartTime || null,
+        end_time: editEndTime || null,
+        notes: editNotes || null,
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setGigs((prev) =>
+        prev.map((g) => g.id === id ? { ...g, ...data } : g).sort((a, b) => a.date.localeCompare(b.date))
+      );
+      setEditingGigId(null);
+    }
+    setEditSaving(false);
   }
 
   async function markStatus(id: string, status: Gig["status"]) {
@@ -181,6 +229,8 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
             const isExpanded = expandedGigId === gig.id;
             const allDone = doneCount === total;
 
+            const isEditing = editingGigId === gig.id;
+
             return (
               <div
                 key={gig.id}
@@ -191,6 +241,49 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
                   opacity: gig.status === "cancelled" ? 0.5 : 1,
                 }}
               >
+                {/* Edit form — replaces the main row while editing this gig */}
+                {isEditing ? (
+                  <div className="p-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Date *</label>
+                        <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+                      </div>
+                      <div>
+                        <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Notes</label>
+                        <input type="text" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Happy hour, private event…" style={{ ...inputStyle, width: "100%" }} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Start Time</label>
+                        <input type="time" value={editStartTime} onChange={(e) => setEditStartTime(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+                      </div>
+                      <div>
+                        <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>End Time</label>
+                        <input type="time" value={editEndTime} onChange={(e) => setEditEndTime(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => saveEdit(gig.id)}
+                        disabled={!editDate || editSaving}
+                        className="text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
+                        style={{ background: "#D4A64F", color: "#0E0E10" }}
+                      >
+                        {editSaving ? "Saving…" : "Save Changes"}
+                      </button>
+                      <button
+                        onClick={() => setEditingGigId(null)}
+                        className="text-xs px-4 py-1.5 rounded-lg"
+                        style={{ color: "#9a9591" }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                <>
                 {/* Main row */}
                 <div className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1 min-w-0">
@@ -204,6 +297,13 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => startEditing(gig)}
+                      className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+                      style={{ background: "rgba(255,255,255,0.05)", color: "#9a9591", border: "1px solid rgba(255,255,255,0.08)" }}
+                    >
+                      Edit
+                    </button>
                     {/* Checklist progress badge */}
                     {gig.status === "upcoming" && (
                       <button
@@ -282,6 +382,8 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
                       );
                     })}
                   </div>
+                )}
+                </>
                 )}
               </div>
             );
