@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { maybeSendNewGigToRateEmails } from "@/lib/email/rating-notifications";
+import { sendCancellationEmail } from "@/lib/email/booking-request-notifications";
+import { createNotification } from "@/lib/notifications/create";
 
 // PATCH /api/gigs/[id]
 export async function PATCH(
@@ -51,6 +53,57 @@ export async function PATCH(
       });
     } catch (err) {
       console.error("PATCH /api/gigs/[id]: failed to send new-gig-to-rate emails", err);
+    }
+  }
+
+  const justCancelled = before?.status !== "cancelled" && data.status === "cancelled";
+  if (justCancelled) {
+    // booking_requests carries no client-facing RLS policies either (same
+    // reasoning as above) — a gig only has a linked booking_requests row
+    // if it originated from an accepted booking request (gig_id is set
+    // there, never the other way around), so most cancelled gigs will
+    // find nothing here and that's fine, not an error case.
+    const service = await createServiceClient();
+    const { data: linkedRequest, error: lookupError } = await service
+      .from("booking_requests")
+      .select("*")
+      .eq("gig_id", id)
+      .maybeSingle();
+    if (lookupError) {
+      console.error("PATCH /api/gigs/[id]: failed to look up linked booking request", lookupError);
+    } else if (linkedRequest && linkedRequest.status !== "declined" && linkedRequest.status !== "cancelled") {
+      const { data: updatedRequest, error: cancelError } = await service
+        .from("booking_requests")
+        .update({ status: "cancelled", cancelled_by: "artist" })
+        .eq("id", linkedRequest.id)
+        .select()
+        .maybeSingle();
+      if (cancelError) {
+        console.error("PATCH /api/gigs/[id]: failed to cancel linked booking request", cancelError);
+      } else if (updatedRequest) {
+        try {
+          await sendCancellationEmail(service, updatedRequest, "artist", true);
+        } catch (err) {
+          console.error("PATCH /api/gigs/[id]: failed to send cancellation email", err);
+        }
+        try {
+          const { data: venueProfile } = await service
+            .from("venue_profiles")
+            .select("user_id")
+            .eq("id", updatedRequest.venue_profile_id)
+            .maybeSingle();
+          if (venueProfile?.user_id) {
+            await createNotification(service, {
+              userId: venueProfile.user_id as string,
+              type: "booking_cancelled_by_artist",
+              title: "A booking was cancelled",
+              link: "/venue/bookings",
+            });
+          }
+        } catch (err) {
+          console.error("PATCH /api/gigs/[id]: failed to create cancellation notification", err);
+        }
+      }
     }
   }
 
