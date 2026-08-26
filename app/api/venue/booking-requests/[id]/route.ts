@@ -44,8 +44,6 @@ export async function PATCH(
     return NextResponse.json({ error: "This booking can no longer be cancelled" }, { status: 409 });
   }
 
-  const wasAccepted = reqRow.status === "accepted";
-
   const { data: updated, error: updateError } = await service
     .from("booking_requests")
     .update({ status: "cancelled", cancelled_by: "venue" })
@@ -58,11 +56,18 @@ export async function PATCH(
     return NextResponse.json({ error: "This booking can no longer be cancelled" }, { status: 409 });
   }
 
-  if (wasAccepted && reqRow.gig_id) {
+  // Derived from the post-update row, not the earlier read — if the
+  // request was accepted (gig created) in the window between that read
+  // and this update, `updated.gig_id` still reflects it and the gig gets
+  // cancelled too; deciding this from the stale pre-update row would miss
+  // that race and leave an orphaned "upcoming" gig on the artist's side.
+  const wasAccepted = Boolean(updated.gig_id);
+
+  if (wasAccepted) {
     const { error: gigError } = await service
       .from("gigs")
       .update({ status: "cancelled" })
-      .eq("id", reqRow.gig_id);
+      .eq("id", updated.gig_id);
     if (gigError) console.error("PATCH /api/venue/booking-requests/[id]: failed to cancel linked gig", gigError);
   }
 
