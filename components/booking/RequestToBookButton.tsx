@@ -15,7 +15,7 @@ export default function RequestToBookButton({
   viewerType,
 }: {
   artistUserId: string;
-  viewerType: "venue" | "other";
+  viewerType: "venue" | "artist" | "other";
 }) {
   const [open, setOpen] = useState(false);
 

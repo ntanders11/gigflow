@@ -1,5 +1,6 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { ArtistProfile, Package, VideoSample, SocialLinks } from "@/types";
 import RatingsSection from "@/components/ratings/RatingsSection";
 import RequestToBookButton from "@/components/booking/RequestToBookButton";
@@ -36,22 +37,35 @@ export default async function PublicProfilePage({
 
   if (!profile) notFound();
 
-  // Determine viewer type for the "Request to Book" control below. This
-  // page is otherwise fully public (it only used createServiceClient()
-  // before this) — adding an auth check here must not change that: a
-  // logged-out visitor still renders the whole page normally, just with
-  // viewerType "other".
+  // Determine viewer type for the "Request to Book" control below, and
+  // for where the top bar's logo link should send a logged-in viewer
+  // back to (see backHref below) — this page has no other nav on it, so
+  // that link is the only way back into the app for someone who's
+  // signed in. This page is otherwise fully public (it only used
+  // createServiceClient() before this) — adding an auth check here must
+  // not change that: a logged-out visitor still renders the whole page
+  // normally, just with viewerType "other".
   const authSupabase = await createClient();
   const { data: { user: viewer } } = await authSupabase.auth.getUser();
-  let viewerType: "venue" | "other" = "other";
+  let viewerType: "venue" | "artist" | "other" = "other";
   if (viewer) {
     const { data: viewerVenueProfile } = await authSupabase
       .from("venue_profiles")
       .select("venue_name")
       .eq("user_id", viewer.id)
       .maybeSingle();
-    if (viewerVenueProfile?.venue_name) viewerType = "venue";
+    if (viewerVenueProfile?.venue_name) {
+      viewerType = "venue";
+    } else {
+      const { data: viewerArtistProfile } = await authSupabase
+        .from("artist_profiles")
+        .select("display_name")
+        .eq("user_id", viewer.id)
+        .maybeSingle();
+      if (viewerArtistProfile?.display_name) viewerType = "artist";
+    }
   }
+  const backHref = viewerType === "venue" ? "/venue/bookings" : viewerType === "artist" ? "/dashboard" : "/venues";
 
   const p = profile as ArtistProfile;
   const packages: Package[] = p.packages || [];
@@ -62,14 +76,20 @@ export default async function PublicProfilePage({
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
-      {/* Top bar */}
+      {/* Top bar — this page has no other nav (it's meant to work as a
+          shareable external link), so this logo link is the only way
+          back into the app for a signed-in viewer. It sends them
+          somewhere useful for their account type rather than nowhere. */}
       <div
         className="px-6 py-3 flex items-center justify-between"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", backgroundColor: "#16181c" }}
       >
-        <div style={{ fontFamily: "serif", fontSize: "1rem", color: "#D4A64F", fontWeight: 600 }}>
-          StageReach
-        </div>
+        <Link
+          href={backHref}
+          style={{ fontFamily: "serif", fontSize: "1rem", color: "#D4A64F", fontWeight: 600, textDecoration: "none" }}
+        >
+          ← StageReach
+        </Link>
         <div style={{ color: "#5e5c58", fontSize: "11px" }}>Booking Profile</div>
       </div>
 
