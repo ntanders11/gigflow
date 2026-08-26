@@ -93,3 +93,65 @@ export async function sendBookingResponseEmail(
     );
   }
 }
+
+// Fired from either cancellation route (venue cancelling, or the artist
+// cancelling their gig) right after the booking_requests row is updated
+// to status: "cancelled". `wasAccepted` controls wording only — a
+// cancelled *pending* request reads as "withdrawn", a cancelled
+// *accepted* one reads as "cancelled", since the artist already has it on
+// their calendar in the second case.
+export async function sendCancellationEmail(
+  service: SupabaseClient,
+  request: { venue_profile_id: string; artist_user_id: string; date: string },
+  cancelledBy: "artist" | "venue",
+  wasAccepted: boolean
+): Promise<void> {
+  const { data: venueProfile, error: venueError } = await service
+    .from("venue_profiles")
+    .select("user_id, venue_name")
+    .eq("id", request.venue_profile_id)
+    .maybeSingle();
+  if (venueError) console.error("sendCancellationEmail: venue profile lookup failed", venueError);
+
+  const { data: artistProfile, error: artistError } = await service
+    .from("artist_profiles")
+    .select("display_name")
+    .eq("user_id", request.artist_user_id)
+    .maybeSingle();
+  if (artistError) console.error("sendCancellationEmail: artist profile lookup failed", artistError);
+
+  const venueName = (venueProfile?.venue_name as string | null) ?? "The venue";
+  const artistName = (artistProfile?.display_name as string | null) ?? "The artist";
+  const verb = wasAccepted ? "cancelled" : "withdrawn";
+
+  if (cancelledBy === "venue") {
+    const { data: artistLogin, error: loginError } = await service
+      .from("profiles")
+      .select("email")
+      .eq("id", request.artist_user_id)
+      .maybeSingle();
+    if (loginError) console.error("sendCancellationEmail: artist login lookup failed", loginError);
+    if (!artistLogin?.email) return;
+
+    await sendSystemEmail(
+      artistLogin.email as string,
+      wasAccepted ? "A booking was cancelled" : "A booking request was withdrawn",
+      `${venueName} ${verb} the booking for ${request.date}.`
+    );
+  } else {
+    if (!venueProfile?.user_id) return;
+    const { data: venueLogin, error: loginError } = await service
+      .from("profiles")
+      .select("email")
+      .eq("id", venueProfile.user_id as string)
+      .maybeSingle();
+    if (loginError) console.error("sendCancellationEmail: venue login lookup failed", loginError);
+    if (!venueLogin?.email) return;
+
+    await sendSystemEmail(
+      venueLogin.email as string,
+      "A booking was cancelled",
+      `${artistName} cancelled the booking for ${request.date}.`
+    );
+  }
+}
