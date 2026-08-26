@@ -1,23 +1,10 @@
 // app/api/venue/booking-requests/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { getOwnCompletedVenueProfile } from "@/lib/bookings/venue-auth";
 import { sendNewBookingRequestEmail } from "@/lib/email/booking-request-notifications";
 import { createNotification } from "@/lib/notifications/create";
 import { VenueBookingRequestView } from "@/types";
-
-async function getOwnCompletedVenueProfile(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<{ id: string } | null> {
-  const { data } = await supabase
-    .from("venue_profiles")
-    .select("id, venue_name")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!data || !data.venue_name) return null;
-  return { id: data.id as string };
-}
 
 // Every request this venue has sent, with current status.
 export async function GET() {
