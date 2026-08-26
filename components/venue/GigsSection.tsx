@@ -229,6 +229,19 @@ export default function GigsSection({ venueId, initialGigs }: Props) {
                         ✓ Done
                       </button>
                     )}
+                    {gig.status === "upcoming" && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm("Cancel this gig? The venue will be notified.")) {
+                            markStatus(gig.id, "cancelled");
+                          }
+                        }}
+                        className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+                        style={{ background: "rgba(226,92,92,0.1)", color: "#e25c5c", border: "1px solid rgba(226,92,92,0.25)" }}
+                      >
+                        Cancel
+                      </button>
+                    )}
                     {gig.status === "completed" && (
                       <span className="text-xs px-2 py-1 rounded-lg" style={{ background: "rgba(154,149,145,0.15)", color: "#9a9591" }}>
                         ✓ Completed
