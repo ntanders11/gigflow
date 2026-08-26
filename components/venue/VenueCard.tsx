@@ -20,6 +20,7 @@ interface Props {
   batchActive?: boolean;
   batchSelected?: boolean;
   batchDisabled?: boolean;
+  disabledReason?: "no_email" | "already_followed_up" | null;
   onBatchToggle?: () => void;
 }
 
@@ -31,7 +32,7 @@ function daysAgo(dateStr: string | null): string | null {
   return `${days}d ago`;
 }
 
-export default function VenueCard({ venue, index, onReply, onEmail, outreach, batchActive, batchSelected, batchDisabled, onBatchToggle }: Props) {
+export default function VenueCard({ venue, index, onReply, onEmail, outreach, batchActive, batchSelected, batchDisabled, disabledReason, onBatchToggle }: Props) {
   const conf = CONFIDENCE_DARK[venue.confidence] ?? CONFIDENCE_DARK.LOW;
 
   return (
@@ -57,8 +58,9 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
           }}
         >
           {/* Top-right corner: On StageReach star, then batch mode indicator
-              (checkbox if selectable, "No email" badge if not) — grouped in
-              one flex row so both can appear together without overlapping */}
+              (checkbox if selectable, a reason badge if not — "No email" or
+              "Already followed up") — grouped in one flex row so both can
+              appear together without overlapping */}
           <div className="absolute top-2 right-2 flex items-center gap-1.5">
             {venue.venue_profile_id && (
               <span
@@ -74,7 +76,7 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
                   className="text-xs px-1.5 py-0.5 rounded"
                   style={{ backgroundColor: "#1e2128", color: "#5e5c58", fontSize: "10px", border: "1px solid rgba(255,255,255,0.07)" }}
                 >
-                  No email
+                  {disabledReason === "already_followed_up" ? "Already followed up" : "No email"}
                 </span>
               ) : (
                 <div

@@ -32,13 +32,18 @@ export default function KanbanColumn({
   const isActiveBatch = batchMode !== null && batchMode === columnBatchMode;
   const isOtherBatch = batchMode !== null && !isActiveBatch;
 
-  function isBatchDisabled(venue: Venue): boolean {
-    if (!venue.contact_email?.trim()) return true;
-    if (batchMode === "followup" && outreachMap[venue.id]?.hasFollowUp) return true;
-    return false;
+  // Two different reasons a venue can't be picked for this batch send —
+  // surfaced separately so the card can say which one actually applies,
+  // instead of always reading "No email" even when the real reason is
+  // that a follow-up was already sent (the common case for a venue
+  // that's been sitting in "Contacted" for a while).
+  function disabledReason(venue: Venue): "no_email" | "already_followed_up" | null {
+    if (!venue.contact_email?.trim()) return "no_email";
+    if (batchMode === "followup" && outreachMap[venue.id]?.hasFollowUp) return "already_followed_up";
+    return null;
   }
 
-  const eligibleIds = venues.filter((v) => !isBatchDisabled(v)).map((v) => v.id);
+  const eligibleIds = venues.filter((v) => disabledReason(v) === null).map((v) => v.id);
   const allSelected = eligibleIds.length > 0 && eligibleIds.every((id) => selectedVenueIds.has(id));
   const selectedCount = venues.filter((v) => selectedVenueIds.has(v.id)).length;
 
@@ -107,7 +112,8 @@ export default function KanbanColumn({
                 outreach={outreachMap[venue.id] ?? null}
                 batchActive={isActiveBatch}
                 batchSelected={selectedVenueIds.has(venue.id)}
-                batchDisabled={isBatchDisabled(venue)}
+                batchDisabled={disabledReason(venue) !== null}
+                disabledReason={disabledReason(venue)}
                 onBatchToggle={() => onToggleSelect(venue.id)}
               />
             ))}
