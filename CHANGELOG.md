@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-08-25 (venue calendar & cancellation)
+- [Feature] Venue's Bookings page is now a calendar. `/venue/bookings` shows a month grid with color-coded dots for pending, accepted, declined, and cancelled bookings — tap a day to see full details, same as before.
+- [Feature] Cancel a booking from either side. A venue can cancel or withdraw a booking request right from the new calendar. An artist can now cancel a gig from the venue's page (next to "Done"), which was missing before. Whichever side cancels, the other person gets an email and an in-app/phone notification, so nobody's left wondering why a gig disappeared.
+
 ## 2026-08-25 (profile page polish)
 - [Change] Your public artist profile now shows real Instagram/YouTube/website icons instead of text labels, and any YouTube or Spotify video/music links play right on the page instead of just linking out. Also removed the phone number from the public page — venues now reach out through Request to Book instead.
 
