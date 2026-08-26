@@ -3,6 +3,7 @@
 import { Droppable } from "@hello-pangea/dnd";
 import { Venue, VenueStage, STAGES, OutreachInfo } from "@/types";
 import VenueCard from "@/components/venue/VenueCard";
+import { isWithinFollowUpCooldown } from "@/lib/bookings/follow-up";
 
 interface Props {
   stage: VenueStage;
@@ -39,7 +40,9 @@ export default function KanbanColumn({
   // that's been sitting in "Contacted" for a while).
   function disabledReason(venue: Venue): "no_email" | "already_followed_up" | null {
     if (!venue.contact_email?.trim()) return "no_email";
-    if (batchMode === "followup" && outreachMap[venue.id]?.hasFollowUp) return "already_followed_up";
+    if (batchMode === "followup" && isWithinFollowUpCooldown(outreachMap[venue.id]?.lastFollowUpDate ?? null)) {
+      return "already_followed_up";
+    }
     return null;
   }
 

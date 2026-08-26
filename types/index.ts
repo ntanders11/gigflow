@@ -22,7 +22,7 @@ export interface EmailConnection {
 export interface OutreachInfo {
   count: number;
   lastDate: string | null;
-  hasFollowUp: boolean;
+  lastFollowUpDate: string | null;
 }
 
 export interface Zone {

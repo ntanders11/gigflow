@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendArtistEmail } from "@/lib/email/send-artist-email";
 import { createNotification } from "@/lib/notifications/create";
+import { isWithinFollowUpCooldown } from "@/lib/bookings/follow-up";
 
 interface ArtistInfo {
   name: string;
@@ -57,18 +58,26 @@ export async function POST(request: NextRequest) {
   const venueIds = venues.map((v) => v.id);
   const { data: existingFollowUps } = await supabase
     .from("interactions")
-    .select("venue_id")
+    .select("venue_id, occurred_at")
     .in("venue_id", venueIds)
     .eq("type", "follow_up");
 
-  const alreadyFollowedUp = new Set(
-    (existingFollowUps ?? []).map((i) => i.venue_id)
+  // Most recent follow-up per venue, not just whether one ever happened —
+  // a venue that got followed up with months ago should be eligible
+  // again, same cooldown rule as the manual batch-follow-up picker on the
+  // pipeline board (see lib/bookings/follow-up.ts).
+  const lastFollowUpByVenue = new Map<string, string>();
+  for (const f of existingFollowUps ?? []) {
+    const prev = lastFollowUpByVenue.get(f.venue_id);
+    if (!prev || f.occurred_at > prev) lastFollowUpByVenue.set(f.venue_id, f.occurred_at);
+  }
+
+  const eligible = venues.filter(
+    (v) => !isWithinFollowUpCooldown(lastFollowUpByVenue.get(v.id) ?? null)
   );
 
-  const eligible = venues.filter((v) => !alreadyFollowedUp.has(v.id));
-
   if (eligible.length === 0) {
-    return NextResponse.json({ sent: 0, message: "All contacted venues already received a follow-up" });
+    return NextResponse.json({ sent: 0, message: "No contacted venues are due for a follow-up right now" });
   }
 
   const uniqueUserIds = [...new Set(eligible.map((v) => v.user_id))];
