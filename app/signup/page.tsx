@@ -4,6 +4,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
 type CodeStatus = "idle" | "checking" | "valid" | "invalid";
@@ -110,10 +111,14 @@ function SignupForm() {
         style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
       >
         <div className="mb-8">
-          <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.75rem", color: "#D4A64F", lineHeight: 1.2 }}>
-            StageReach
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "#9a9591" }}>Create your account</p>
+          <Image
+            src="/stagereach-logo.png"
+            alt="StageReach"
+            width={220}
+            height={73}
+            style={{ objectFit: "contain", objectPosition: "left", height: "48px", width: "auto" }}
+          />
+          <p className="mt-2 text-sm" style={{ color: "#9a9591" }}>Create your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

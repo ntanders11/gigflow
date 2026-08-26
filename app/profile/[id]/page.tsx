@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArtistProfile, Package, VideoSample, SocialLinks } from "@/types";
 import RatingsSection from "@/components/ratings/RatingsSection";
 import RequestToBookButton from "@/components/booking/RequestToBookButton";
@@ -84,11 +85,15 @@ export default async function PublicProfilePage({
         className="px-6 py-3 flex items-center justify-between"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", backgroundColor: "#16181c" }}
       >
-        <Link
-          href={backHref}
-          style={{ fontFamily: "serif", fontSize: "1rem", color: "#D4A64F", fontWeight: 600, textDecoration: "none" }}
-        >
-          ← StageReach
+        <Link href={backHref} className="flex items-center gap-1.5" style={{ textDecoration: "none" }}>
+          <span style={{ color: "#D4A64F", fontSize: "1rem" }}>←</span>
+          <Image
+            src="/stagereach-logo.png"
+            alt="StageReach"
+            width={150}
+            height={50}
+            style={{ objectFit: "contain", objectPosition: "left", height: "36px", width: "108px" }}
+          />
         </Link>
         <div style={{ color: "#5e5c58", fontSize: "11px" }}>Booking Profile</div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 
@@ -279,9 +280,13 @@ export default function OnboardingPage() {
 
       <div className="rounded-xl p-8 w-full max-w-sm" style={card}>
         <div className="mb-6">
-          <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.5rem", color: "#D4A64F" }}>
-            StageReach
-          </h1>
+          <Image
+            src="/stagereach-logo.png"
+            alt="StageReach"
+            width={220}
+            height={73}
+            style={{ objectFit: "contain", objectPosition: "left", height: "44px", width: "auto" }}
+          />
         </div>
 
         <ProgressBar step={step} />
