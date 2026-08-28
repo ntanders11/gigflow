@@ -8,6 +8,7 @@
 - [Feature] Added an "Edit" button to each gig so a date, time, or note can be fixed after the fact.
 - [Feature] Only a venue can now change the date or time of a booking they sent you — from their own Bookings calendar — and it updates your calendar automatically. You can still cancel a venue's booking, and you can freely edit any gig you added yourself, but you can't move a date the venue committed to.
 - [Fix] The "already followed up" block on batch follow-ups was permanent — once a venue got one follow-up, it was blocked forever, even months later. It now clears after 30 days, so venues that never replied are fair game to follow up with again. Applies to both the manual pipeline picker and the automated weekly follow-up.
+- [Feature] A venue's Gig Dates list now only shows what's upcoming by default. Completed and cancelled gigs move into a collapsible "Booking History" section below, so old dates don't clutter the view of what's actually coming up.
 
 ## 2026-08-25 (venue calendar & cancellation)
 - [Feature] Venue's Bookings page is now a calendar. `/venue/bookings` shows a month grid with color-coded dots for pending, accepted, declined, and cancelled bookings — tap a day to see full details, same as before.

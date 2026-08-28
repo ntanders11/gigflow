@@ -52,6 +52,7 @@ const DEFAULT_END_TIME = "21:00";
 export default function GigsSection({ venueId, initialGigs, venueOriginatedGigIds }: Props) {
   const [gigs, setGigs] = useState<Gig[]>(initialGigs);
   const [showForm, setShowForm] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [expandedGigId, setExpandedGigId] = useState<string | null>(null);
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState(DEFAULT_START_TIME);
@@ -157,6 +158,9 @@ export default function GigsSection({ venueId, initialGigs, venueOriginatedGigId
     outline: "none",
   };
 
+  const upcomingGigs = gigs.filter((g) => g.status === "upcoming");
+  const pastGigs = gigs.filter((g) => g.status !== "upcoming");
+
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-3">
@@ -215,12 +219,48 @@ export default function GigsSection({ venueId, initialGigs, venueOriginatedGigId
         </div>
       )}
 
-      {/* Gig list */}
+      {/* Gig list — upcoming gigs stay visible; completed/cancelled ones
+          move under the collapsible "Booking History" section below so
+          they don't clutter the view of what's actually coming up. */}
       {gigs.length === 0 ? (
         <p className="text-sm" style={{ color: "#5e5c58" }}>No gig dates scheduled yet.</p>
       ) : (
+        <>
         <div className="space-y-2">
-          {gigs.map((gig) => {
+          {upcomingGigs.length === 0 ? (
+            <p className="text-sm" style={{ color: "#5e5c58" }}>No upcoming gig dates.</p>
+          ) : (
+            upcomingGigs.map(renderGig)
+          )}
+        </div>
+
+        {pastGigs.length > 0 && (
+          <div className="mt-4">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="flex items-center gap-1.5 text-xs font-medium transition-all hover:brightness-125"
+              style={{ color: "#9a9591" }}
+            >
+              <span style={{ transform: showHistory ? "rotate(90deg)" : "none", transition: "transform 0.15s", display: "inline-block" }}>▶</span>
+              Booking History ({pastGigs.length})
+            </button>
+            {showHistory && (
+              <div className="space-y-2 mt-2">
+                {pastGigs.map(renderGig)}
+              </div>
+            )}
+          </div>
+        )}
+        </>
+      )}
+    </div>
+  );
+
+  // Kept as an inline function (not extracted above the return) so it can
+  // close over all the row-level state/handlers above without threading
+  // a long prop list — it's rendered from two places (the upcoming list
+  // and the collapsible history list) rather than duplicated between them.
+  function renderGig(gig: Gig) {
             const s = STATUS_STYLE[gig.status];
             const start = fmt12(gig.start_time);
             const end = fmt12(gig.end_time);
@@ -407,10 +447,6 @@ export default function GigsSection({ venueId, initialGigs, venueOriginatedGigId
                 </>
                 )}
               </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+    );
+  }
 }
