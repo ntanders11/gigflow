@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { geocodeCity } from "@/lib/geocoding";
-
-type ArtistResult = {
-  user_id: string;
-  display_name: string;
-  genres: string[];
-  photo_url: string | null;
-  avg_rating: number | null;
-  rating_count: number;
-};
+import { buildArtistResults, ArtistResult } from "@/lib/venues/artist-results";
 
 // Haversine distance in miles between two lat/lon points.
 function distanceMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -132,49 +124,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ matchingGenre: [], other: [], venueHasGenres });
   }
 
-  // artist_profiles already has a public-read RLS policy (the same one
-  // that powers the public /profile/[id] page anyone can already view), so
-  // this join goes through the venue's own ordinary session — no
-  // service-role needed here, unlike the zones read above.
-  const { data: artists, error: artistsError } = await supabase
-    .from("artist_profiles")
-    .select("user_id, display_name, genres, photo_url")
-    .in("user_id", nearbyUserIds);
+  // venue_favorites has a real owner-only RLS policy (see migration 026),
+  // so this is a plain read through the venue's own session — no
+  // service-role needed, unlike the zones/ratings reads elsewhere here.
+  const { data: favoriteRows } = await supabase
+    .from("venue_favorites")
+    .select("artist_user_id")
+    .eq("user_id", user.id);
+  const favoritedIds = new Set((favoriteRows ?? []).map((r) => r.artist_user_id as string));
 
-  if (artistsError) return NextResponse.json({ error: artistsError.message }, { status: 500 });
-
-  const artistUserIdsForRatings = (artists ?? []).map((a) => a.user_id as string);
-  // venue_artist_ratings has no client-facing RLS policies — this read MUST
-  // use `service` (already in scope earlier in this file), not `supabase`
-  // (the venue's own RLS session), or it will silently return zero rows.
-  const { data: ratingRows } = await service
-    .from("venue_artist_ratings")
-    .select("artist_user_id, venue_stars")
-    .in("artist_user_id", artistUserIdsForRatings.length > 0 ? artistUserIdsForRatings : [""])
-    .not("venue_rated_at", "is", null)
-    .not("artist_rated_at", "is", null);
-
-  const ratingsByArtist = new Map<string, number[]>();
-  for (const row of ratingRows ?? []) {
-    const list = ratingsByArtist.get(row.artist_user_id as string) ?? [];
-    list.push(row.venue_stars as number);
-    ratingsByArtist.set(row.artist_user_id as string, list);
+  let results: ArtistResult[];
+  try {
+    results = await buildArtistResults(supabase, service, nearbyUserIds, favoritedIds);
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to load artists" }, { status: 500 });
   }
 
   const matchingGenre: ArtistResult[] = [];
   const other: ArtistResult[] = [];
 
-  for (const artist of artists ?? []) {
-    if (!artist.display_name) continue; // onboarding not complete — not a real artist yet
-    const stars = ratingsByArtist.get(artist.user_id) ?? [];
-    const result: ArtistResult = {
-      user_id: artist.user_id,
-      display_name: artist.display_name,
-      genres: artist.genres ?? [],
-      photo_url: artist.photo_url,
-      avg_rating: stars.length > 0 ? stars.reduce((a, b) => a + b, 0) / stars.length : null,
-      rating_count: stars.length,
-    };
+  for (const result of results) {
     const artistGenres = new Set(result.genres.map(normalizeGenre));
     const hasMatch = venueHasGenres && [...artistGenres].some((g) => venueGenres.has(g));
     (hasMatch ? matchingGenre : other).push(result);
