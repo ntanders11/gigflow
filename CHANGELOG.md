@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (venue favorite artists)
+- [Feature] Venues can now save artists to a private "Favorites" list — a heart icon on Discover Artists cards and on an artist's public profile. Find your saved artists anytime from the new "Favorites" tab. Completely private — artists never see who's favorited them.
+
 ## 2026-09-01 (artist blackout dates)
 - [Feature] Artists can now block off date ranges on their Booking Calendar — for private events, time off, or anything else — so venues can't request a booking on those dates. Add an optional private note only you can see.
 - [Fix] Closed a real gap: a venue's booking request for a date you're already booked on wasn't actually blocked by the app itself before — only a greyed-out button stopped them. Now it's enforced properly, for both existing gigs and new blocked dates.
