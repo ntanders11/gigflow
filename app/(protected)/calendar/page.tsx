@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import CalendarView from "@/components/calendar/CalendarView";
 import BookingRequestsSection from "@/components/calendar/BookingRequestsSection";
+import { BlackoutDate } from "@/types";
 
 export default async function CalendarPage() {
   const supabase = await createClient();
@@ -26,6 +27,16 @@ export default async function CalendarPage() {
     .eq("user_id", user.id)
     .neq("status", "cancelled")
     .order("date", { ascending: true });
+
+  // artist_blackout_dates has a real owner-only RLS policy (unlike
+  // most tables added this session) — the ordinary RLS-scoped
+  // `supabase` client above is exactly right here, no service-role
+  // client needed.
+  const { data: blackoutDates } = await supabase
+    .from("artist_blackout_dates")
+    .select("id, start_date, end_date, note")
+    .eq("user_id", user.id)
+    .order("start_date", { ascending: true });
 
   const bookedVenues = (gigs ?? []).map((g: any) => ({
     id: g.venues?.id ?? g.id,
@@ -77,7 +88,11 @@ export default async function CalendarPage() {
       </div>
 
       <div className="max-w-5xl">
-        <CalendarView bookedVenues={bookedVenues} subscriptionUrl={subscriptionUrl} />
+        <CalendarView
+          bookedVenues={bookedVenues}
+          subscriptionUrl={subscriptionUrl}
+          initialBlackoutDates={(blackoutDates as BlackoutDate[]) ?? []}
+        />
       </div>
     </div>
   );
