@@ -58,5 +58,12 @@ export async function buildArtistResults(
       favorited: favoritedIds.has(artistUserId),
     });
   }
+
+  // .in() does not guarantee the query preserves artistUserIds' order, so
+  // sort explicitly — callers (the favorites list, in particular) rely on
+  // getting results back in the order they asked for.
+  const orderIndex = new Map(artistUserIds.map((id, i) => [id, i]));
+  results.sort((a, b) => (orderIndex.get(a.user_id) ?? 0) - (orderIndex.get(b.user_id) ?? 0));
+
   return results;
 }
