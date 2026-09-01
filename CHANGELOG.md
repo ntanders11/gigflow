@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-09-01 (artist blackout dates)
+- [Feature] Artists can now block off date ranges on their Booking Calendar — for private events, time off, or anything else — so venues can't request a booking on those dates. Add an optional private note only you can see.
+- [Fix] Closed a real gap: a venue's booking request for a date you're already booked on wasn't actually blocked by the app itself before — only a greyed-out button stopped them. Now it's enforced properly, for both existing gigs and new blocked dates.
+
 ## 2026-08-25 (booking reschedule & pipeline fixes)
 - [Fix] The public profile page had no way to get back into the app once you landed on it while signed in — the logo up top is now a real link that takes you back to your Bookings page (venue), your Dashboard (artist), or the public landing page (a stranger just viewing your profile).
 - [Change] The plain "StageReach" text in the venue nav bar, the profile page, and the signup/onboarding screens now shows the real logo image, matching what the login page and your own sidebar already used.
