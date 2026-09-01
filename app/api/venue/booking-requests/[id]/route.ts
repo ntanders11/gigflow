@@ -5,6 +5,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getOwnCompletedVenueProfile } from "@/lib/bookings/venue-auth";
 import { sendCancellationEmail, sendRescheduleEmail } from "@/lib/email/booking-request-notifications";
 import { createNotification } from "@/lib/notifications/create";
+import { isDateUnavailable } from "@/lib/bookings/availability";
 
 // PATCH /api/venue/booking-requests/[id] — a venue withdraws a pending
 // request, cancels an already-accepted booking, or edits its date/time.
@@ -115,6 +116,14 @@ async function handleEdit(
 ) {
   if (!body.date) {
     return NextResponse.json({ error: "date is required" }, { status: 400 });
+  }
+
+  // Only check availability when the date is actually changing — reusing
+  // isDateUnavailable naively would false-positive against the booking's
+  // own existing linked gig if the venue is only changing the time, since
+  // that gig legitimately already occupies that date.
+  if (body.date !== reqRow.date && await isDateUnavailable(service, reqRow.artist_user_id as string, body.date)) {
+    return NextResponse.json({ error: "This artist isn't available on that date." }, { status: 400 });
   }
 
   // A booking's status here only ever reflects the request lifecycle
