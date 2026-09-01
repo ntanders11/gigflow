@@ -13,7 +13,9 @@ export default function ProtectedLayout({
         <Sidebar />
       </div>
       {/* Main content — full width on mobile, flex-1 on desktop */}
-      <main className="flex-1 pb-20 md:pb-0 min-w-0">{children}</main>
+      {/* pb-28 clears the taller mobile nav bar (bigger tap targets) plus
+          the iPhone home-indicator safe area it now pads itself with */}
+      <main className="flex-1 pb-28 md:pb-0 min-w-0">{children}</main>
       {/* Mobile bottom tab bar */}
       <MobileBottomNav />
     </div>

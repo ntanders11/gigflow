@@ -15,6 +15,13 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0E0E10",
+  // Lets content (and the fixed mobile bottom nav below) know about the
+  // iPhone's safe areas via the env(safe-area-inset-*) CSS variables —
+  // without this, those variables silently resolve to 0 and fixed UI can
+  // sit flush against the home-indicator gesture zone, especially when
+  // running as an installed home-screen PWA with a translucent status bar
+  // (required for push notifications — see PushToggle).
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
