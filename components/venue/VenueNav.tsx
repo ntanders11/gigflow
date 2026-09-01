@@ -8,6 +8,7 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 const links = [
   { href: "/venue/profile", label: "My Profile" },
   { href: "/venue/discover", label: "Discover Artists" },
+  { href: "/venue/favorites", label: "Favorites" },
   { href: "/venue/bookings", label: "Bookings" },
   { href: "/venue/ratings", label: "Ratings" },
 ];
