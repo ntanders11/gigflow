@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-09-01 (notification cleanup)
+- [Feature] Added a "Clear all" button to the notification bell dropdown (artist and venue side both) to wipe your notification history whenever you want.
+- [Change] Notifications you've already read now quietly drop off the list after 7 days on their own, so old ones don't pile up. Anything still unread always stays visible, no matter how old.
+
 ## 2026-09-01 (calendar subscription CTA)
 - [Change] Removed the "Add to Calendar" button on each individual gig — it's now front and center as a "subscribe once" link at the top of your Booking Calendar instead. Subscribing already keeps itself current automatically (it checks your real gigs every time your phone refreshes it), so there's no need to add gigs one at a time anymore.
 
