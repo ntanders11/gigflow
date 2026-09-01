@@ -32,7 +32,14 @@ export async function getUnavailableDates(
     // Iterate in UTC to avoid a local-timezone DST edge accidentally
     // skipping or repeating a day when adding 24 hours.
     let cursor = new Date(`${row.start_date}T00:00:00Z`);
-    const end = new Date(`${row.end_date}T00:00:00Z`);
+    const rawEnd = new Date(`${row.end_date}T00:00:00Z`);
+    // Clamp to 730 days as defense-in-depth against a pathological row
+    // (e.g. a mistyped year) blowing up this loop and the response —
+    // POST /api/blackout-dates also validates this at write time, but
+    // this endpoint is public/unauthenticated and shouldn't rely solely
+    // on that.
+    const maxEnd = new Date(cursor.getTime() + 730 * 24 * 60 * 60 * 1000);
+    const end = rawEnd < maxEnd ? rawEnd : maxEnd;
     while (cursor <= end) {
       dates.add(cursor.toISOString().slice(0, 10));
       cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000);
@@ -52,21 +59,29 @@ export async function isDateUnavailable(
   artistUserId: string,
   date: string
 ): Promise<boolean> {
-  const { data: gigRow } = await service
+  const { data: gigRows, error: gigError } = await service
     .from("gigs")
     .select("id")
     .eq("user_id", artistUserId)
     .eq("status", "upcoming")
     .eq("date", date)
-    .maybeSingle();
-  if (gigRow) return true;
+    .limit(1);
+  if (gigError) {
+    console.error("isDateUnavailable: gig lookup failed, failing closed", gigError);
+    return true;
+  }
+  if (gigRows && gigRows.length > 0) return true;
 
-  const { data: blackoutRow } = await service
+  const { data: blackoutRows, error: blackoutError } = await service
     .from("artist_blackout_dates")
     .select("id")
     .eq("user_id", artistUserId)
     .lte("start_date", date)
     .gte("end_date", date)
-    .maybeSingle();
-  return !!blackoutRow;
+    .limit(1);
+  if (blackoutError) {
+    console.error("isDateUnavailable: blackout lookup failed, failing closed", blackoutError);
+    return true;
+  }
+  return !!(blackoutRows && blackoutRows.length > 0);
 }
