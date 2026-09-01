@@ -204,6 +204,23 @@ export interface Invoice {
   updated_at: string;
 }
 
+// What a venue's own invoice-history view returns per invoice — unlike
+// the artist-facing Invoice shape above, this carries the sending
+// artist's name (a venue can be billed by more than one StageReach
+// artist) instead of any venue-identifying fields, since the venue
+// already knows who they are.
+export interface VenueInvoiceView {
+  id: string;
+  artist_name: string;
+  amount_cents: number;
+  payment_type: PaymentType;
+  event_date: string | null;
+  package_label: string | null;
+  status: InvoiceStatus;
+  stripe_invoice_url: string | null;
+  created_at: string;
+}
+
 // ============================================================
 // VENUE PROFILES
 // ============================================================

@@ -10,6 +10,7 @@ const links = [
   { href: "/venue/discover", label: "Discover Artists" },
   { href: "/venue/favorites", label: "Favorites" },
   { href: "/venue/bookings", label: "Bookings" },
+  { href: "/venue/invoices", label: "Invoices" },
   { href: "/venue/ratings", label: "Ratings" },
 ];
 
