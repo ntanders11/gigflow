@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (calendar subscription CTA)
+- [Change] Removed the "Add to Calendar" button on each individual gig — it's now front and center as a "subscribe once" link at the top of your Booking Calendar instead. Subscribing already keeps itself current automatically (it checks your real gigs every time your phone refreshes it), so there's no need to add gigs one at a time anymore.
+
 ## 2026-09-01 (mobile nav fix)
 - [Fix] The bottom navigation bar on mobile is now bigger and sits clear of the iPhone's swipe-up-to-home area, so tapping a tab shouldn't accidentally trigger something else nearby anymore.
 
