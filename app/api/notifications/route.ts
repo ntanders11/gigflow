@@ -9,10 +9,17 @@ export async function GET() {
 
   const service = await createServiceClient();
 
+  // Unread notifications always show, however old — an artist shouldn't
+  // lose something they haven't seen yet. Once read, a notification only
+  // sticks around for 7 days before it's hidden from this list (it's never
+  // deleted by this alone — "Clear all" is the only thing that removes rows).
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
   const { data: rows, error } = await service
     .from("notifications")
     .select("*")
     .eq("user_id", user.id)
+    .or(`read_at.is.null,created_at.gte.${sevenDaysAgo}`)
     .order("created_at", { ascending: false })
     .limit(20);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -35,4 +42,19 @@ export async function GET() {
   }));
 
   return NextResponse.json({ notifications, unreadCount: unreadCount ?? 0 });
+}
+
+export async function DELETE() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const service = await createServiceClient();
+  const { error } = await service
+    .from("notifications")
+    .delete()
+    .eq("user_id", user.id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ success: true });
 }

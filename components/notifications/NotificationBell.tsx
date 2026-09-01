@@ -51,6 +51,7 @@ export default function NotificationBell({
   const [notifications, setNotifications] = useState<NotificationView[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,6 +100,21 @@ export default function NotificationBell({
     router.push(n.link);
   }
 
+  async function handleClearAll() {
+    setClearing(true);
+    try {
+      const res = await fetch("/api/notifications", { method: "DELETE" });
+      if (res.ok) {
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    } catch {
+      // leave the list as-is — nothing to clean up client-side on failure
+    } finally {
+      setClearing(false);
+    }
+  }
+
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
       <button
@@ -140,21 +156,39 @@ export default function NotificationBell({
           {notifications.length === 0 ? (
             <p className="text-sm p-4 text-center" style={{ color: "#5e5c58" }}>Nothing yet</p>
           ) : (
-            notifications.map((n) => (
-              <button
-                key={n.id}
-                onClick={() => handleClickNotification(n)}
-                className="w-full text-left px-4 py-3 transition-all hover:brightness-125"
-                style={{
-                  borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  backgroundColor: n.read ? "transparent" : "rgba(212,166,79,0.06)",
-                }}
+            <>
+              <div
+                className="flex items-center justify-between px-4 py-2"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
               >
-                <div className="text-sm font-medium" style={{ color: "#F4E8D2" }}>{n.title}</div>
-                {n.body && <div className="text-xs mt-0.5" style={{ color: "#9a9591" }}>{n.body}</div>}
-                <div className="text-xs mt-1" style={{ color: "#5e5c58" }}>{timeAgo(n.created_at)}</div>
-              </button>
-            ))
+                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#5e5c58" }}>
+                  Notifications
+                </span>
+                <button
+                  onClick={handleClearAll}
+                  disabled={clearing}
+                  className="text-xs transition-all hover:brightness-125 disabled:opacity-50"
+                  style={{ color: "#9a9591" }}
+                >
+                  {clearing ? "Clearing…" : "Clear all"}
+                </button>
+              </div>
+              {notifications.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => handleClickNotification(n)}
+                  className="w-full text-left px-4 py-3 transition-all hover:brightness-125"
+                  style={{
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    backgroundColor: n.read ? "transparent" : "rgba(212,166,79,0.06)",
+                  }}
+                >
+                  <div className="text-sm font-medium" style={{ color: "#F4E8D2" }}>{n.title}</div>
+                  {n.body && <div className="text-xs mt-0.5" style={{ color: "#9a9591" }}>{n.body}</div>}
+                  <div className="text-xs mt-1" style={{ color: "#5e5c58" }}>{timeAgo(n.created_at)}</div>
+                </button>
+              ))}
+            </>
           )}
         </div>
       )}
