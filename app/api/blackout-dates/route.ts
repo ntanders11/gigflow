@@ -34,6 +34,11 @@ export async function POST(request: NextRequest) {
   if (end_date < start_date) {
     return NextResponse.json({ error: "End date must be on or after the start date" }, { status: 400 });
   }
+  const MAX_BLACKOUT_SPAN_DAYS = 730; // ~2 years
+  const spanDays = (new Date(`${end_date}T00:00:00Z`).getTime() - new Date(`${start_date}T00:00:00Z`).getTime()) / (1000 * 60 * 60 * 24);
+  if (spanDays > MAX_BLACKOUT_SPAN_DAYS) {
+    return NextResponse.json({ error: "That range is too long — please use 2 years or less." }, { status: 400 });
+  }
 
   const { data: created, error } = await supabase
     .from("artist_blackout_dates")
