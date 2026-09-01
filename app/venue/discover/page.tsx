@@ -3,15 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import VenueNav from "@/components/venue/VenueNav";
-
-type ArtistResult = {
-  user_id: string;
-  display_name: string;
-  genres: string[];
-  photo_url: string | null;
-  avg_rating: number | null;
-  rating_count: number;
-};
+import FavoriteButton from "@/components/venue/FavoriteButton";
+import { ArtistResult } from "@/lib/venues/artist-results";
 
 const inputStyle = {
   background: "#1e2128",
@@ -23,9 +16,12 @@ function ArtistCard({ artist }: { artist: ArtistResult }) {
   return (
     <Link
       href={`/profile/${artist.user_id}`}
-      className="rounded-xl p-4 flex items-center gap-3 transition-all hover:brightness-110"
+      className="relative rounded-xl p-4 flex items-center gap-3 transition-all hover:brightness-110"
       style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
     >
+      <div className="absolute top-2 right-2">
+        <FavoriteButton artistUserId={artist.user_id} initialFavorited={artist.favorited} stopClickPropagation size={16} />
+      </div>
       {artist.photo_url ? (
         <img src={artist.photo_url} alt={artist.display_name} className="w-11 h-11 rounded-full object-cover shrink-0" />
       ) : (
@@ -36,7 +32,7 @@ function ArtistCard({ artist }: { artist: ArtistResult }) {
           {artist.display_name.charAt(0).toUpperCase()}
         </div>
       )}
-      <div className="min-w-0">
+      <div className="min-w-0 pr-6">
         <div className="text-sm font-semibold truncate" style={{ color: "#F4E8D2" }}>{artist.display_name}</div>
         <div className="text-xs truncate" style={{ color: "#9a9591" }}>{artist.genres.join(" · ") || "—"}</div>
         {artist.rating_count > 0 && (
