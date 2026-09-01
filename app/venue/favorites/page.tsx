@@ -53,8 +53,14 @@ export default function VenueFavoritesPage() {
 
   useEffect(() => {
     fetch("/api/venue/favorites")
-      .then((r) => (r.ok ? r.json() : { favorites: [] }))
-      .then((data) => setFavorites(data.favorites ?? []))
+      .then(async (r) => {
+        if (!r.ok) {
+          setError("Couldn't load favorites right now — please check your connection and try again.");
+          return;
+        }
+        const data = await r.json();
+        setFavorites(data.favorites ?? []);
+      })
       .catch(() => {
         setError("Couldn't load favorites right now — please check your connection and try again.");
       })
