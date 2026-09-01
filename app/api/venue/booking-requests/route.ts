@@ -35,6 +35,7 @@ export async function GET() {
     const artist = artistByUserId.get(r.artist_user_id as string);
     return {
       id: r.id,
+      artist_user_id: r.artist_user_id,
       artist_name: (artist?.display_name as string | null) ?? "An artist",
       artist_photo_url: (artist?.photo_url as string | null) ?? null,
       date: r.date,

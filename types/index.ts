@@ -335,6 +335,7 @@ export interface PendingBookingRequest {
 // What the venue's sent-requests endpoint returns per request.
 export interface VenueBookingRequestView {
   id: string;
+  artist_user_id: string;
   artist_name: string;
   artist_photo_url: string | null;
   date: string;

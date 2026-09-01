@@ -62,6 +62,57 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
   const canCancel = r.status === "pending" || r.status === "accepted";
   const canEdit = r.status === "pending" || r.status === "accepted";
 
+  // "Book Again" — a new request to the same artist, never reusing the old
+  // date (it's presumably in the past, or would collide anyway). Times
+  // default to whatever this booking used, since a venue re-booking the
+  // same artist is usually running the same kind of slot again.
+  const [isBookingAgain, setIsBookingAgain] = useState(false);
+  const [bookAgainDate, setBookAgainDate] = useState("");
+  const [bookAgainStartTime, setBookAgainStartTime] = useState(r.start_time || DEFAULT_START_TIME);
+  const [bookAgainEndTime, setBookAgainEndTime] = useState(r.end_time || DEFAULT_END_TIME);
+  const [bookAgainMessage, setBookAgainMessage] = useState("");
+  const [bookAgainSaving, setBookAgainSaving] = useState(false);
+  const [bookAgainSent, setBookAgainSent] = useState(false);
+  const [bookAgainError, setBookAgainError] = useState("");
+  const [unavailableDates, setUnavailableDates] = useState<Set<string>>(new Set());
+  const canBookAgain = r.status === "accepted";
+  const bookAgainIsUnavailable = !!bookAgainDate && unavailableDates.has(bookAgainDate);
+
+  function startBookingAgain() {
+    setIsBookingAgain(true);
+    setBookAgainSent(false);
+    setBookAgainError("");
+    fetch(`/api/public/artists/${r.artist_user_id}/availability`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setUnavailableDates(new Set(data?.dates ?? [])))
+      .catch(() => {});
+  }
+
+  async function submitBookAgain() {
+    if (!bookAgainDate || bookAgainIsUnavailable) return;
+    setBookAgainSaving(true);
+    setBookAgainError("");
+    const res = await fetch("/api/venue/booking-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        artist_user_id: r.artist_user_id,
+        date: bookAgainDate,
+        start_time: bookAgainStartTime || undefined,
+        end_time: bookAgainEndTime || undefined,
+        message: bookAgainMessage.trim() || undefined,
+      }),
+    });
+    setBookAgainSaving(false);
+    if (res.ok) {
+      setBookAgainSent(true);
+      onCancelled(); // reuses the same "refresh the list" callback — a new pending request should show up too
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setBookAgainError(data.error ?? "Couldn't send the request — please try again.");
+    }
+  }
+
   async function cancel() {
     if (!window.confirm(r.status === "accepted"
       ? "Cancel this booking? The artist will be notified and it will be removed from their calendar."
@@ -154,6 +205,85 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
     );
   }
 
+  if (isBookingAgain) {
+    return (
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+      >
+        {bookAgainSent ? (
+          <div className="text-center py-2">
+            <p className="text-sm font-semibold mb-1" style={{ color: "#F4E8D2" }}>Request sent</p>
+            <p className="text-xs mb-3" style={{ color: "#9a9591" }}>
+              {r.artist_name} will be notified — you&apos;ll see it here once they respond.
+            </p>
+            <button
+              onClick={() => setIsBookingAgain(false)}
+              className="text-xs px-4 py-1.5 rounded-lg font-semibold"
+              style={{ background: "#D4A64F", color: "#0E0E10" }}
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="text-sm font-semibold" style={{ color: "#F4E8D2" }}>Book {r.artist_name} again</div>
+            <div>
+              <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Date *</label>
+              <input
+                type="date"
+                value={bookAgainDate}
+                min={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setBookAgainDate(e.target.value)}
+                style={{ ...inputStyle, width: "100%" }}
+              />
+              {bookAgainIsUnavailable && (
+                <p className="text-xs mt-1" style={{ color: "#e25c5c" }}>This date is already booked — try another.</p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Start Time</label>
+                <input type="time" value={bookAgainStartTime} onChange={(e) => setBookAgainStartTime(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+              </div>
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>End Time</label>
+                <input type="time" value={bookAgainEndTime} onChange={(e) => setBookAgainEndTime(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Note (optional)</label>
+              <textarea
+                rows={2}
+                value={bookAgainMessage}
+                onChange={(e) => setBookAgainMessage(e.target.value)}
+                style={{ ...inputStyle, width: "100%", resize: "none" }}
+              />
+            </div>
+            {bookAgainError && <p className="text-xs" style={{ color: "#e25c5c" }}>{bookAgainError}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={submitBookAgain}
+                disabled={!bookAgainDate || bookAgainSaving || bookAgainIsUnavailable}
+                className="text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
+                style={{ background: "#D4A64F", color: "#0E0E10" }}
+              >
+                {bookAgainSaving ? "Sending…" : "Send Request"}
+              </button>
+              <button
+                onClick={() => setIsBookingAgain(false)}
+                className="text-xs px-4 py-1.5 rounded-lg"
+                style={{ color: "#9a9591" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className="rounded-xl p-4 flex items-center gap-4"
@@ -190,6 +320,15 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
           <span className="text-xs" style={{ color: "#5e5c58" }}>{cancelledBySubLabel(r)}</span>
         )}
         <div className="flex gap-1.5">
+          {canBookAgain && (
+            <button
+              onClick={startBookingAgain}
+              className="text-xs px-2.5 py-1 rounded-lg transition-all hover:brightness-125"
+              style={{ background: "rgba(212,166,79,0.12)", color: "#D4A64F", border: "1px solid rgba(212,166,79,0.25)" }}
+            >
+              Book Again
+            </button>
+          )}
           {canEdit && (
             <button
               onClick={() => setIsEditing(true)}
