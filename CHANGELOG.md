@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (invoice date filter)
+- [Feature] Your own Invoices page now has the same date-range filter venues just got — All Time, Last 30/90 Days, or a specific year — narrowing both the totals and the list. Handy for pulling a clean "what I collected in 2026" number at tax time.
+
 ## 2026-09-01 (venue invoices)
 - [Feature] Venues now have their own Invoices page — every invoice sent to them, from any artist they've worked with on StageReach, with a running total of what's outstanding and what's been paid. A date filter lets them narrow it to the last 30 or 90 days, or a specific year.
 
