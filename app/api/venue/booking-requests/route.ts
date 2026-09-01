@@ -4,6 +4,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getOwnCompletedVenueProfile } from "@/lib/bookings/venue-auth";
 import { sendNewBookingRequestEmail } from "@/lib/email/booking-request-notifications";
 import { createNotification } from "@/lib/notifications/create";
+import { isDateUnavailable } from "@/lib/bookings/availability";
 import { VenueBookingRequestView } from "@/types";
 
 // Every request this venue has sent, with current status.
@@ -73,6 +74,10 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
   if (!targetArtist?.display_name) {
     return NextResponse.json({ error: "That artist could not be found" }, { status: 404 });
+  }
+
+  if (await isDateUnavailable(service, artist_user_id, date)) {
+    return NextResponse.json({ error: "This artist isn't available on that date." }, { status: 400 });
   }
 
   const { data: created, error } = await service
