@@ -14,6 +14,7 @@ import {
 } from "date-fns";
 import { useState } from "react";
 import Link from "next/link";
+import { BlackoutDate } from "@/types";
 
 type Venue = {
   id: string;
@@ -64,15 +65,36 @@ function downloadICS(venue: Venue) {
   URL.revokeObjectURL(url);
 }
 
+// "Sep 12, 2026" for a single day, "Sep 12 – Sep 19, 2026" for a range.
+function fmtRange(startDate: string, endDate: string): string {
+  const start = new Date(startDate + "T12:00:00");
+  if (startDate === endDate) {
+    return format(start, "EEEE, MMMM d, yyyy");
+  }
+  const end = new Date(endDate + "T12:00:00");
+  return `${format(start, "MMM d")} – ${format(end, "MMM d, yyyy")}`;
+}
+
 export default function CalendarView({
   bookedVenues,
   subscriptionUrl,
+  initialBlackoutDates,
 }: {
   bookedVenues: Venue[];
   subscriptionUrl: string;
+  initialBlackoutDates: BlackoutDate[];
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [copied, setCopied] = useState(false);
+
+  const [blackoutDates, setBlackoutDates] = useState<BlackoutDate[]>(initialBlackoutDates);
+  const [showBlockForm, setShowBlockForm] = useState(false);
+  const [blockStart, setBlockStart] = useState("");
+  const [blockEnd, setBlockEnd] = useState("");
+  const [blockNote, setBlockNote] = useState("");
+  const [blocking, setBlocking] = useState(false);
+  const [blockError, setBlockError] = useState("");
+  const [blockWarning, setBlockWarning] = useState<string | null>(null);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -89,12 +111,62 @@ export default function CalendarView({
     );
   }
 
+  // Plain string comparison of YYYY-MM-DD values — sidesteps every
+  // timezone footgun that comparing Date objects across a day boundary
+  // could introduce.
+  function isDateBlocked(day: Date): boolean {
+    const dayStr = format(day, "yyyy-MM-dd");
+    return blackoutDates.some((b) => dayStr >= b.start_date && dayStr <= b.end_date);
+  }
+
   function copyUrl() {
     navigator.clipboard.writeText(subscriptionUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   }
+
+  async function addBlackoutDate() {
+    if (!blockStart || !blockEnd) return;
+    if (blockEnd < blockStart) {
+      setBlockError("End date must be on or after the start date.");
+      return;
+    }
+    setBlocking(true);
+    setBlockError("");
+    const res = await fetch("/api/blackout-dates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start_date: blockStart, end_date: blockEnd, note: blockNote || null }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setBlackoutDates((prev) =>
+        [...prev, data as BlackoutDate].sort((a, b) => a.start_date.localeCompare(b.start_date))
+      );
+      setBlockStart(""); setBlockEnd(""); setBlockNote("");
+      setShowBlockForm(false);
+      if (data.warning) setBlockWarning(data.warning as string);
+    } else {
+      setBlockError(data.error ?? "Couldn't block those dates — please try again.");
+    }
+    setBlocking(false);
+  }
+
+  async function removeBlackoutDate(id: string) {
+    const res = await fetch(`/api/blackout-dates/${id}`, { method: "DELETE" });
+    if (res.ok) setBlackoutDates((prev) => prev.filter((b) => b.id !== id));
+  }
+
+  const inputStyle = {
+    background: "#262b33",
+    border: "1px solid rgba(255,255,255,0.08)",
+    color: "#F4E8D2",
+    borderRadius: "8px",
+    padding: "6px 10px",
+    fontSize: "13px",
+    outline: "none",
+  };
 
   return (
     <div>
@@ -141,13 +213,18 @@ export default function CalendarView({
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isToday = isSameDay(day, new Date());
           const dayVenues = venuesOnDay(day);
+          const blocked = isDateBlocked(day);
 
           return (
             <div
               key={idx}
               className="min-h-[90px] p-2"
+              title={blocked ? "Blocked off" : undefined}
               style={{
                 backgroundColor: isCurrentMonth ? "#16181c" : "#13141700",
+                backgroundImage: blocked
+                  ? "repeating-linear-gradient(45deg, rgba(94,92,88,0.18), rgba(94,92,88,0.18) 4px, transparent 4px, transparent 10px)"
+                  : "none",
                 borderRight: (idx + 1) % 7 === 0 ? "none" : "1px solid rgba(255,255,255,0.05)",
                 borderBottom: idx < days.length - 7 ? "1px solid rgba(255,255,255,0.05)" : "none",
               }}
@@ -176,9 +253,127 @@ export default function CalendarView({
                   {v.name}
                 </Link>
               ))}
+              {blocked && dayVenues.length === 0 && (
+                <span
+                  className="block text-xs px-1.5 py-0.5 rounded"
+                  style={{ backgroundColor: "rgba(94,92,88,0.3)", color: "#9a9591", fontSize: "10px" }}
+                >
+                  Blocked
+                </span>
+              )}
             </div>
           );
         })}
+      </div>
+
+      {/* Blocked Dates */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#9a9591" }}>
+            Blocked Dates
+          </h3>
+          <button
+            onClick={() => setShowBlockForm(!showBlockForm)}
+            className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all hover:brightness-110"
+            style={{ background: "#D4A64F", color: "#0E0E10" }}
+          >
+            + Block Dates
+          </button>
+        </div>
+
+        {blockWarning && (
+          <div
+            className="rounded-lg px-4 py-3 mb-4 flex items-start justify-between gap-3"
+            style={{ backgroundColor: "rgba(212,166,79,0.1)", border: "1px solid rgba(212,166,79,0.25)" }}
+          >
+            <p className="text-xs" style={{ color: "#D4A64F" }}>{blockWarning}</p>
+            <button
+              onClick={() => setBlockWarning(null)}
+              className="text-xs shrink-0"
+              style={{ color: "#9a9591" }}
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {showBlockForm && (
+          <div className="rounded-lg p-4 mb-4 space-y-3" style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Start Date *</label>
+                <input type="date" value={blockStart} onChange={(e) => setBlockStart(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+              </div>
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>End Date *</label>
+                <input type="date" value={blockEnd} onChange={(e) => setBlockEnd(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Note (private — only you see this)</label>
+              <input type="text" value={blockNote} onChange={(e) => setBlockNote(e.target.value)} placeholder="Family event, time off…" style={{ ...inputStyle, width: "100%" }} />
+            </div>
+            {blockError && <p className="text-xs" style={{ color: "#e25c5c" }}>{blockError}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={addBlackoutDate}
+                disabled={!blockStart || !blockEnd || blocking}
+                className="text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
+                style={{ background: "#D4A64F", color: "#0E0E10" }}
+              >
+                {blocking ? "Saving…" : "Block Dates"}
+              </button>
+              <button
+                onClick={() => setShowBlockForm(false)}
+                className="text-xs px-4 py-1.5 rounded-lg"
+                style={{ color: "#9a9591" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+          {blackoutDates.length === 0 ? (
+            <div className="px-5 py-8 text-center">
+              <p className="text-sm" style={{ color: "#5e5c58" }}>
+                No blocked dates. Use &quot;+ Block Dates&quot; to mark yourself unavailable.
+              </p>
+            </div>
+          ) : (
+            blackoutDates.map((b, idx) => {
+              const isLast = idx === blackoutDates.length - 1;
+              return (
+                <div
+                  key={b.id}
+                  className="flex items-center gap-4 px-5 py-4"
+                  style={{
+                    backgroundColor: "#16181c",
+                    borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.05)",
+                    borderLeft: "3px solid #5e5c58",
+                  }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium" style={{ color: "#F4E8D2" }}>
+                      {fmtRange(b.start_date, b.end_date)}
+                    </p>
+                    {b.note && (
+                      <p className="text-xs mt-0.5" style={{ color: "#9a9591" }}>{b.note}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => removeBlackoutDate(b.id)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0"
+                    style={{ backgroundColor: "rgba(226,92,92,0.1)", color: "#e25c5c", border: "1px solid rgba(226,92,92,0.25)" }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* Booked gigs list */}
