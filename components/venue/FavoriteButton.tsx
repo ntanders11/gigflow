@@ -35,20 +35,25 @@ export default function FavoriteButton({
     const next = !favorited;
     setFavorited(next); // optimistic — this is a low-stakes toggle, no need to wait
 
-    const res = next
-      ? await fetch("/api/venue/favorites", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ artist_user_id: artistUserId }),
-        })
-      : await fetch(`/api/venue/favorites/${artistUserId}`, { method: "DELETE" });
+    try {
+      const res = next
+        ? await fetch("/api/venue/favorites", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ artist_user_id: artistUserId }),
+          })
+        : await fetch(`/api/venue/favorites/${artistUserId}`, { method: "DELETE" });
 
-    setSaving(false);
-    if (!res.ok) {
-      setFavorited(!next); // roll back on failure
-      return;
+      if (!res.ok) {
+        setFavorited(!next); // roll back on a failed request
+        return;
+      }
+      onToggle?.(next);
+    } catch {
+      setFavorited(!next); // roll back on a network failure (offline, dropped connection)
+    } finally {
+      setSaving(false);
     }
-    onToggle?.(next);
   }
 
   return (
