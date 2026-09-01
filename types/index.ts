@@ -123,6 +123,20 @@ export interface Gig {
 }
 
 // ============================================================
+// ARTIST BLACKOUT DATES
+// ============================================================
+
+// A date range an artist has marked themselves unavailable for. Client
+// shape only — deliberately omits user_id/created_at/updated_at, which
+// no consumer of this type needs.
+export interface BlackoutDate {
+  id: string;
+  start_date: string; // YYYY-MM-DD
+  end_date: string;   // YYYY-MM-DD
+  note: string | null;
+}
+
+// ============================================================
 // ARTIST PROFILE
 // ============================================================
 
