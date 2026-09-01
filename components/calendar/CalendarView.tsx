@@ -28,43 +28,6 @@ type Venue = {
   notes: string | null;
 };
 
-function downloadICS(venue: Venue) {
-  const d = venue.follow_up_date!;
-  const [y, m, day] = d.split("-");
-  const pad = (n: string) => n.padStart(2, "0");
-  const startH = venue.gig_time ? parseInt(venue.gig_time.split(":")[0]) : 19;
-  const startM = venue.gig_time ? parseInt(venue.gig_time.split(":")[1]) : 0;
-  const endH = startH + 3;
-  const dtStart = `${y}${pad(m)}${pad(day)}T${String(startH).padStart(2,"0")}${String(startM).padStart(2,"0")}00`;
-  const dtEnd   = `${y}${pad(m)}${pad(day)}T${String(endH).padStart(2,"0")}${String(startM).padStart(2,"0")}00`;
-  const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z/, "Z");
-  const escape = (s: string) => s.replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
-
-  const ics = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//StageReach//StageReach//EN",
-    "BEGIN:VEVENT",
-    `UID:gigflow-${venue.id}@gigflow.app`,
-    `DTSTAMP:${now}`,
-    `DTSTART;TZID=America/Los_Angeles:${dtStart}`,
-    `DTEND;TZID=America/Los_Angeles:${dtEnd}`,
-    `SUMMARY:${escape(`Gig at ${venue.name}`)}`,
-    `LOCATION:${escape(venue.address ?? venue.city ?? venue.name)}`,
-    `DESCRIPTION:${escape(venue.notes ?? `Booked gig at ${venue.name}`)}`,
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ].join("\r\n");
-
-  const blob = new Blob([ics], { type: "text/calendar" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${venue.name.replace(/[^a-z0-9]/gi, "_")}.ics`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 // "Sep 12, 2026" for a single day, "Sep 12 – Sep 19, 2026" for a range.
 function fmtRange(startDate: string, endDate: string): string {
   const start = new Date(startDate + "T12:00:00");
@@ -376,6 +339,37 @@ export default function CalendarView({
         </div>
       </div>
 
+      {/* Subscription URL — the recommended way to get gigs onto your phone's
+          calendar. Leads the section since it covers every gig automatically,
+          current and future, instead of adding them one at a time. */}
+      <div className="mt-8 rounded-xl px-5 py-4" style={{ backgroundColor: "rgba(212,166,79,0.08)", border: "1px solid rgba(212,166,79,0.25)" }}>
+        <p className="text-sm font-semibold mb-1" style={{ color: "#D4A64F" }}>
+          📅 Subscribe once, every gig shows up automatically
+        </p>
+        <p className="text-xs mb-3" style={{ color: "#9a9591" }}>
+          Add this link to your phone&apos;s calendar app and it&apos;ll always stay current — no need to add gigs one at a time. On iPhone: Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar → paste this URL.
+        </p>
+        <div className="flex items-center gap-2">
+          <code
+            className="flex-1 text-xs px-3 py-2 rounded-lg truncate"
+            style={{ backgroundColor: "#0E0E10", color: "#9b7fe8", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            {subscriptionUrl}
+          </code>
+          <button
+            onClick={copyUrl}
+            className="px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0"
+            style={{
+              backgroundColor: copied ? "rgba(76,175,125,0.15)" : "rgba(255,255,255,0.07)",
+              color: copied ? "#4caf7d" : "#9a9591",
+              border: `1px solid ${copied ? "#4caf7d" : "rgba(255,255,255,0.1)"}`,
+            }}
+          >
+            {copied ? "✓ Copied" : "Copy"}
+          </button>
+        </div>
+      </div>
+
       {/* Booked gigs list */}
       <div className="mt-8">
         <h3 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "#9a9591" }}>
@@ -417,19 +411,6 @@ export default function CalendarView({
                       {venue.city ? ` · ${venue.city}` : ""}
                     </p>
                   </div>
-                  {venue.follow_up_date && (
-                    <button
-                      onClick={() => downloadICS(venue)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0"
-                      style={{
-                        backgroundColor: "rgba(255,255,255,0.05)",
-                        color: "#9a9591",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                      }}
-                    >
-                      Add to Calendar
-                    </button>
-                  )}
                 </div>
               );
             })
@@ -440,35 +421,6 @@ export default function CalendarView({
             {venuesWithoutDate.length} booked venue{venuesWithoutDate.length > 1 ? "s" : ""} without a date — open the venue and set a Gig Date to show it on the calendar.
           </p>
         )}
-      </div>
-
-      {/* Subscription URL copy box */}
-      <div className="mt-8 rounded-xl px-5 py-4" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
-        <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>
-          Calendar Subscription URL
-        </p>
-        <p className="text-xs mb-3" style={{ color: "#9a9591" }}>
-          On iPhone: Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar → paste this URL.
-        </p>
-        <div className="flex items-center gap-2">
-          <code
-            className="flex-1 text-xs px-3 py-2 rounded-lg truncate"
-            style={{ backgroundColor: "#0E0E10", color: "#9b7fe8", border: "1px solid rgba(255,255,255,0.07)" }}
-          >
-            {subscriptionUrl}
-          </code>
-          <button
-            onClick={copyUrl}
-            className="px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0"
-            style={{
-              backgroundColor: copied ? "rgba(76,175,125,0.15)" : "rgba(255,255,255,0.07)",
-              color: copied ? "#4caf7d" : "#9a9591",
-              border: `1px solid ${copied ? "#4caf7d" : "rgba(255,255,255,0.1)"}`,
-            }}
-          >
-            {copied ? "✓ Copied" : "Copy"}
-          </button>
-        </div>
       </div>
     </div>
   );
