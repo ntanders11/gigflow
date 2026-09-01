@@ -7,6 +7,7 @@ import RatingsSection from "@/components/ratings/RatingsSection";
 import RequestToBookButton from "@/components/booking/RequestToBookButton";
 import { InstagramIcon, SpotifyIcon, YouTubeIcon, WebsiteIcon } from "@/components/icons/SocialIcons";
 import { getEmbedUrl } from "@/lib/embeds";
+import FavoriteButton from "@/components/venue/FavoriteButton";
 
 const SOCIAL_PLATFORMS: { key: keyof SocialLinks; label: string; color: string; Icon: typeof InstagramIcon }[] = [
   { key: "instagram", label: "Instagram", color: "#e1306c", Icon: InstagramIcon },
@@ -67,6 +68,21 @@ export default async function PublicProfilePage({
     }
   }
   const backHref = viewerType === "venue" ? "/venue/bookings" : viewerType === "artist" ? "/dashboard" : "/venues";
+
+  // venue_favorites has a real owner-only RLS policy (migration 026) — a
+  // plain read through the viewer's own session, only meaningful when
+  // they're actually a venue (viewerType check keeps this a no-op query
+  // for an artist or logged-out visitor).
+  let initialFavorited = false;
+  if (viewerType === "venue" && viewer) {
+    const { data: favoriteRow } = await authSupabase
+      .from("venue_favorites")
+      .select("id")
+      .eq("user_id", viewer.id)
+      .eq("artist_user_id", id)
+      .maybeSingle();
+    initialFavorited = !!favoriteRow;
+  }
 
   const p = profile as ArtistProfile;
   const packages: Package[] = p.packages || [];
@@ -136,9 +152,19 @@ export default async function PublicProfilePage({
           </div>
         )}
 
-        {/* Book button */}
-        <div className="mb-6">
-          <RequestToBookButton artistUserId={id} viewerType={viewerType} />
+        {/* Book button, plus a favorite toggle for venue viewers only */}
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex-1">
+            <RequestToBookButton artistUserId={id} viewerType={viewerType} />
+          </div>
+          {viewerType === "venue" && (
+            <div
+              className="rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: "#1e2128", border: "1px solid rgba(255,255,255,0.07)" }}
+            >
+              <FavoriteButton artistUserId={id} initialFavorited={initialFavorited} size={20} />
+            </div>
+          )}
         </div>
 
         {/* Bio */}
