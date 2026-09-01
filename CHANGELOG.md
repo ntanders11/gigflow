@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (mobile nav fix)
+- [Fix] The bottom navigation bar on mobile is now bigger and sits clear of the iPhone's swipe-up-to-home area, so tapping a tab shouldn't accidentally trigger something else nearby anymore.
+
 ## 2026-09-01 (invoice date filter)
 - [Feature] Your own Invoices page now has the same date-range filter venues just got — All Time, Last 30/90 Days, or a specific year — narrowing both the totals and the list. Handy for pulling a clean "what I collected in 2026" number at tax time.
 
