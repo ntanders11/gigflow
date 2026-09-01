@@ -49,11 +49,15 @@ function FavoriteCard({ artist, onRemoved }: { artist: ArtistResult; onRemoved: 
 export default function VenueFavoritesPage() {
   const [favorites, setFavorites] = useState<ArtistResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/venue/favorites")
       .then((r) => (r.ok ? r.json() : { favorites: [] }))
       .then((data) => setFavorites(data.favorites ?? []))
+      .catch(() => {
+        setError("Couldn't load favorites right now — please check your connection and try again.");
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -71,6 +75,19 @@ export default function VenueFavoritesPage() {
           {loading ? (
             <div className="text-center py-16">
               <p className="text-sm" style={{ color: "#5e5c58" }}>Loading…</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-16">
+              <p className="text-sm font-medium mb-2" style={{ color: "#e25c5c" }}>{error}</p>
+              <p className="text-sm">
+                <button
+                  onClick={() => window.location.reload()}
+                  style={{ color: "#D4A64F" }}
+                  className="underline hover:brightness-110"
+                >
+                  Reload →
+                </button>
+              </p>
             </div>
           ) : favorites.length === 0 ? (
             <div className="text-center py-16">
