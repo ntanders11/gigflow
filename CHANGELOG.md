@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (book this artist again)
+- [Feature] A "Book Again" button now appears on any accepted booking in your Bookings history — opens a quick form pre-filled with the same artist and times, so re-booking someone you've worked with before takes just a new date, not a whole new request from scratch.
+
 ## 2026-09-01 (venue favorite artists)
 - [Feature] Venues can now save artists to a private "Favorites" list — a heart icon on Discover Artists cards and on an artist's public profile. Find your saved artists anytime from the new "Favorites" tab. Completely private — artists never see who's favorited them.
 
