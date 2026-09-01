@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (venue invoices)
+- [Feature] Venues now have their own Invoices page — every invoice sent to them, from any artist they've worked with on StageReach, with a running total of what's outstanding and what's been paid. A date filter lets them narrow it to the last 30 or 90 days, or a specific year.
+
 ## 2026-09-01 (book this artist again)
 - [Feature] A "Book Again" button now appears on any accepted booking in your Bookings history — opens a quick form pre-filled with the same artist and times, so re-booking someone you've worked with before takes just a new date, not a whole new request from scratch.
 
