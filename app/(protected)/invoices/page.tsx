@@ -1,25 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { Invoice, Venue } from "@/types";
 import CreateInvoiceButton from "@/components/invoice/CreateInvoiceButton";
-import DeleteInvoiceButton from "@/components/invoice/DeleteInvoiceButton";
-
-const STATUS_STYLE: Record<string, { color: string; bg: string; label: string }> = {
-  draft:  { color: "#9a9591", bg: "rgba(154,149,145,0.15)", label: "Draft"  },
-  sent:   { color: "#D4A64F", bg: "rgba(212,166,79,0.15)",  label: "Sent"   },
-  paid:   { color: "#4caf7d", bg: "rgba(76,175,125,0.15)",  label: "Paid"   },
-  void:   { color: "#5e5c58", bg: "rgba(94,92,88,0.15)",    label: "Void"   },
-};
-
-function fmt(cents: number) {
-  return "$" + (cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0 });
-}
-
-function fmtDate(iso: string | null) {
-  if (!iso) return null;
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
+import ArtistInvoicesList from "@/components/invoice/ArtistInvoicesList";
 
 export default async function InvoicesPage() {
   const supabase = await createClient();
@@ -43,12 +26,6 @@ export default async function InvoicesPage() {
     .eq("user_id", user.id)
     .order("name");
 
-  const unpaid = allInvoices.filter((i) => i.status === "sent" || i.status === "draft");
-  const unpaidTotal = unpaid.reduce((sum, i) => sum + i.amount_cents, 0);
-  const paidTotal = allInvoices
-    .filter((i) => i.status === "paid")
-    .reduce((sum, i) => sum + i.amount_cents, 0);
-
   return (
     <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
       {/* Header */}
@@ -59,156 +36,7 @@ export default async function InvoicesPage() {
         <CreateInvoiceButton venues={(venues ?? []) as Venue[]} />
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 max-w-4xl">
-        <div
-          className="rounded-xl p-5"
-          style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
-        >
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#9a9591" }}>
-            Outstanding
-          </p>
-          <p className="text-4xl font-bold leading-none mb-1" style={{ color: "#e09b50" }}>
-            {fmt(unpaidTotal)}
-          </p>
-          <p className="text-xs" style={{ color: "#9a9591" }}>
-            {unpaid.length} unpaid invoice{unpaid.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-
-        <div
-          className="rounded-xl p-5"
-          style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
-        >
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#9a9591" }}>
-            Collected
-          </p>
-          <p className="text-4xl font-bold leading-none mb-1" style={{ color: "#4caf7d" }}>
-            {fmt(paidTotal)}
-          </p>
-          <p className="text-xs" style={{ color: "#9a9591" }}>
-            {allInvoices.filter((i) => i.status === "paid").length} paid
-          </p>
-        </div>
-
-        <div
-          className="rounded-xl p-5"
-          style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
-        >
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#9a9591" }}>
-            Total Invoices
-          </p>
-          <p className="text-4xl font-bold leading-none mb-1" style={{ color: "#F4E8D2" }}>
-            {allInvoices.length}
-          </p>
-          <p className="text-xs" style={{ color: "#9a9591" }}>
-            all time
-          </p>
-        </div>
-      </div>
-
-      {/* Invoice list */}
-      <div className="max-w-4xl">
-        <div
-          className="rounded-xl overflow-hidden"
-          style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
-        >
-          {allInvoices.length === 0 ? (
-            <div className="px-5 py-12 text-center">
-              <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>
-                No invoices yet
-              </p>
-              <p className="text-xs" style={{ color: "#5e5c58" }}>
-                Create your first invoice, or open a venue&apos;s detail page once a gig is booked.
-              </p>
-            </div>
-          ) : (
-            allInvoices.map((invoice, idx) => {
-              const style = STATUS_STYLE[invoice.status] ?? STATUS_STYLE.draft;
-              const isLast = idx === allInvoices.length - 1;
-
-              return (
-                <div
-                  key={invoice.id}
-                  className="flex flex-col gap-2 px-5 py-4 md:flex-row md:items-center md:gap-4"
-                  style={{
-                    borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.05)",
-                  }}
-                >
-                  {/* Venue + details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-sm font-medium truncate" style={{ color: "#F4E8D2" }}>
-                        {invoice.venues?.name ?? "Unknown venue"}
-                      </p>
-                      {invoice.package_label && (
-                        <span className="text-xs flex-shrink-0" style={{ color: "#5e5c58" }}>
-                          · {invoice.package_label}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs" style={{ color: "#9a9591" }}>
-                      {[
-                        invoice.venues?.city,
-                        invoice.payment_type === "deposit" ? "Deposit" : "Full payment",
-                        invoice.event_date ? `Event ${fmtDate(invoice.event_date)}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </div>
-
-                  {/* Amount, date, status, links — wraps on mobile, inline on desktop */}
-                  <div className="flex items-center gap-3 flex-wrap md:flex-nowrap md:gap-4">
-                    {/* Amount */}
-                    <p className="text-sm font-semibold flex-shrink-0" style={{ color: "#F4E8D2" }}>
-                      {fmt(invoice.amount_cents)}
-                    </p>
-
-                    {/* Date */}
-                    <p className="text-xs flex-shrink-0 md:w-24 md:text-right" style={{ color: "#9a9591" }}>
-                      {fmtDate(invoice.created_at)}
-                    </p>
-
-                    {/* Status badge */}
-                    <span
-                      className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 w-14 text-center"
-                      style={{ backgroundColor: style.bg, color: style.color }}
-                    >
-                      {style.label}
-                    </span>
-
-                    {/* Stripe link */}
-                    {invoice.stripe_invoice_url && (
-                      <a
-                        href={invoice.stripe_invoice_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs flex-shrink-0 transition-all hover:brightness-125"
-                        style={{ color: "#D4A64F" }}
-                      >
-                        View ↗
-                      </a>
-                    )}
-
-                    {/* Venue link */}
-                    <Link
-                      href={`/venues/${invoice.venue_id}`}
-                      className="text-xs flex-shrink-0 transition-all hover:brightness-125"
-                      style={{ color: "#9a9591" }}
-                    >
-                      Venue →
-                    </Link>
-
-                    {/* Delete */}
-                    <DeleteInvoiceButton invoiceId={invoice.id} status={invoice.status} />
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
+      <ArtistInvoicesList initialInvoices={allInvoices} />
     </div>
   );
 }
