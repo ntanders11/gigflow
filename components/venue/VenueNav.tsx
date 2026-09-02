@@ -7,8 +7,9 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 
 const links = [
   { href: "/venue/profile",  label: "My Profile",       mobileLabel: "Profile",  icon: "◉" },
+  // Favorites lives inside Discover Artists now (a "★ Favorites" dropdown
+  // near the top of that page) rather than as its own tab/page.
   { href: "/venue/discover", label: "Discover Artists",  mobileLabel: "Discover", icon: "⊕" },
-  { href: "/venue/favorites", label: "Favorites",        mobileLabel: "Favorites", icon: "♥" },
   { href: "/venue/bookings", label: "Bookings",          mobileLabel: "Bookings", icon: "☐" },
   { href: "/venue/invoices", label: "Invoices",          mobileLabel: "Invoices", icon: "$" },
   { href: "/venue/ratings",  label: "Ratings",           mobileLabel: "Ratings",  icon: "★" },

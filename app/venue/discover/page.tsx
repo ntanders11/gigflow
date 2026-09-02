@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import VenueNav from "@/components/venue/VenueNav";
 import FavoriteButton from "@/components/venue/FavoriteButton";
@@ -12,7 +12,7 @@ const inputStyle = {
   color: "#F4E8D2",
 };
 
-function ArtistCard({ artist }: { artist: ArtistResult }) {
+function ArtistCard({ artist, onUnfavorited }: { artist: ArtistResult; onUnfavorited?: (userId: string) => void }) {
   return (
     <Link
       href={`/profile/${artist.user_id}`}
@@ -20,7 +20,13 @@ function ArtistCard({ artist }: { artist: ArtistResult }) {
       style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
     >
       <div className="absolute top-2 right-2">
-        <FavoriteButton artistUserId={artist.user_id} initialFavorited={artist.favorited} stopClickPropagation size={16} />
+        <FavoriteButton
+          artistUserId={artist.user_id}
+          initialFavorited={artist.favorited}
+          stopClickPropagation
+          size={16}
+          onToggle={onUnfavorited ? (favorited) => { if (!favorited) onUnfavorited(artist.user_id); } : undefined}
+        />
       </div>
       {artist.photo_url ? (
         <img src={artist.photo_url} alt={artist.display_name} className="w-11 h-11 rounded-full object-cover shrink-0" />
@@ -57,6 +63,25 @@ export default function VenueDiscoverPage() {
   const [searched, setSearched] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [favorites, setFavorites] = useState<ArtistResult[]>([]);
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+
+  // Loads quietly in the background on mount, same as the notification
+  // bell's own unread count does on every page — this is the venue's own
+  // saved list, not a paid external search, so there's no "why did it
+  // search without me asking" concern the location-field auto-search had.
+  useEffect(() => {
+    fetch("/api/venue/favorites")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setFavorites(data?.favorites ?? []))
+      .catch(() => {})
+      .finally(() => setFavoritesLoaded(true));
+  }, []);
+
+  function handleUnfavorited(artistUserId: string) {
+    setFavorites((prev) => prev.filter((a) => a.user_id !== artistUserId));
+  }
 
   // Accepts either a typed city/zip or coordinates straight from the
   // browser's own geolocation (see handleUseLocation below) — mirrors the
@@ -134,6 +159,38 @@ export default function VenueDiscoverPage() {
       <div className="min-h-screen pb-28 md:pb-0" style={{ backgroundColor: "#0E0E10" }}>
         <div className="max-w-4xl mx-auto px-6 py-10">
           <h1 className="text-2xl font-bold mb-6" style={{ color: "#F4E8D2" }}>Discover Artists</h1>
+
+          {/* Favorites — replaced the standalone "Favorites" nav tab/page;
+              everything lives here now, one tap from search. */}
+          <div className="mb-6">
+            <button
+              type="button"
+              onClick={() => setFavoritesOpen((o) => !o)}
+              className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg transition-all hover:brightness-110"
+              style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)", color: "#D4A64F" }}
+            >
+              ★ Favorites{favoritesLoaded ? ` (${favorites.length})` : ""}
+              <span style={{ fontSize: "10px", color: "#9a9591" }}>{favoritesOpen ? "▲" : "▼"}</span>
+            </button>
+
+            {favoritesOpen && (
+              <div className="mt-3 rounded-xl p-4" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
+                {!favoritesLoaded ? (
+                  <p className="text-sm text-center py-4" style={{ color: "#5e5c58" }}>Loading…</p>
+                ) : favorites.length === 0 ? (
+                  <p className="text-sm text-center py-4" style={{ color: "#5e5c58" }}>
+                    No favorites yet — tap the heart on any artist below to save them here.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {favorites.map((a) => (
+                      <ArtistCard key={a.user_id} artist={a} onUnfavorited={handleUnfavorited} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <form onSubmit={handleSearch} className="rounded-xl p-5 mb-6" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
             <div className="flex gap-3 mb-4">
