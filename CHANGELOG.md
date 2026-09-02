@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (discover artists layout cleanup)
+- [Change] Moved the "★ Favorites" button on Discover Artists from sitting alone at the top of the page to right beside the "Search Artists" button — cleaner, and grouped with the action it's related to.
+
 ## 2026-09-01 (ratings summary relocated)
 - [Change] Moved the ratings summary on your profile page (artist and venue side) from right next to your photo down to a quieter spot near the Sign out button at the bottom — still there, just not competing for attention up top.
 
