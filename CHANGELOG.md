@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (sign out button)
+- [Fix] "Sign out" on your Artist Profile page is now its own full-size button at the bottom of the page, instead of a small text link tucked in the header — easier to find, harder to tap by accident.
+
 ## 2026-09-01 (notification cleanup)
 - [Feature] Added a "Clear all" button to the notification bell dropdown (artist and venue side both) to wipe your notification history whenever you want.
 - [Change] Notifications you've already read now quietly drop off the list after 7 days on their own, so old ones don't pile up. Anything still unread always stays visible, no matter how old.
