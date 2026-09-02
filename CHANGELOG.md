@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (day-of gig reminders)
+- [Feature] Every gig now sends an automatic reminder the morning of the show — a notification and phone alert to you with the venue, the time, and how many prep checklist items are still open, and one to the venue too if they have a StageReach account. Needs a quick database update on your end (SQL in the migration file) before it starts working.
+
 ## 2026-09-01 (privacy policy + terms of service)
 - [Feature] Added a Privacy Policy and Terms of Service, linked from the sign-up and login pages. Covers what data is collected, that it's never sold, and which outside services (Stripe, Supabase, etc.) it passes through. Uses a placeholder contact email — swap it for a real one before relying on it, and it's worth a lawyer's once-over before wide release.
 
