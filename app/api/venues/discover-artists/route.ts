@@ -23,17 +23,30 @@ export async function GET(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const city = req.nextUrl.searchParams.get("city")?.trim();
-  if (!city) return NextResponse.json({ error: "city is required" }, { status: 400 });
   const parsedRadius = parseInt(req.nextUrl.searchParams.get("radius") ?? "30");
   const radiusMi = Number.isNaN(parsedRadius) || parsedRadius <= 0 ? 30 : parsedRadius;
 
   const googleKey = process.env.GOOGLE_PLACES_API_KEY?.trim();
   const geoapifyKey = process.env.GEOAPIFY_API_KEY?.trim();
 
-  const searchCoords = await geocodeCity(city, googleKey, geoapifyKey);
-  if (!searchCoords) {
-    return NextResponse.json({ error: "Location not found — try a different city or zip." }, { status: 400 });
+  // Same lat/lon-or-city pattern as the artist-side discover route
+  // (app/api/venues/discover/route.ts): coordinates straight from the
+  // browser's own geolocation skip geocoding entirely; a typed city/zip
+  // still gets geocoded server-side.
+  const city = req.nextUrl.searchParams.get("city")?.trim();
+  const latParam = parseFloat(req.nextUrl.searchParams.get("lat") ?? "");
+  const lonParam = parseFloat(req.nextUrl.searchParams.get("lon") ?? "");
+
+  let searchCoords: { lat: number; lon: number } | null;
+  if (!isNaN(latParam) && !isNaN(lonParam)) {
+    searchCoords = { lat: latParam, lon: lonParam };
+  } else if (city) {
+    searchCoords = await geocodeCity(city, googleKey, geoapifyKey);
+    if (!searchCoords) {
+      return NextResponse.json({ error: "Location not found — try a different city or zip." }, { status: 400 });
+    }
+  } else {
+    return NextResponse.json({ error: "city or lat/lon is required" }, { status: 400 });
   }
 
   // The requesting venue's own genres, for tiering results below. Read via

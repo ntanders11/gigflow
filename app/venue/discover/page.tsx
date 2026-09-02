@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import VenueNav from "@/components/venue/VenueNav";
 import FavoriteButton from "@/components/venue/FavoriteButton";
@@ -55,13 +55,24 @@ export default function VenueDiscoverPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [locating, setLocating] = useState(false);
 
-  const runSearch = useCallback(async (searchCity: string, searchRadius: number) => {
-    if (!searchCity.trim()) return;
+  // Accepts either a typed city/zip or coordinates straight from the
+  // browser's own geolocation (see handleUseLocation below) — mirrors the
+  // artist-side Discover Venues page (components/discover/DiscoverView.tsx).
+  const runSearch = useCallback(async (searchCity: string, searchRadius: number, searchCoords: { lat: number; lon: number } | null) => {
+    if (!searchCoords && !searchCity.trim()) return;
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams({ city: searchCity.trim(), radius: String(searchRadius) });
+      const params = new URLSearchParams({ radius: String(searchRadius) });
+      if (searchCoords) {
+        params.set("lat", String(searchCoords.lat));
+        params.set("lon", String(searchCoords.lon));
+      } else {
+        params.set("city", searchCity.trim());
+      }
       const res = await fetch(`/api/venues/discover-artists?${params}`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -80,30 +91,39 @@ export default function VenueDiscoverPage() {
     }
   }, []);
 
-  // Auto-search on mount using the venue's own city, same pattern the
-  // artist-side Discover Venues page already uses with the artist's home
-  // zone.
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/venue-profile");
-        if (res.ok) {
-          const profile = await res.json();
-          if (profile?.city) {
-            setCity(profile.city);
-            runSearch(profile.city, 30);
-          }
-        }
-      } catch {
-        // No connectivity to check — venue can still search manually.
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    runSearch(city, radius);
+    runSearch(city, radius, coords);
+  }
+
+  // Same pattern as the artist side's "Use my current location" — an
+  // explicit click + browser permission grant, so searching immediately on
+  // success is the point of the button, not a surprise auto-search.
+  function handleUseLocation() {
+    if (!navigator.geolocation) {
+      setError("Your browser doesn't support location lookup — try typing a city or zip instead.");
+      return;
+    }
+    setLocating(true);
+    setError("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const c = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        setLocating(false);
+        setCoords(c);
+        setCity("Current location");
+        runSearch("", radius, c);
+      },
+      (err) => {
+        setLocating(false);
+        setError(
+          err.code === err.PERMISSION_DENIED
+            ? "Location access was denied — you can still search by typing a city or zip code."
+            : "Couldn't get your location — try typing a city or zip code instead."
+        );
+      },
+      { timeout: 10000 }
+    );
   }
 
   const combined = venueHasGenres ? null : [...matchingGenre, ...other];
@@ -122,11 +142,20 @@ export default function VenueDiscoverPage() {
                 <input
                   type="text"
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="City, state or zip code"
+                  onChange={(e) => { setCity(e.target.value); setCoords(null); }}
+                  placeholder="Look up a zip code or city name"
                   className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
                   style={inputStyle}
                 />
+                <button
+                  type="button"
+                  onClick={handleUseLocation}
+                  disabled={locating}
+                  className="mt-2 text-xs font-medium transition-all hover:brightness-125 disabled:opacity-50"
+                  style={{ color: "#D4A64F" }}
+                >
+                  {locating ? "Getting your location…" : "📍 Use my current location"}
+                </button>
               </div>
               <div style={{ width: "130px" }}>
                 <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>Radius: {radius} mi</label>
