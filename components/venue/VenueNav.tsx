@@ -5,13 +5,14 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import NotificationBell from "@/components/notifications/NotificationBell";
 
-const links = [
-  // Dashboard leads the nav and is the default landing page for every
-  // venue login (see proxy.ts) — "My Profile" used to hold both roles,
-  // which meant profile-editing fields were the first thing a venue saw
-  // every time they signed in.
+// Dashboard leads and is the default landing page for every venue login
+// (see proxy.ts). "My Profile" sits last, immediately before the
+// notification bell on both surfaces — on the mobile bottom bar that
+// falls out naturally from being last in this array; on the desktop bar,
+// a spacer between the main links and Profile pushes it (and the bell,
+// which moves alongside it) to the right edge — see profileLink below.
+const mainLinks = [
   { href: "/venue/dashboard", label: "Dashboard",        mobileLabel: "Dashboard", icon: "◆" },
-  { href: "/venue/profile",  label: "My Profile",       mobileLabel: "Profile",  icon: "◉" },
   // Favorites lives inside Discover Artists now (a "★ Favorites" dropdown
   // near the top of that page) rather than as its own tab/page.
   { href: "/venue/discover", label: "Discover Artists",  mobileLabel: "Discover", icon: "⊕" },
@@ -19,6 +20,8 @@ const links = [
   { href: "/venue/invoices", label: "Invoices",          mobileLabel: "Invoices", icon: "$" },
   { href: "/venue/ratings",  label: "Ratings",           mobileLabel: "Ratings",  icon: "★" },
 ];
+const profileLink = { href: "/venue/profile", label: "My Profile", mobileLabel: "Profile", icon: "◉" };
+const links = [...mainLinks, profileLink];
 
 // Renders both surfaces from one component so every page that does
 // `<VenueNav />` gets both automatically, with no per-page changes: a
@@ -51,8 +54,7 @@ export default function VenueNav() {
           height={50}
           style={{ objectFit: "contain", objectPosition: "left", height: "36px", width: "108px" }}
         />
-        <NotificationBell align="left" />
-        {links.map((link) => (
+        {mainLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
@@ -62,6 +64,17 @@ export default function VenueNav() {
             {link.label}
           </Link>
         ))}
+        {/* Spacer pushes Profile + the notification bell to the right
+            edge, separated from the main nav links. */}
+        <div className="flex-1" />
+        <Link
+          href={profileLink.href}
+          className="flex items-center gap-1.5 text-sm transition-all hover:brightness-125"
+          style={{ color: isActive(profileLink.href) ? "#D4A64F" : "#9a9591", fontWeight: isActive(profileLink.href) ? 600 : 400 }}
+        >
+          {profileLink.label}
+        </Link>
+        <NotificationBell />
       </nav>
 
       {/* Mobile bottom tab bar */}
