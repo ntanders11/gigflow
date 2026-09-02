@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (favorites folded into discover artists)
+- [Change] Removed the separate "Favorites" tab on the venue side. Your saved artists now live inside Discover Artists instead — a "★ Favorites" dropdown near the top of the page that expands to show everyone you've saved, right where you're already searching.
+
 ## 2026-09-01 (discover artists parity with discover venues)
 - [Fix] Discover Artists (venue side) no longer automatically searches your city the moment you open the page — same fix as Discover Venues got earlier today. The location field starts empty with a hint, and search only runs when you ask.
 - [Feature] Also added the same "📍 Use my current location" button Discover Venues just got, so venues can search near them without typing anything.
