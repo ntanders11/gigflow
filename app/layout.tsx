@@ -31,7 +31,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${geist.variable} antialiased`} style={{ backgroundColor: "#0E0E10" }}>
-      <body style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>{children}</body>
+      <body
+        style={{
+          backgroundColor: "#0E0E10",
+          color: "#F4E8D2",
+          // "black-translucent" (above) makes the iPhone status bar an
+          // overlay on top of the page instead of its own separate bar —
+          // without this, whatever sits at the very top of every page
+          // (a heading, a button) renders underneath the clock/battery
+          // icons instead of below them. Mirrors the bottom safe-area
+          // handling the mobile nav bars already do.
+          paddingTop: "env(safe-area-inset-top)",
+        }}
+      >
+        {children}
+      </body>
     </html>
   );
 }
