@@ -36,6 +36,45 @@ function isInRange(createdAt: string, range: RangeValue): boolean {
   return created.getFullYear() === Number(range);
 }
 
+// Same quoting rule the venue CSV export (app/api/venues/export/route.ts)
+// already uses — quote a field only if it actually needs it.
+function csvField(value: string | null | undefined): string {
+  const s = value ?? "";
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+const RANGE_FILENAME: Record<string, string> = { all: "all-time", "30d": "last-30-days", "90d": "last-90-days" };
+
+// Exports exactly what's currently on screen — the same range filter
+// already applied to the list above, not a separate query. A tax record
+// for "2026" should mean exactly the rows the 2026 filter shows.
+function downloadInvoicesCSV(invoices: InvoiceWithVenue[], range: RangeValue) {
+  const header = "Venue,City,Package,Payment Type,Event Date,Amount,Status,Invoice Date";
+  const rows = invoices.map((i) =>
+    [
+      csvField(i.venues?.name ?? "Unknown venue"),
+      csvField(i.venues?.city),
+      csvField(i.package_label),
+      csvField(i.payment_type === "deposit" ? "Deposit" : "Full payment"),
+      csvField(i.event_date ? fmtDate(i.event_date) : ""),
+      csvField((i.amount_cents / 100).toFixed(2)),
+      csvField(STATUS_STYLE[i.status]?.label ?? i.status),
+      csvField(fmtDate(i.created_at)),
+    ].join(",")
+  );
+  const csv = [header, ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `stagereach-invoices-${RANGE_FILENAME[range] ?? range}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ArtistInvoicesList({ initialInvoices }: { initialInvoices: InvoiceWithVenue[] }) {
   const [invoices, setInvoices] = useState(initialInvoices);
   const [range, setRange] = useState<RangeValue>("all");
@@ -70,8 +109,8 @@ export default function ArtistInvoicesList({ initialInvoices }: { initialInvoice
 
   return (
     <div>
-      {/* Range filter */}
-      <div className="flex justify-end mb-4 max-w-4xl">
+      {/* Range filter + export */}
+      <div className="flex justify-end items-center gap-2 mb-4 max-w-4xl">
         <select
           value={range}
           onChange={(e) => setRange(e.target.value)}
@@ -85,6 +124,14 @@ export default function ArtistInvoicesList({ initialInvoices }: { initialInvoice
             <option key={y} value={String(y)}>All of {y}</option>
           ))}
         </select>
+        <button
+          onClick={() => downloadInvoicesCSV(filtered, range)}
+          disabled={filtered.length === 0}
+          className="text-sm px-3 py-2 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
+          style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.1)", color: "#D4A64F" }}
+        >
+          Download CSV
+        </button>
       </div>
 
       {/* Summary cards */}
