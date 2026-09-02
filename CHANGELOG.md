@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (venue nav profile placement)
+- [Change] "My Profile" moved to the far right of the venue navigation, right next to the notification bell — separated from Dashboard/Discover Artists/Bookings/Invoices/Ratings on the left.
+
 ## 2026-09-01 (profile ratings + venue photo)
 - [Feature] Your own average rating and review count now show right on your profile page (both artist and venue side), with a link to see all your reviews — no more needing to go to a separate page just to check.
 - [Feature] Venues can now upload a profile photo, same as artists always could. It shows on your public venue profile too.
