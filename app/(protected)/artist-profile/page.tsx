@@ -119,7 +119,6 @@ export default function ArtistProfilePage() {
     const params = new URLSearchParams(window.location.search);
     const connected = params.get("connected");
     const error = params.get("error");
-    const reason = params.get("reason");
 
     // The onboarding wizard sets this cookie right before sending the artist
     // to Google/Microsoft, to tag "the next OAuth outcome belongs to
@@ -145,17 +144,7 @@ export default function ArtistProfilePage() {
         window.location.replace(`/onboarding?error=${encodeURIComponent(error)}`);
         return;
       }
-      // Temporary: show the actual error code (a known-safe string constant
-      // from the OAuth callback route, e.g. "invalid_state" / "token_failed"
-      // / "no_refresh_token" / "save_failed" — never anything sensitive),
-      // plus Google's own short machine-readable reason when the callback
-      // route captured one (e.g. "invalid_client" / "redirect_uri_mismatch"),
-      // instead of a generic message, to diagnose why Gmail connect is
-      // failing in production. Revert to the plain message once resolved.
-      setConnectBanner({
-        type: "error",
-        message: `Couldn't connect (${error}${reason ? `: ${reason}` : ""}) — please try again.`,
-      });
+      setConnectBanner({ type: "error", message: "Couldn't connect — please try again." });
       window.history.replaceState({}, "", "/artist-profile");
     }
   }, []);
