@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-09-01 (discover artists parity with discover venues)
+- [Fix] Discover Artists (venue side) no longer automatically searches your city the moment you open the page — same fix as Discover Venues got earlier today. The location field starts empty with a hint, and search only runs when you ask.
+- [Feature] Also added the same "📍 Use my current location" button Discover Venues just got, so venues can search near them without typing anything.
+
 ## 2026-09-01 (venue mobile nav)
 - [Fix] The venue-side navigation on mobile was one long bar that ran off the edge of the screen, so you'd have to swipe sideways to see all the options. It now works the same way the artist side does — a proper bottom tab bar with icons for Profile, Discover, Favorites, Bookings, Invoices, and Ratings.
 
