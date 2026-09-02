@@ -105,21 +105,26 @@ export async function proxy(request: NextRequest) {
         url.pathname = "/venues/signup";
         return NextResponse.redirect(url);
       }
-      // A fully-provisioned venue account's entire app surface (for now)
-      // is /venue/profile — this catches every OTHER protected path a
-      // venue might land on, most importantly /dashboard, which every
-      // login goes through first (app/login/page.tsx always pushes
-      // there). Without this, a venue signing back in after their first
-      // session would render the artist dashboard instead — the wizard's
-      // own explicit redirect on first signup only covers that one path.
-      // Widened from an exact match on "/venue/profile" to a prefix match
-      // on "/venue/" so new venue-facing pages (like /venue/discover) don't
-      // need a middleware change each time one's added. Safe against
-      // false-matching "/venues/signup" or "/venues" — those are a
-      // different path segment ("/venues/", plural) entirely.
+      // A fully-provisioned venue account's default landing page is
+      // /venue/dashboard — this catches every OTHER protected path a
+      // venue might land on, most importantly /dashboard (the artist
+      // one), which every login goes through first (app/login/page.tsx
+      // always pushes there). Without this, a venue signing back in
+      // after their first session would render the artist dashboard
+      // instead — the wizard's own explicit redirect on first signup
+      // (still /venue/profile, to finish filling in genres/photo right
+      // after creating the account) only covers that one path.
+      // Changed from /venue/profile to /venue/dashboard 2026-09-01 — the
+      // old target meant profile-editing fields were the first thing
+      // every venue saw on every single login, not just the first one.
+      // Widened from an exact match to a prefix match on "/venue/" so new
+      // venue-facing pages (like /venue/discover) don't need a middleware
+      // change each time one's added. Safe against false-matching
+      // "/venues/signup" or "/venues" — those are a different path
+      // segment ("/venues/", plural) entirely.
       if (venueProfile.venue_name && !pathname.startsWith("/venue/")) {
         const url = request.nextUrl.clone();
-        url.pathname = "/venue/profile";
+        url.pathname = "/venue/dashboard";
         return NextResponse.redirect(url);
       }
       return supabaseResponse;

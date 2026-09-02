@@ -6,6 +6,11 @@ import { usePathname } from "next/navigation";
 import NotificationBell from "@/components/notifications/NotificationBell";
 
 const links = [
+  // Dashboard leads the nav and is the default landing page for every
+  // venue login (see proxy.ts) — "My Profile" used to hold both roles,
+  // which meant profile-editing fields were the first thing a venue saw
+  // every time they signed in.
+  { href: "/venue/dashboard", label: "Dashboard",        mobileLabel: "Dashboard", icon: "◆" },
   { href: "/venue/profile",  label: "My Profile",       mobileLabel: "Profile",  icon: "◉" },
   // Favorites lives inside Discover Artists now (a "★ Favorites" dropdown
   // near the top of that page) rather than as its own tab/page.
