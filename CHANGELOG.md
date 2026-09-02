@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (use my location)
+- [Feature] Discover Venues now has a "📍 Use my current location" button. Tap it, allow location access when your phone/browser asks, and it searches near you right away — no typing a city or zip needed.
+
 ## 2026-09-01 (discover venues no auto-search)
 - [Fix] Discover Venues no longer automatically searches your home city the moment you open the page. The location field starts empty with a "Look up a zip code or city name" hint — search only runs when you ask it to.
 
