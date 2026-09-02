@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ArtistProfile, Package, VideoSample, SocialLinks, EmailConnection } from "@/types";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 import PushToggle from "@/components/notifications/PushToggle";
+import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
 
 const DEFAULT_PACKAGES: Package[] = [
   { id: "solo", label: "Solo", price_min: null, price_max: null, description: "", duration: "", color: "#D4A64F" },
@@ -347,6 +348,13 @@ export default function ArtistProfilePage() {
               </p>
             )}
           </div>
+
+          {/* Ratings summary — same public endpoint the public /profile/[id]
+              page reads, just the average + count instead of the full
+              review list, with a link to the full Ratings page. */}
+          {userId && (
+            <RatingsSummaryCard endpoint={`/api/public/artists/${userId}/ratings`} viewAllHref="/ratings" />
+          )}
 
           {/* Genre & Style */}
           <div
