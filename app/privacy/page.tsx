@@ -90,7 +90,7 @@ export default function PrivacyPage() {
         <h2 style={h2}>Contact us</h2>
         <p style={p}>
           Questions about this policy or your data? Reach out at{" "}
-          <a href="mailto:hello@stagereach.app" style={{ color: "#D4A64F" }}>hello@stagereach.app</a>.
+          <a href="mailto:booking@taylorandersonmusic.com" style={{ color: "#D4A64F" }}>booking@taylorandersonmusic.com</a>.
         </p>
       </div>
     </div>
