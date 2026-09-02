@@ -207,6 +207,12 @@ function SignupForm() {
             Sign in
           </Link>
         </p>
+        <p className="text-center mt-3 text-xs" style={{ color: "#5e5c58" }}>
+          By creating an account, you agree to our{" "}
+          <Link href="/terms" style={{ color: "#9a9591", textDecoration: "underline" }}>Terms</Link>
+          {" "}and{" "}
+          <Link href="/privacy" style={{ color: "#9a9591", textDecoration: "underline" }}>Privacy Policy</Link>.
+        </p>
       </div>
     </div>
   );

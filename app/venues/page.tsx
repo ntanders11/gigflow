@@ -27,6 +27,11 @@ export default function VenuesLandingPage() {
         <p className="text-xs mt-8" style={{ color: "#5e5c58" }}>
           An artist? <Link href="/login" className="underline">Log in here</Link> instead.
         </p>
+        <p className="text-xs mt-3" style={{ color: "#5e5c58" }}>
+          <Link href="/terms" className="underline">Terms</Link>
+          {" "}·{" "}
+          <Link href="/privacy" className="underline">Privacy Policy</Link>
+        </p>
       </div>
     </div>
   );
