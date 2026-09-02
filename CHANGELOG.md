@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (status bar overlap fix)
+- [Fix] Page headers and buttons were rendering underneath the iPhone's clock/battery status bar (seen on the venue Overview page, but it affected every page). Content now starts clear of it everywhere.
+
 ## 2026-09-01 (ratings out of the main nav)
 - [Change] "Ratings" is no longer its own tab in the main navigation (artist or venue side) — the nav was getting cluttered with one tab per feature. Nothing about the Ratings page itself changed; it's reached from a new "Pending Ratings" card on your Dashboard/Overview instead.
 
