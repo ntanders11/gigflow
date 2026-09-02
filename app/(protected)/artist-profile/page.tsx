@@ -287,9 +287,6 @@ export default function ArtistProfilePage() {
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {saving && <span style={{ color: "#5e5c58", fontSize: "11px" }}>Saving…</span>}
-          <button onClick={handleSignOut} className="text-xs whitespace-nowrap" style={{ color: "#5e5c58" }}>
-            Sign out
-          </button>
         </div>
       </div>
 
@@ -1033,6 +1030,19 @@ export default function ArtistProfilePage() {
           </div>
 
         </div>
+      </div>
+
+      {/* Sign out — its own standalone button, separate from the rest of
+          the profile fields, so it's easy to find and hard to hit by
+          accident. */}
+      <div className="max-w-5xl mt-8">
+        <button
+          onClick={handleSignOut}
+          className="w-full md:w-auto px-6 py-3 rounded-lg text-sm font-medium transition-all hover:brightness-125"
+          style={{ backgroundColor: "rgba(226,92,92,0.1)", color: "#e25c5c", border: "1px solid rgba(226,92,92,0.25)" }}
+        >
+          Sign out
+        </button>
       </div>
     </div>
   );
