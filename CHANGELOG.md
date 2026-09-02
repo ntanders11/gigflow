@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-09-01 (profile ratings + venue photo)
+- [Feature] Your own average rating and review count now show right on your profile page (both artist and venue side), with a link to see all your reviews — no more needing to go to a separate page just to check.
+- [Feature] Venues can now upload a profile photo, same as artists always could. It shows on your public venue profile too.
+
 ## 2026-09-01 (venue dashboard)
 - [Feature] Venues now have their own Overview/Dashboard page — pending booking requests, upcoming gigs, what's outstanding, favorited artists, and pending ratings, all at a glance, matching what the artist side already has.
 - [Change] Logging in as a venue now lands on this new Dashboard instead of your Profile page. "Dashboard" is the first item in the venue nav; "My Profile" is still right there, just no longer the automatic starting point every time.
