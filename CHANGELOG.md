@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (discover venues no auto-search)
+- [Fix] Discover Venues no longer automatically searches your home city the moment you open the page. The location field starts empty with a "Look up a zip code or city name" hint — search only runs when you ask it to.
+
 ## 2026-09-01 (sign out button)
 - [Fix] "Sign out" on your Artist Profile page is now its own full-size button at the bottom of the page, instead of a small text link tucked in the header — easier to find, harder to tap by accident.
 
