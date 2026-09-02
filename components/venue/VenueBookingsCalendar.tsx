@@ -41,6 +41,17 @@ function cancelledBySubLabel(r: VenueBookingRequestView): string | null {
 const DEFAULT_START_TIME = "19:00";
 const DEFAULT_END_TIME = "21:00";
 
+// Nth occurrence (n=0 is the date itself) on a weekly or monthly cadence
+// from a starting date. Plain Date math, not date-fns's addWeeks/addMonths
+// — this file already imports date-fns for the calendar grid, but this is
+// simple enough not to need it, and keeps the diff small.
+function addOccurrence(dateStr: string, pattern: "weekly" | "monthly", n: number): string {
+  const d = new Date(dateStr + "T12:00:00");
+  if (pattern === "weekly") d.setDate(d.getDate() + 7 * n);
+  else d.setMonth(d.getMonth() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 const inputStyle = {
   background: "#262b33",
   border: "1px solid rgba(255,255,255,0.08)",
@@ -71,8 +82,12 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
   const [bookAgainStartTime, setBookAgainStartTime] = useState(r.start_time || DEFAULT_START_TIME);
   const [bookAgainEndTime, setBookAgainEndTime] = useState(r.end_time || DEFAULT_END_TIME);
   const [bookAgainMessage, setBookAgainMessage] = useState("");
+  const [bookAgainRepeat, setBookAgainRepeat] = useState<"none" | "weekly" | "monthly">("none");
+  const [bookAgainRepeatCount, setBookAgainRepeatCount] = useState(3);
   const [bookAgainSaving, setBookAgainSaving] = useState(false);
   const [bookAgainSent, setBookAgainSent] = useState(false);
+  const [bookAgainSentCount, setBookAgainSentCount] = useState(0);
+  const [bookAgainSkipped, setBookAgainSkipped] = useState<string[]>([]);
   const [bookAgainError, setBookAgainError] = useState("");
   const [unavailableDates, setUnavailableDates] = useState<Set<string>>(new Set());
   const canBookAgain = r.status === "accepted";
@@ -82,34 +97,61 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
     setIsBookingAgain(true);
     setBookAgainSent(false);
     setBookAgainError("");
+    setBookAgainRepeat("none");
+    setBookAgainRepeatCount(3);
+    setBookAgainSkipped([]);
     fetch(`/api/public/artists/${r.artist_user_id}/availability`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setUnavailableDates(new Set(data?.dates ?? [])))
       .catch(() => {});
   }
 
+  // With a repeat pattern set, this sends one individual request per
+  // occurrence instead of one — there's no "series" record anywhere, just
+  // several ordinary booking_requests rows created in one action. Each one
+  // still goes through the normal server-side availability check
+  // (POST /api/venue/booking-requests already rejects an unavailable
+  // date), so a later occurrence colliding with a blackout date or
+  // another gig just gets skipped and reported, not silently created —
+  // and the artist reviews and accepts each one individually, exactly
+  // like any other request.
   async function submitBookAgain() {
     if (!bookAgainDate || bookAgainIsUnavailable) return;
     setBookAgainSaving(true);
     setBookAgainError("");
-    const res = await fetch("/api/venue/booking-requests", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        artist_user_id: r.artist_user_id,
-        date: bookAgainDate,
-        start_time: bookAgainStartTime || undefined,
-        end_time: bookAgainEndTime || undefined,
-        message: bookAgainMessage.trim() || undefined,
-      }),
-    });
+
+    const dates = bookAgainRepeat === "none"
+      ? [bookAgainDate]
+      : Array.from({ length: bookAgainRepeatCount }, (_, i) => addOccurrence(bookAgainDate, bookAgainRepeat, i));
+
+    let sentCount = 0;
+    const skipped: string[] = [];
+
+    for (const date of dates) {
+      const res = await fetch("/api/venue/booking-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          artist_user_id: r.artist_user_id,
+          date,
+          start_time: bookAgainStartTime || undefined,
+          end_time: bookAgainEndTime || undefined,
+          message: bookAgainMessage.trim() || undefined,
+        }),
+      });
+      if (res.ok) sentCount++;
+      else skipped.push(date);
+    }
+
     setBookAgainSaving(false);
-    if (res.ok) {
+    setBookAgainSentCount(sentCount);
+    setBookAgainSkipped(skipped);
+
+    if (sentCount > 0) {
       setBookAgainSent(true);
-      onCancelled(); // reuses the same "refresh the list" callback — a new pending request should show up too
+      onCancelled(); // reuses the same "refresh the list" callback — new pending requests should show up too
     } else {
-      const data = await res.json().catch(() => ({}));
-      setBookAgainError(data.error ?? "Couldn't send the request — please try again.");
+      setBookAgainError("None of those dates could be requested — they may already be unavailable.");
     }
   }
 
@@ -213,10 +255,18 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
       >
         {bookAgainSent ? (
           <div className="text-center py-2">
-            <p className="text-sm font-semibold mb-1" style={{ color: "#F4E8D2" }}>Request sent</p>
-            <p className="text-xs mb-3" style={{ color: "#9a9591" }}>
-              {r.artist_name} will be notified — you&apos;ll see it here once they respond.
+            <p className="text-sm font-semibold mb-1" style={{ color: "#F4E8D2" }}>
+              {bookAgainSentCount > 1 ? `${bookAgainSentCount} requests sent` : "Request sent"}
             </p>
+            <p className={bookAgainSkipped.length > 0 ? "text-xs mb-1" : "text-xs mb-3"} style={{ color: "#9a9591" }}>
+              {r.artist_name} will be notified — you&apos;ll see {bookAgainSentCount > 1 ? "them" : "it"} here once they respond.
+            </p>
+            {bookAgainSkipped.length > 0 && (
+              <p className="text-xs mb-3" style={{ color: "#e09b50" }}>
+                {bookAgainSkipped.length} date{bookAgainSkipped.length !== 1 ? "s" : ""} couldn&apos;t be requested (already unavailable):{" "}
+                {bookAgainSkipped.map((d) => format(new Date(d + "T12:00:00"), "MMM d")).join(", ")}.
+              </p>
+            )}
             <button
               onClick={() => setIsBookingAgain(false)}
               className="text-xs px-4 py-1.5 rounded-lg font-semibold"
@@ -252,6 +302,37 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
               </div>
             </div>
             <div>
+              <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Repeat this booking</label>
+              <div className="flex gap-2">
+                <select
+                  value={bookAgainRepeat}
+                  onChange={(e) => setBookAgainRepeat(e.target.value as "none" | "weekly" | "monthly")}
+                  style={{ ...inputStyle, flex: 1 }}
+                >
+                  <option value="none">Don&apos;t repeat</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+                {bookAgainRepeat !== "none" && (
+                  <select
+                    value={bookAgainRepeatCount}
+                    onChange={(e) => setBookAgainRepeatCount(Number(e.target.value))}
+                    style={{ ...inputStyle, width: "140px" }}
+                  >
+                    {[2, 3, 6, 12].map((n) => (
+                      <option key={n} value={n}>{n} bookings</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              {bookAgainRepeat !== "none" && (
+                <p className="text-xs mt-1" style={{ color: "#5e5c58" }}>
+                  Sends {bookAgainRepeatCount} separate requests, starting {bookAgainDate ? format(new Date(bookAgainDate + "T12:00:00"), "MMM d") : "on the date above"}
+                  {" "}and repeating {bookAgainRepeat}. {r.artist_name} still reviews and accepts each one individually.
+                </p>
+              )}
+            </div>
+            <div>
               <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Note (optional)</label>
               <textarea
                 rows={2}
@@ -268,7 +349,11 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
                 className="text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
                 style={{ background: "#D4A64F", color: "#0E0E10" }}
               >
-                {bookAgainSaving ? "Sending…" : "Send Request"}
+                {bookAgainSaving
+                  ? "Sending…"
+                  : bookAgainRepeat === "none"
+                  ? "Send Request"
+                  : `Send ${bookAgainRepeatCount} Requests`}
               </button>
               <button
                 onClick={() => setIsBookingAgain(false)}
