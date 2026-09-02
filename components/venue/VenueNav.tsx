@@ -18,7 +18,10 @@ const mainLinks = [
   { href: "/venue/discover", label: "Discover Artists",  mobileLabel: "Discover", icon: "⊕" },
   { href: "/venue/bookings", label: "Bookings",          mobileLabel: "Bookings", icon: "☐" },
   { href: "/venue/invoices", label: "Invoices",          mobileLabel: "Invoices", icon: "$" },
-  { href: "/venue/ratings",  label: "Ratings",           mobileLabel: "Ratings",  icon: "★" },
+  // "Ratings" (/venue/ratings) is deliberately not a main nav link — the
+  // page itself is untouched and fully functional, just reached from the
+  // Dashboard's "Pending Ratings" stat card instead of its own tab, to
+  // keep the main nav from accumulating one tab per feature (2026-09-01).
 ];
 const profileLink = { href: "/venue/profile", label: "My Profile", mobileLabel: "Profile", icon: "◉" };
 const links = [...mainLinks, profileLink];

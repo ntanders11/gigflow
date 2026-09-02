@@ -7,6 +7,10 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import NotificationBell from "@/components/notifications/NotificationBell";
 
+// "Ratings" (/ratings) is deliberately not a main nav link — the page
+// itself is untouched and fully functional, just reached from the
+// Dashboard's "Pending Ratings" stat card instead of its own tab, to keep
+// the main nav from accumulating one tab per feature (2026-09-01).
 const mainLinks = [
   { href: "/dashboard",  label: "Overview",         icon: "◆", comingSoon: false },
   { href: "/pipeline",   label: "Pipeline",          icon: "◎", comingSoon: false },
@@ -14,7 +18,6 @@ const mainLinks = [
   { href: "/venues/import", label: "Outreach",       icon: "✉", comingSoon: false },
   { href: "/calendar",   label: "Booking Calendar",  icon: "☐", comingSoon: false },
   { href: "/invoices",   label: "Invoices",          icon: "$", comingSoon: false },
-  { href: "/ratings",    label: "Ratings",           icon: "★", comingSoon: false },
 ];
 
 const profileLinks = [

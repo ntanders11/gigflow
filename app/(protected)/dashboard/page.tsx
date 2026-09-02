@@ -1,8 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { VenueStage } from "@/types";
 import NeedsAttentionSection from "@/components/dashboard/NeedsAttentionSection";
+import { getArtistPendingRelationships } from "@/lib/ratings/eligibility";
 
 const STAGE_STYLE: Record<
   VenueStage,
@@ -85,6 +86,20 @@ export default async function DashboardPage() {
   const unpaidCount = unpaidInvoices?.length ?? 0;
   const unpaidTotal = (unpaidInvoices ?? []).reduce((sum, inv) => sum + inv.amount_cents, 0);
   const revenueTotal = (paidInvoices ?? []).reduce((sum, inv) => sum + inv.amount_cents, 0);
+
+  // Pending ratings — /ratings has no nav tab of its own anymore (removed
+  // 2026-09-01 to keep the main nav from growing one tab per feature), so
+  // this stat card is now the way in from here, same as the venue
+  // dashboard's own "Pending Ratings" card already works. Wrapped
+  // defensively so one failing query doesn't take the whole page down.
+  let pendingRatingsCount = 0;
+  try {
+    const service = await createServiceClient();
+    const pendingRatings = await getArtistPendingRelationships(service, user.id);
+    pendingRatingsCount = pendingRatings.length;
+  } catch (err) {
+    console.error("dashboard: pending ratings lookup failed", err);
+  }
 
   // Aggregate stats
   const totalVenues = allVenues.length;
@@ -185,6 +200,13 @@ export default async function DashboardPage() {
       color: "#4caf7d",
       href: "/invoices",
     },
+    {
+      label: "Pending Ratings",
+      value: pendingRatingsCount,
+      trend: pendingRatingsCount > 0 ? "ready to rate" : "all caught up",
+      color: pendingRatingsCount > 0 ? "#e09b50" : "#9a9591",
+      href: "/ratings",
+    },
   ];
 
   return (
@@ -276,7 +298,7 @@ export default async function DashboardPage() {
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-8 max-w-6xl">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mb-8 max-w-6xl">
         {statCards.map((stat) => (
           <Link
             key={stat.label}
