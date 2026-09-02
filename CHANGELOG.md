@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (ratings summary relocated)
+- [Change] Moved the ratings summary on your profile page (artist and venue side) from right next to your photo down to a quieter spot near the Sign out button at the bottom — still there, just not competing for attention up top.
+
 ## 2026-09-01 (venue sign out button)
 - [Fix] "Sign out" on your venue Profile page is now the same full-size button at the bottom of the page as the artist side has, instead of a small text link up top — easier to find, harder to tap by accident.
 
