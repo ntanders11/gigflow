@@ -153,10 +153,10 @@ export default function VenueProfilePage() {
           <h1 className="text-2xl font-bold" style={{ color: "#F4E8D2" }}>{profile.venue_name}</h1>
         </div>
 
-        {/* Photo + Ratings */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        {/* Photo */}
+        <div className="mb-6">
           <div
-            className="rounded-xl p-4 text-center sm:w-52 sm:shrink-0"
+            className="rounded-xl p-4 text-center sm:w-52"
             style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
           >
             <div className="w-20 h-20 mx-auto mb-3">
@@ -186,10 +186,6 @@ export default function VenueProfilePage() {
             {photoError && (
               <p style={{ color: "#e25c5c", fontSize: "10px", marginTop: "6px" }}>{photoError}</p>
             )}
-          </div>
-
-          <div className="flex-1">
-            <RatingsSummaryCard endpoint={`/api/public/venues/${profile.id}/ratings`} viewAllHref="/venue/ratings" />
           </div>
         </div>
 
@@ -263,6 +259,15 @@ export default function VenueProfilePage() {
           </button>
           {saved && <span className="text-xs ml-3" style={{ color: "#4caf7d" }}>Saved</span>}
         </form>
+
+        {/* Ratings summary — moved down here from beside the photo
+            (2026-09-01): same public endpoint the public
+            /venues/profile/[id] page reads, just the average + count
+            instead of the full review list. A quieter spot near Sign out
+            instead of competing with the photo up top. */}
+        <div className="mt-8" style={{ maxWidth: "260px" }}>
+          <RatingsSummaryCard endpoint={`/api/public/venues/${profile.id}/ratings`} viewAllHref="/venue/ratings" />
+        </div>
 
         {/* Sign out — same standalone full-width button as the artist
             side's "My Artist Profile" page, for the same reason: a small

@@ -349,13 +349,6 @@ export default function ArtistProfilePage() {
             )}
           </div>
 
-          {/* Ratings summary — same public endpoint the public /profile/[id]
-              page reads, just the average + count instead of the full
-              review list, with a link to the full Ratings page. */}
-          {userId && (
-            <RatingsSummaryCard endpoint={`/api/public/artists/${userId}/ratings`} viewAllHref="/ratings" />
-          )}
-
           {/* Genre & Style */}
           <div
             className="rounded-xl p-4"
@@ -1039,6 +1032,17 @@ export default function ArtistProfilePage() {
 
         </div>
       </div>
+
+      {/* Ratings summary — moved down here from the sidebar's hero area
+          next to the photo (2026-09-01): same public endpoint the public
+          /profile/[id] page reads, just the average + count instead of the
+          full review list, with a link to the full Ratings page. A quieter
+          spot near Sign out instead of competing with the photo up top. */}
+      {userId && (
+        <div className="mt-8" style={{ maxWidth: "260px" }}>
+          <RatingsSummaryCard endpoint={`/api/public/artists/${userId}/ratings`} viewAllHref="/ratings" />
+        </div>
+      )}
 
       {/* Sign out — its own standalone button, separate from the rest of
           the profile fields, so it's easy to find and hard to hit by
