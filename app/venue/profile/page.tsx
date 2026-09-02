@@ -149,9 +149,8 @@ export default function VenueProfilePage() {
       )}
       <VenueNav />
       <div className="max-w-2xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8">
           <h1 className="text-2xl font-bold" style={{ color: "#F4E8D2" }}>{profile.venue_name}</h1>
-          <button onClick={handleSignOut} className="text-xs" style={labelStyle}>Sign out</button>
         </div>
 
         {/* Photo + Ratings */}
@@ -264,6 +263,19 @@ export default function VenueProfilePage() {
           </button>
           {saved && <span className="text-xs ml-3" style={{ color: "#4caf7d" }}>Saved</span>}
         </form>
+
+        {/* Sign out — same standalone full-width button as the artist
+            side's "My Artist Profile" page, for the same reason: a small
+            text link is easy to miss and easy to misfire on mobile. */}
+        <div className="mt-8">
+          <button
+            onClick={handleSignOut}
+            className="w-full md:w-auto px-6 py-3 rounded-lg text-sm font-medium transition-all hover:brightness-125"
+            style={{ backgroundColor: "rgba(226,92,92,0.1)", color: "#e25c5c", border: "1px solid rgba(226,92,92,0.25)" }}
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
   );
