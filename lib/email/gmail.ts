@@ -24,7 +24,18 @@ export async function exchangeCode(code: string, redirectUri: string): Promise<T
   });
 
   if (!res.ok) {
-    throw new Error(`gmail: code exchange failed (${res.status})`);
+    // Google's token endpoint returns a short, safe machine-readable reason
+    // in the body on failure (e.g. "invalid_client", "redirect_uri_mismatch",
+    // "invalid_grant") — never anything sensitive. Surfacing it is the
+    // difference between "something failed" and actually knowing why.
+    let reason = "";
+    try {
+      const body = await res.json();
+      reason = body?.error ?? "";
+    } catch {
+      // body wasn't JSON — leave reason empty, status code alone still helps
+    }
+    throw new Error(`gmail: code exchange failed (${res.status}${reason ? `: ${reason}` : ""})`);
   }
 
   return res.json();

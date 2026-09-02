@@ -27,7 +27,10 @@ export async function GET(req: NextRequest) {
     tokens = await exchangeCode(code, redirectUri);
   } catch (err) {
     console.error("gmail callback: token exchange failed", err);
-    return NextResponse.redirect(new URL("/artist-profile?error=token_failed", req.url));
+    const message = err instanceof Error ? err.message : "";
+    const url = new URL("/artist-profile?error=token_failed", req.url);
+    if (message) url.searchParams.set("reason", message);
+    return NextResponse.redirect(url);
   }
 
   if (!tokens.refresh_token) {
