@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const VENUE_TYPES = [
   { key: "bar",        label: "Bar",          color: "#D4A64F" },
@@ -69,22 +69,6 @@ export default function DiscoverView() {
   function handleSearch() {
     doSearch(city, radius);
   }
-
-  // On mount: load the user's home zone, sync the controls, and auto-search.
-  // This means a new user sees their local venues immediately — no button click needed.
-  useEffect(() => {
-    fetch("/api/zones")
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        const zone = data?.zones?.[0];
-        if (!zone?.name) return;
-        const r = Math.min(zone.radius_mi ?? 30, 50); // slider max is 50
-        setCity(zone.name);
-        setRadius(r);
-        doSearch(zone.name, r);
-      })
-      .catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleAdd(venue: DiscoverResult) {
     setAdding((prev) => new Set(prev).add(venue.osm_id));
@@ -190,7 +174,7 @@ export default function DiscoverView() {
               value={city}
               onChange={(e) => setCity(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="City, state or zip code"
+              placeholder="Look up a zip code or city name"
               className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
               style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
             />
