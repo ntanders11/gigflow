@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (recurring bookings)
+- [Feature] "Book Again" (on a venue's accepted bookings) now has a "Repeat this booking" option — weekly or monthly, 2 to 12 times — so a standing gig with the same artist doesn't need a fresh request every time. Each date still goes to the artist as its own request to accept, and any date that's already unavailable gets skipped and flagged instead of silently failing.
+
 ## 2026-09-01 (invoice CSV export)
 - [Feature] Added a "Download CSV" button to the Invoices page, both artist and venue side, right next to the date filter. Pick a year, hit download, and you've got a clean record ready for taxes or bookkeeping.
 
