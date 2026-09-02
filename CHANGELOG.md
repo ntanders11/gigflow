@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-09-01 (venue dashboard)
+- [Feature] Venues now have their own Overview/Dashboard page — pending booking requests, upcoming gigs, what's outstanding, favorited artists, and pending ratings, all at a glance, matching what the artist side already has.
+- [Change] Logging in as a venue now lands on this new Dashboard instead of your Profile page. "Dashboard" is the first item in the venue nav; "My Profile" is still right there, just no longer the automatic starting point every time.
+
 ## 2026-09-01 (favorites folded into discover artists)
 - [Change] Removed the separate "Favorites" tab on the venue side. Your saved artists now live inside Discover Artists instead — a "★ Favorites" dropdown near the top of the page that expands to show everyone you've saved, right where you're already searching.
 
