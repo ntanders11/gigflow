@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (ratings out of the main nav)
+- [Change] "Ratings" is no longer its own tab in the main navigation (artist or venue side) — the nav was getting cluttered with one tab per feature. Nothing about the Ratings page itself changed; it's reached from a new "Pending Ratings" card on your Dashboard/Overview instead.
+
 ## 2026-09-01 (discover artists layout cleanup)
 - [Change] Moved the "★ Favorites" button on Discover Artists from sitting alone at the top of the page to right beside the "Search Artists" button — cleaner, and grouped with the action it's related to.
 
