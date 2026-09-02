@@ -40,22 +40,29 @@ export default function DiscoverView() {
   const [added, setAdded]       = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const [coords, setCoords]     = useState<{ lat: number; lon: number } | null>(null);
+  const [locating, setLocating] = useState(false);
 
-  // Core search function — accepts city/radius directly so it can be called
-  // both from the Search button (uses state) and from the auto-search on mount.
-  // Geocoding now happens server-side so the Google API key can be used —
-  // much more reliable than client-side Nominatim which can return wrong cities.
-  async function doSearch(searchCity: string, searchRadius: number) {
-    if (!searchCity.trim()) return;
+  // Core search function — accepts city/radius/coords directly so it can be
+  // called from the Search button (uses state) or right after a successful
+  // "Use my current location" lookup. Geocoding a typed city happens
+  // server-side (Google Geocoding, much more reliable than client-side
+  // Nominatim); coords from the browser's own GPS/Wi-Fi lookup skip that
+  // step entirely and go straight to the API as lat/lon.
+  async function doSearch(searchCity: string, searchRadius: number, searchCoords: { lat: number; lon: number } | null) {
+    if (!searchCoords && !searchCity.trim()) return;
     setLoading(true);
     setError("");
     setSearched(false);
     setSelected(new Set());
 
-    const params = new URLSearchParams({
-      city:   searchCity.trim(),
-      radius: String(searchRadius),
-    });
+    const params = new URLSearchParams({ radius: String(searchRadius) });
+    if (searchCoords) {
+      params.set("lat", String(searchCoords.lat));
+      params.set("lon", String(searchCoords.lon));
+    } else {
+      params.set("city", searchCity.trim());
+    }
 
     const res = await fetch(`/api/venues/discover?${params}`);
     const data = await res.json();
@@ -67,7 +74,40 @@ export default function DiscoverView() {
   }
 
   function handleSearch() {
-    doSearch(city, radius);
+    doSearch(city, radius, coords);
+  }
+
+  // Asks the browser for permission to share the device's location. On
+  // success, searches immediately using those coordinates — this is an
+  // explicit user action (click + grant permission), unlike the old
+  // page-load auto-search Taylor asked to remove, so firing the search
+  // right away here is the whole point of the button rather than the
+  // surprise that one was.
+  function handleUseLocation() {
+    if (!navigator.geolocation) {
+      setError("Your browser doesn't support location lookup — try typing a city or zip instead.");
+      return;
+    }
+    setLocating(true);
+    setError("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const c = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        setLocating(false);
+        setCoords(c);
+        setCity("Current location");
+        doSearch("", radius, c);
+      },
+      (err) => {
+        setLocating(false);
+        setError(
+          err.code === err.PERMISSION_DENIED
+            ? "Location access was denied — you can still search by typing a city or zip code."
+            : "Couldn't get your location — try typing a city or zip code instead."
+        );
+      },
+      { timeout: 10000 }
+    );
   }
 
   async function handleAdd(venue: DiscoverResult) {
@@ -172,12 +212,21 @@ export default function DiscoverView() {
             <input
               type="text"
               value={city}
-              onChange={(e) => setCity(e.target.value)}
+              onChange={(e) => { setCity(e.target.value); setCoords(null); }}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Look up a zip code or city name"
               className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
               style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
             />
+            <button
+              type="button"
+              onClick={handleUseLocation}
+              disabled={locating}
+              className="mt-2 text-xs font-medium transition-all hover:brightness-125 disabled:opacity-50"
+              style={{ color: "#D4A64F" }}
+            >
+              {locating ? "Getting your location…" : "📍 Use my current location"}
+            </button>
           </div>
           <div style={{ width: "130px" }}>
             <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>
