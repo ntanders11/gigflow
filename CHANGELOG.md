@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (invoice CSV export)
+- [Feature] Added a "Download CSV" button to the Invoices page, both artist and venue side, right next to the date filter. Pick a year, hit download, and you've got a clean record ready for taxes or bookkeeping.
+
 ## 2026-09-01 (day-of gig reminders)
 - [Feature] Every gig now sends an automatic reminder the morning of the show — a notification and phone alert to you with the venue, the time, and how many prep checklist items are still open, and one to the venue too if they have a StageReach account. Needs a quick database update on your end (SQL in the migration file) before it starts working.
 
