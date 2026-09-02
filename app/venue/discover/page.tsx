@@ -160,38 +160,6 @@ export default function VenueDiscoverPage() {
         <div className="max-w-4xl mx-auto px-6 py-10">
           <h1 className="text-2xl font-bold mb-6" style={{ color: "#F4E8D2" }}>Discover Artists</h1>
 
-          {/* Favorites — replaced the standalone "Favorites" nav tab/page;
-              everything lives here now, one tap from search. */}
-          <div className="mb-6">
-            <button
-              type="button"
-              onClick={() => setFavoritesOpen((o) => !o)}
-              className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg transition-all hover:brightness-110"
-              style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)", color: "#D4A64F" }}
-            >
-              ★ Favorites{favoritesLoaded ? ` (${favorites.length})` : ""}
-              <span style={{ fontSize: "10px", color: "#9a9591" }}>{favoritesOpen ? "▲" : "▼"}</span>
-            </button>
-
-            {favoritesOpen && (
-              <div className="mt-3 rounded-xl p-4" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
-                {!favoritesLoaded ? (
-                  <p className="text-sm text-center py-4" style={{ color: "#5e5c58" }}>Loading…</p>
-                ) : favorites.length === 0 ? (
-                  <p className="text-sm text-center py-4" style={{ color: "#5e5c58" }}>
-                    No favorites yet — tap the heart on any artist below to save them here.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {favorites.map((a) => (
-                      <ArtistCard key={a.user_id} artist={a} onUnfavorited={handleUnfavorited} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
           <form onSubmit={handleSearch} className="rounded-xl p-5 mb-6" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
             <div className="flex gap-3 mb-4">
               <div className="flex-1">
@@ -227,16 +195,48 @@ export default function VenueDiscoverPage() {
                 />
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
-              style={{ backgroundColor: "#D4A64F", color: "#0E0E10", opacity: loading ? 0.7 : 1 }}
-            >
-              {loading ? "Searching…" : "Search Artists"}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
+                style={{ backgroundColor: "#D4A64F", color: "#0E0E10", opacity: loading ? 0.7 : 1 }}
+              >
+                {loading ? "Searching…" : "Search Artists"}
+              </button>
+              {/* Favorites — replaced the standalone "Favorites" nav
+                  tab/page; lives beside the search action instead of its
+                  own separate block up top. */}
+              <button
+                type="button"
+                onClick={() => setFavoritesOpen((o) => !o)}
+                className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition-all hover:brightness-110"
+                style={{ backgroundColor: "transparent", border: "1px solid rgba(212,166,79,0.3)", color: "#D4A64F" }}
+              >
+                ★ Favorites{favoritesLoaded ? ` (${favorites.length})` : ""}
+                <span style={{ fontSize: "10px", color: "#9a9591" }}>{favoritesOpen ? "▲" : "▼"}</span>
+              </button>
+            </div>
             {error && <p className="mt-3 text-sm" style={{ color: "#e25c5c" }}>{error}</p>}
           </form>
+
+          {favoritesOpen && (
+            <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
+              {!favoritesLoaded ? (
+                <p className="text-sm text-center py-4" style={{ color: "#5e5c58" }}>Loading…</p>
+              ) : favorites.length === 0 ? (
+                <p className="text-sm text-center py-4" style={{ color: "#5e5c58" }}>
+                  No favorites yet — tap the heart on any artist below to save them here.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {favorites.map((a) => (
+                    <ArtistCard key={a.user_id} artist={a} onUnfavorited={handleUnfavorited} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {loading && (
             <div className="text-center py-16">
