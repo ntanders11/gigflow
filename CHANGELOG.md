@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (venue mobile nav)
+- [Fix] The venue-side navigation on mobile was one long bar that ran off the edge of the screen, so you'd have to swipe sideways to see all the options. It now works the same way the artist side does — a proper bottom tab bar with icons for Profile, Discover, Favorites, Bookings, Invoices, and Ratings.
+
 ## 2026-09-01 (use my location)
 - [Feature] Discover Venues now has a "📍 Use my current location" button. Tap it, allow location access when your phone/browser asks, and it searches near you right away — no typing a city or zip needed.
 
