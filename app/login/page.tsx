@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,6 +12,46 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // /api/auth/confirm lands here with ?error=confirmation_failed whenever
+  // the one-time confirmation code couldn't be exchanged for a session —
+  // most commonly because something (an email client's own link-safety
+  // scanner, or a second click on the same link) already used it up before
+  // the person got to it. Before this, that failure was completely silent:
+  // the visitor just landed on a normal-looking login page with no idea
+  // anything had gone wrong, then got a confusing "Email not confirmed"
+  // error trying to sign in — discovered via a real beta tester's report
+  // 2026-09-02.
+  const [confirmationFailed, setConfirmationFailed] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "confirmation_failed") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of a post-redirect URL param; hydration-safe since it only runs client-side after mount
+      setConfirmationFailed(true);
+      window.history.replaceState({}, "", "/login");
+    }
+  }, []);
+
+  async function resendConfirmation() {
+    if (!email.trim()) {
+      setResendError("Enter your email above first, then hit Resend.");
+      return;
+    }
+    setResending(true);
+    setResendError(null);
+    const supabase = createClient();
+    const { error } = await supabase.auth.resend({ type: "signup", email: email.trim() });
+    setResending(false);
+    if (error) {
+      setResendError(error.message);
+    } else {
+      setResendSent(true);
+    }
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -56,6 +96,33 @@ export default function LoginPage() {
             Sign in to your account
           </p>
         </div>
+
+        {confirmationFailed && (
+          <div
+            className="rounded-lg px-3 py-3 mb-4 text-sm"
+            style={{ backgroundColor: "rgba(212,166,79,0.1)", border: "1px solid rgba(212,166,79,0.25)", color: "#D4A64F" }}
+          >
+            {resendSent ? (
+              <p>New confirmation email sent — check your inbox and click the fresh link.</p>
+            ) : (
+              <>
+                <p className="mb-2">
+                  That confirmation link didn&apos;t work — it may have already been opened once (some email
+                  apps do this automatically) or expired. Enter your email below and resend it.
+                </p>
+                <button
+                  type="button"
+                  onClick={resendConfirmation}
+                  disabled={resending}
+                  className="text-sm font-semibold underline disabled:opacity-50"
+                >
+                  {resending ? "Sending…" : "Resend confirmation email"}
+                </button>
+                {resendError && <p className="mt-1" style={{ color: "#e25c5c" }}>{resendError}</p>}
+              </>
+            )}
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
