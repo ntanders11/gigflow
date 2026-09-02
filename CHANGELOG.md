@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (venue sign out button)
+- [Fix] "Sign out" on your venue Profile page is now the same full-size button at the bottom of the page as the artist side has, instead of a small text link up top — easier to find, harder to tap by accident.
+
 ## 2026-09-01 (venue nav profile placement)
 - [Change] "My Profile" moved to the far right of the venue navigation, right next to the notification bell — separated from Dashboard/Discover Artists/Bookings/Invoices/Ratings on the left.
 
