@@ -307,7 +307,7 @@ export default function VenueRatingsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#0E0E10" }}>
+    <div className="min-h-screen pb-28 md:pb-0" style={{ backgroundColor: "#0E0E10" }}>
       <VenueNav />
       {!loading && (
         <div className="max-w-2xl mx-auto px-6 py-10">

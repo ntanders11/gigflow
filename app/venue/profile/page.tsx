@@ -83,7 +83,7 @@ export default function VenueProfilePage() {
   if (!profile) return <div className="p-8" style={{ color: "#9a9591" }}>Couldn&apos;t load your profile.</div>;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#0E0E10" }}>
+    <div className="min-h-screen pb-28 md:pb-0" style={{ backgroundColor: "#0E0E10" }}>
       <VenueNav />
       <div className="max-w-2xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">

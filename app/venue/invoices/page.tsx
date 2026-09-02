@@ -67,7 +67,7 @@ export default async function VenueInvoicesPage() {
   return (
     <>
       <VenueNav />
-      <div className="min-h-screen" style={{ backgroundColor: "#0E0E10" }}>
+      <div className="min-h-screen pb-28 md:pb-0" style={{ backgroundColor: "#0E0E10" }}>
         <div className="max-w-4xl mx-auto px-6 py-10">
           <h1 className="text-2xl font-bold mb-6" style={{ color: "#F4E8D2" }}>Invoices</h1>
           <VenueInvoicesList invoices={invoices} />
