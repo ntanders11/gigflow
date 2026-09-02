@@ -11,12 +11,15 @@ interface TokenResponse {
 }
 
 export async function exchangeCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID!;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET!;
+
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_OAUTH_CLIENT_ID!,
-      client_secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET!,
+      client_id: clientId,
+      client_secret: clientSecret,
       code,
       redirect_uri: redirectUri,
       grant_type: "authorization_code",
@@ -26,16 +29,25 @@ export async function exchangeCode(code: string, redirectUri: string): Promise<T
   if (!res.ok) {
     // Google's token endpoint returns a short, safe machine-readable reason
     // in the body on failure (e.g. "invalid_client", "redirect_uri_mismatch",
-    // "invalid_grant") — never anything sensitive. Surfacing it is the
-    // difference between "something failed" and actually knowing why.
+    // "invalid_grant"), sometimes with a more specific error_description —
+    // never anything sensitive. Surfacing it is the difference between
+    // "something failed" and actually knowing why.
     let reason = "";
     try {
       const body = await res.json();
-      reason = body?.error ?? "";
+      reason = [body?.error, body?.error_description].filter(Boolean).join(" — ");
     } catch {
       // body wasn't JSON — leave reason empty, status code alone still helps
     }
-    throw new Error(`gmail: code exchange failed (${res.status}${reason ? `: ${reason}` : ""})`);
+    // client_id is not secret (it's already public — sent in the browser
+    // URL during the redirect to Google), so echoing it back is safe and
+    // lets a human directly compare it against Google Cloud Console.
+    // clientSecret itself is never included — only its length, which is
+    // enough to catch a truncated/whitespace-corrupted paste without ever
+    // exposing the actual value.
+    throw new Error(
+      `gmail: code exchange failed (${res.status}${reason ? `: ${reason}` : ""}) — using client_id ending "…${clientId.slice(-12)}", secret length ${clientSecret.length}`
+    );
   }
 
   return res.json();
