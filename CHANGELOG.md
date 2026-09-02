@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-01 (privacy policy + terms of service)
+- [Feature] Added a Privacy Policy and Terms of Service, linked from the sign-up and login pages. Covers what data is collected, that it's never sold, and which outside services (Stripe, Supabase, etc.) it passes through. Uses a placeholder contact email — swap it for a real one before relying on it, and it's worth a lawyer's once-over before wide release.
+
 ## 2026-09-01 (status bar overlap fix)
 - [Fix] Page headers and buttons were rendering underneath the iPhone's clock/battery status bar (seen on the venue Overview page, but it affected every page). Content now starts clear of it everywhere.
 
