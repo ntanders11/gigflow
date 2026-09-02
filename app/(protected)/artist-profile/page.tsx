@@ -144,7 +144,12 @@ export default function ArtistProfilePage() {
         window.location.replace(`/onboarding?error=${encodeURIComponent(error)}`);
         return;
       }
-      setConnectBanner({ type: "error", message: "Couldn't connect — please try again." });
+      // Temporary: show the actual error code (a known-safe string constant
+      // from the OAuth callback route, e.g. "invalid_state" / "token_failed"
+      // / "no_refresh_token" / "save_failed" — never anything sensitive)
+      // instead of a generic message, to diagnose why Gmail connect is
+      // failing in production. Revert to the plain message once resolved.
+      setConnectBanner({ type: "error", message: `Couldn't connect (${error}) — please try again.` });
       window.history.replaceState({}, "", "/artist-profile");
     }
   }, []);
