@@ -376,7 +376,8 @@ export type NotificationType =
   | "booking_rescheduled"
   | "rating_available"
   | "rating_revealed"
-  | "follow_up_sent";
+  | "follow_up_sent"
+  | "gig_reminder";
 
 export interface NotificationView {
   id: string;

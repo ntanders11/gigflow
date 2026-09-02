@@ -9,6 +9,9 @@ const PUSHABLE_TYPES = new Set<NotificationType>([
   "booking_cancelled_by_venue",
   "booking_cancelled_by_artist",
   "booking_rescheduled",
+  // Time-sensitive by nature — the whole point is catching someone before
+  // the gig, so this is worth a phone alert like the booking events above.
+  "gig_reminder",
 ]);
 
 // Never throws — a failed notification insert must never affect whether

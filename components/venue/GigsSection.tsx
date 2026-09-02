@@ -2,22 +2,13 @@
 
 import { useState } from "react";
 import { Gig } from "@/types";
+import { CHECKLIST_ITEMS } from "@/lib/gigs/checklist";
 
 interface Props {
   venueId: string;
   initialGigs: Gig[];
   venueOriginatedGigIds: string[];
 }
-
-const CHECKLIST_ITEMS = [
-  { id: "load_in",    label: "Load-in time confirmed" },
-  { id: "sound_check",label: "Sound check scheduled" },
-  { id: "payment",    label: "Deposit / payment arranged" },
-  { id: "set_list",   label: "Set list ready" },
-  { id: "equipment",  label: "Equipment packed" },
-  { id: "parking",    label: "Parking figured out" },
-  { id: "contact",    label: "Point of contact confirmed" },
-];
 
 const STATUS_STYLE = {
   upcoming:  { color: "#4caf7d", label: "Upcoming" },
