@@ -122,6 +122,14 @@ If a session involves significant decisions, research, or direction changes (not
 
   - lib/supabase/server.ts — createClient() (cookie-based, respects RLS) and createServiceClient() (service role, bypasses RLS — used for cross-user reads/writes like CSV import, venue signup search, and the linking sweep). createServiceClient() deliberately does NOT use the @supabase/ssr cookie-aware helper, even though it looks like the natural choice — that helper recovers and reuses a session from cookies, and once a session exists, supabase-js authenticates requests as that session instead of the key passed at construction, silently defeating RLS bypass with no error. Discovered via live testing 2026-08-14 (cross-artist venue search was returning zero results despite matching data existing). Fixed by building it on the plain @supabase/supabase-js createClient() instead, with no cookie awareness and persistSession/autoRefreshToken both off.
   - lib/supabase/client.ts — browser-side client
+
+  Migrations: Data API Grants — Supabase stops auto-granting Data API access to brand-new `public` schema tables as of 2026-10-30 (existing tables, including every one already in this project, are unaffected — no action needed for anything already built). Every migration that creates a new table from this date forward must end with explicit grants, or the app will get a "permission denied" error trying to read/write it. Pattern to add at the end of any `create table` migration:
+    ```sql
+    grant select on public.your_table to anon;
+    grant select, insert, update, delete on public.your_table to authenticated;
+    grant select, insert, update, delete on public.your_table to service_role;
+    ```
+    (For a "no policies, service-role only" table — most tables in this project — the `anon`/`authenticated` grants are harmless no-ops since RLS still blocks those roles; only `service_role` actually needs it. Granting all three anyway keeps the migration template consistent and avoids having to remember which pattern a given table uses.) A migration that only alters an existing table (like `027_gig_reminders.sql`) never needs this — only `create table`.
                                                                                                                                                                     
   Path Aliases
                                                                                                                                                                     
