@@ -17,11 +17,20 @@ export async function POST(request: NextRequest) {
   }
 
   if (event.type === "invoice.paid" || event.type === "invoice_payment.paid") {
-    const stripeInvoiceObj = event.data.object as { metadata?: { gigflow_invoice_id?: string }; invoice?: string };
-    // invoice_payment.paid nests the invoice ID differently
-    const gigflowInvoiceId = stripeInvoiceObj.metadata?.gigflow_invoice_id;
+    // invoice.paid: event.data.object IS the Invoice, so its own id is the
+    // Stripe invoice id. invoice_payment.paid: event.data.object is an
+    // "Invoice Payment" object — a different shape that does NOT carry the
+    // invoice's metadata, only a plain `invoice` field pointing at it by id.
+    // Matching on stripe_invoice_id (which we already store at creation
+    // time, in app/api/invoices/[id]/send/route.ts) works for both shapes
+    // without relying on metadata surviving the trip at all — discovered
+    // 2026-09-25 after a real paid invoice never flipped to "paid" because
+    // this previously read `.metadata.gigflow_invoice_id` off the payment
+    // object, which doesn't exist there.
+    const obj = event.data.object as { id?: string; invoice?: string };
+    const stripeInvoiceId = event.type === "invoice.paid" ? obj.id : obj.invoice;
 
-    if (gigflowInvoiceId) {
+    if (stripeInvoiceId) {
       const adminClient = createSupabaseClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -29,7 +38,7 @@ export async function POST(request: NextRequest) {
       await adminClient
         .from("invoices")
         .update({ status: "paid", paid_at: new Date().toISOString() })
-        .eq("id", gigflowInvoiceId);
+        .eq("stripe_invoice_id", stripeInvoiceId);
     }
   }
 

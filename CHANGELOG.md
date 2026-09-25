@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-25 (fix invoices not marking as paid)
+- [Fix] Found while sending a real test invoice — a venue could pay an invoice in full and it would still show as unpaid on your dashboard. The automatic "mark as paid" step was matching on the wrong piece of information for one of the two payment-confirmation messages Stripe can send. Fixed, and the one affected test invoice has been corrected.
+
 ## 2026-09-25 (edit home region + venue name search)
 - [Fix] Your home city/zip/search radius could only ever be set once, during signup — there was no way to go back and fix it if you skipped or mistyped something. Added a "Home Region" section to the Artist Profile page so it's editable any time.
 - [Feature] Discover Venues now has an optional "Venue Name" field to narrow results down to a specific venue within the area you've already searched.
