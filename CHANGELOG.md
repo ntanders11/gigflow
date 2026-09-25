@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-09-25 (edit home region + venue name search)
+- [Fix] Your home city/zip/search radius could only ever be set once, during signup — there was no way to go back and fix it if you skipped or mistyped something. Added a "Home Region" section to the Artist Profile page so it's editable any time.
+- [Feature] Discover Venues now has an optional "Venue Name" field to narrow results down to a specific venue within the area you've already searched.
+
 ## 2026-09-25 (security fix: invite codes table exposed)
 - [Fix] Supabase's security scanner flagged that the beta invite-codes table had never had its access lock turned on — meaning anyone who found the app's public project address could read every invite code directly, no signup page involved. Closed the hole with a migration; nothing else about how invite codes work changed.
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ArtistProfile, Package, VideoSample, SocialLinks, EmailConnection } from "@/types";
+import { ArtistProfile, Package, VideoSample, SocialLinks, EmailConnection, Zone } from "@/types";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 import PushToggle from "@/components/notifications/PushToggle";
 import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
@@ -61,6 +61,15 @@ export default function ArtistProfilePage() {
   const [editingBio, setEditingBio] = useState(false);
   const [bioText, setBioText] = useState("");
 
+  // Home region (zone) editing
+  const [zone, setZone] = useState<Zone | null>(null);
+  const [editingZone, setEditingZone] = useState(false);
+  const [zoneCityText, setZoneCityText] = useState("");
+  const [zoneZipText, setZoneZipText] = useState("");
+  const [zoneRadiusText, setZoneRadiusText] = useState(30);
+  const [zoneSaving, setZoneSaving] = useState(false);
+  const [zoneError, setZoneError] = useState("");
+
   // Social links editing
   const [editingSocial, setEditingSocial] = useState(false);
   const [socialEdits, setSocialEdits] = useState<SocialLinks>(DEFAULT_SOCIAL);
@@ -104,6 +113,42 @@ export default function ArtistProfilePage() {
     }
     load();
   }, []);
+
+  useEffect(() => {
+    async function loadZone() {
+      const res = await fetch("/api/zone");
+      if (res.ok) {
+        const data: { zone: Zone | null } = await res.json();
+        setZone(data.zone);
+        setZoneCityText(data.zone?.name ?? "");
+        setZoneZipText(data.zone?.zip_code ?? "");
+        setZoneRadiusText(data.zone?.radius_mi ?? 30);
+      }
+    }
+    loadZone();
+  }, []);
+
+  async function saveZone() {
+    setZoneError("");
+    if (!zoneCityText.trim()) {
+      setZoneError("City is required.");
+      return;
+    }
+    setZoneSaving(true);
+    const res = await fetch("/api/zone", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: zoneCityText.trim(), zip_code: zoneZipText.trim(), radius_mi: zoneRadiusText }),
+    });
+    const data = await res.json();
+    setZoneSaving(false);
+    if (res.ok) {
+      setZone(data.zone);
+      setEditingZone(false);
+    } else {
+      setZoneError(data.error ?? "Failed to save — please try again.");
+    }
+  }
 
   useEffect(() => {
     async function loadConnections() {
@@ -590,6 +635,93 @@ export default function ArtistProfilePage() {
                 </p>
                 <p style={{ color: emailText ? "#9a9591" : "#5e5c58", fontSize: "12px" }}>
                   {emailText || "No email on file"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Home Region */}
+          <div
+            className="rounded-xl p-5"
+            style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div style={{ fontSize: "9px", color: "#5e5c58", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Home Region
+              </div>
+              {editingZone ? (
+                <div className="flex gap-2">
+                  <button
+                    onClick={saveZone}
+                    disabled={zoneSaving}
+                    className="text-xs px-2.5 py-0.5 rounded font-semibold transition-all hover:brightness-110 disabled:opacity-50"
+                    style={{ backgroundColor: "#D4A64F", color: "#0E0E10", cursor: "pointer" }}
+                  >
+                    {zoneSaving ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setZoneCityText(zone?.name ?? "");
+                      setZoneZipText(zone?.zip_code ?? "");
+                      setZoneRadiusText(zone?.radius_mi ?? 30);
+                      setZoneError("");
+                      setEditingZone(false);
+                    }}
+                    className="text-xs px-2.5 py-0.5 rounded transition-all hover:brightness-125"
+                    style={{ backgroundColor: "#1e2128", color: "#9a9591", cursor: "pointer" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setEditingZone(true)} style={{ color: "#D4A64F", fontSize: "11px", cursor: "pointer" }}>
+                  Edit
+                </button>
+              )}
+            </div>
+            <p style={{ color: "#9a9591", fontSize: "11px", marginBottom: "12px", lineHeight: 1.5 }}>
+              Where you&apos;re based — used to find venues near you in Discover Venues.
+            </p>
+            {editingZone ? (
+              <div className="flex flex-col gap-2">
+                <input
+                  autoFocus
+                  value={zoneCityText}
+                  onChange={(e) => setZoneCityText(e.target.value)}
+                  placeholder="Home city (e.g. Newberg, OR)"
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(212,166,79,0.3)" }}
+                />
+                <input
+                  value={zoneZipText}
+                  onChange={(e) => setZoneZipText(e.target.value)}
+                  placeholder="Zip code (optional, improves accuracy)"
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(212,166,79,0.3)" }}
+                />
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "#5e5c58" }}>
+                    Search radius: {zoneRadiusText} mi
+                  </label>
+                  <input
+                    type="range"
+                    min={2}
+                    max={50}
+                    value={zoneRadiusText}
+                    onChange={(e) => setZoneRadiusText(Number(e.target.value))}
+                    className="w-full"
+                    style={{ accentColor: "#D4A64F" }}
+                  />
+                </div>
+                {zoneError && <p style={{ color: "#e25c5c", fontSize: "11px" }}>{zoneError}</p>}
+              </div>
+            ) : (
+              <div className="cursor-text" onClick={() => setEditingZone(true)}>
+                <p style={{ color: zone?.name ? "#F4E8D2" : "#5e5c58", fontSize: "13px", fontWeight: 500 }}>
+                  {zone?.name || "Add your home city"}
+                </p>
+                <p style={{ color: "#9a9591", fontSize: "12px" }}>
+                  {zone ? `${zone.zip_code ? zone.zip_code + " · " : ""}${zone.radius_mi} mi radius` : "Click Edit to set it up"}
                 </p>
               </div>
             )}

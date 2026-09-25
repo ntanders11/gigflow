@@ -32,6 +32,7 @@ type DiscoverResult = {
 export default function DiscoverView() {
   const [city, setCity]         = useState("");
   const [radius, setRadius]     = useState(30);
+  const [nameQuery, setNameQuery] = useState("");
   const [results, setResults]   = useState<DiscoverResult[]>([]);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
@@ -194,8 +195,14 @@ export default function DiscoverView() {
   const typeColor = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.color ?? "#9a9591";
   const typeLabel = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.label.replace(/s$/, "").replace(/ies$/, "y") ?? type;
 
-  const newVenues = results.filter((r) => !r.already_in_pipeline);
-  const inPipeline = results.filter((r) => r.already_in_pipeline);
+  // Client-side filter over whatever the location search already returned —
+  // no extra API call, since results are already scoped to that area/radius.
+  const filteredResults = nameQuery.trim()
+    ? results.filter((r) => r.name.toLowerCase().includes(nameQuery.trim().toLowerCase()))
+    : results;
+
+  const newVenues = filteredResults.filter((r) => !r.already_in_pipeline);
+  const inPipeline = filteredResults.filter((r) => r.already_in_pipeline);
 
   return (
     <div>
@@ -244,6 +251,20 @@ export default function DiscoverView() {
           </div>
         </div>
 
+        <div className="mb-5">
+          <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>
+            Venue Name (optional)
+          </label>
+          <input
+            type="text"
+            value={nameQuery}
+            onChange={(e) => setNameQuery(e.target.value)}
+            placeholder="Narrow results down to a specific venue"
+            className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
+            style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
+          />
+        </div>
+
         <button
           onClick={handleSearch}
           disabled={loading}
@@ -268,9 +289,17 @@ export default function DiscoverView() {
           {newVenues.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>
-                {inPipeline.length > 0 ? "All venues in this area are already in your pipeline" : "No venues found nearby"}
+                {nameQuery.trim() && results.length > 0
+                  ? `No results match "${nameQuery.trim()}" in this area`
+                  : inPipeline.length > 0
+                  ? "All venues in this area are already in your pipeline"
+                  : "No venues found nearby"}
               </p>
-              <p className="text-xs" style={{ color: "#5e5c58" }}>Try a larger radius or a nearby bigger city.</p>
+              <p className="text-xs" style={{ color: "#5e5c58" }}>
+                {nameQuery.trim() && results.length > 0
+                  ? "Try clearing the venue name filter or searching a different area."
+                  : "Try a larger radius or a nearby bigger city."}
+              </p>
             </div>
           ) : (
             <>
