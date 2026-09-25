@@ -106,10 +106,24 @@ export default function VenueNav() {
             </span>
           </Link>
         ))}
-        <div className="flex flex-col items-center justify-center gap-0.5" style={{ minWidth: "44px", minHeight: "44px", padding: "6px 4px" }}>
-          <NotificationBell dropUp />
-        </div>
       </nav>
+
+      {/* Fixed top-right notification bell on mobile — moved out of the
+          bottom bar (2026-09-25) to match the artist side, so it doesn't
+          cost a tab slot; the 5 links above stay a clean bottom bar. */}
+      <div
+        className="md:hidden fixed z-50 rounded-full flex items-center justify-center"
+        style={{
+          top: "calc(10px + env(safe-area-inset-top))",
+          right: "10px",
+          width: "38px",
+          height: "38px",
+          backgroundColor: "#16181c",
+          border: "1px solid rgba(255,255,255,0.07)",
+        }}
+      >
+        <NotificationBell />
+      </div>
     </>
   );
 }

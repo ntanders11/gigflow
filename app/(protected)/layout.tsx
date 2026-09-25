@@ -1,5 +1,4 @@
-import Sidebar from "@/components/layout/Sidebar";
-import { MobileBottomNav } from "@/components/layout/Sidebar";
+import Sidebar, { MobileBottomNav, MobileNotificationBell } from "@/components/layout/Sidebar";
 
 export default function ProtectedLayout({
   children,
@@ -18,6 +17,9 @@ export default function ProtectedLayout({
       <main className="flex-1 pb-28 md:pb-0 min-w-0">{children}</main>
       {/* Mobile bottom tab bar */}
       <MobileBottomNav />
+      {/* Fixed top-right notification bell — every artist page gets it via
+          this shared layout, freeing the bottom bar down to 5 tabs (2026-09-25) */}
+      <MobileNotificationBell />
     </div>
   );
 }

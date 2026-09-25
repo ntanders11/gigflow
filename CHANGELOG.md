@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-09-25 (mobile nav: 5 tabs + notifications moved to a corner icon)
+- [Change] Artist mobile bottom bar was down to 6 tabs plus the notification bell all squeezed into one row. Trimmed to a clean 5 (Overview, Pipeline, Calendar, Invoices, Profile) and moved the bell to a small icon in the top-right corner of every screen instead — same treatment applied to the venue side for consistency.
+- [Change] Discover Venues no longer has its own tab — it's now a toggle right at the top of Pipeline ("My Pipeline" / "Discover New Venues"), since searching for venues and adding them to your pipeline are really one workflow.
+
 ## 2026-09-25 (fix invoices not marking as paid — real root cause)
 - [Fix] The first fix (matching Stripe's payment confirmation to the right invoice) wasn't the whole story — a second test invoice still didn't update automatically. Turned out Stripe's payment notifications were being redirected to the login page before they ever reached the app, since that address was never told to skip the login check the way a real webhook needs to be. Fixed — auto-mark-as-paid should now work for real going forward.
 

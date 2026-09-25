@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Venue, VenueStage, STAGES, OutreachInfo } from "@/types";
 import AddVenueModal from "@/components/venue/AddVenueModal";
 import PitchEmailModal from "@/components/venue/PitchEmailModal";
 import BatchEmailModal, { SendResult } from "@/components/pipeline/BatchEmailModal";
+import DiscoverView from "@/components/discover/DiscoverView";
 
 const KanbanBoard = dynamic(() => import("./KanbanBoard"), { ssr: false });
 
@@ -18,6 +19,16 @@ interface Props {
 
 export default function PipelineView({ initialVenues, initialStageFilter, outreachMap }: Props) {
   const [venues, setVenues] = useState<Venue[]>(initialVenues);
+  // Discover Venues folded in as a second view here (2026-09-25) so mobile,
+  // which dropped its own standalone Discover tab to get down to 5 bottom
+  // tabs, still has an easy way to reach it via Pipeline. Switching back to
+  // "pipeline" triggers a router.refresh() so anything added while in
+  // Discover mode shows up — this effect is what actually applies that
+  // refreshed data, since useState only reads initialVenues once on mount.
+  const [view, setView] = useState<"pipeline" | "discover">("pipeline");
+  useEffect(() => {
+    setVenues(initialVenues);
+  }, [initialVenues]);
   const [query, setQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [emailVenue, setEmailVenue] = useState<Venue | null>(null);
@@ -226,10 +237,43 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
               Pipeline
             </h1>
             <p className="text-sm mt-1" style={{ color: "#9a9591" }}>
-              {filtered.length} venues
+              {view === "pipeline" ? `${filtered.length} venues` : "Search for new venues to add"}
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+        </div>
+
+        {/* My Pipeline / Discover Venues toggle — Discover no longer has its
+            own mobile bottom tab (2026-09-25), so this is now the only way
+            to reach it there; kept on desktop too for consistency even
+            though the sidebar still has a separate Discover Venues link. */}
+        <div className="flex gap-1 mb-4 p-1 rounded-lg w-fit" style={{ backgroundColor: "#1e2128" }}>
+          <button
+            onClick={() => {
+              if (view === "discover") router.refresh();
+              setView("pipeline");
+            }}
+            className="text-sm px-3 py-1.5 rounded-md font-medium transition-all"
+            style={{
+              backgroundColor: view === "pipeline" ? "#D4A64F" : "transparent",
+              color: view === "pipeline" ? "#0E0E10" : "#9a9591",
+            }}
+          >
+            My Pipeline
+          </button>
+          <button
+            onClick={() => setView("discover")}
+            className="text-sm px-3 py-1.5 rounded-md font-medium transition-all"
+            style={{
+              backgroundColor: view === "discover" ? "#D4A64F" : "transparent",
+              color: view === "discover" ? "#0E0E10" : "#9a9591",
+            }}
+          >
+            Discover New Venues
+          </button>
+        </div>
+
+        {view === "pipeline" && (
+          <div className="flex items-center gap-2 flex-wrap w-full md:w-auto mb-4">
             <input
               type="text"
               placeholder="Search…"
@@ -270,8 +314,9 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
               + Add
             </button>
           </div>
-        </div>
+        )}
         {/* Stage labels — hidden on mobile, they're on each column header instead */}
+        {view === "pipeline" && (
         <div className="hidden md:flex gap-3">
           {STAGES.map(({ key, label }) => (
             <div
@@ -293,10 +338,17 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
             </div>
           ))}
         </div>
+        )}
       </div>
 
+      {view === "discover" && (
+        <div className="px-4 md:px-8 pt-4 pb-8">
+          <DiscoverView />
+        </div>
+      )}
+
       {/* Enrich progress banner */}
-      {enrichProgress && (
+      {view === "pipeline" && enrichProgress && (
         <div className="px-4 md:px-8 pt-4">
           <div
             className="rounded-lg px-4 py-3 flex items-center gap-4"
@@ -323,7 +375,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
       )}
 
       {/* Address fill progress banner */}
-      {fillProgress && (
+      {view === "pipeline" && fillProgress && (
         <div className="px-4 md:px-8 pt-4">
           <div
             className="rounded-lg px-4 py-3 flex items-center gap-4"
@@ -352,7 +404,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
       )}
 
       {/* Stage filter banner */}
-      {initialStageFilter && (
+      {view === "pipeline" && initialStageFilter && (
         <div className="px-8 pt-4">
           <div
             className="flex items-center justify-between rounded-lg px-4 py-2 text-sm"
@@ -373,21 +425,23 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
       )}
 
       {/* Board */}
-      <div className="px-4 md:px-8 pt-4 pb-8 overflow-x-auto">
-        <KanbanBoard
-          venues={filtered}
-          setVenues={setVenues}
-          outreachMap={outreachMap}
-          onEmail={setEmailVenue}
-          batchMode={batchMode}
-          selectedVenueIds={selectedVenueIds}
-          onBatchStart={startBatch}
-          onToggleSelect={toggleVenueSelect}
-          onSelectAll={selectAllForBatch}
-          onBatchSend={openBatchModal}
-          onBatchCancel={cancelBatch}
-        />
-      </div>
+      {view === "pipeline" && (
+        <div className="px-4 md:px-8 pt-4 pb-8 overflow-x-auto">
+          <KanbanBoard
+            venues={filtered}
+            setVenues={setVenues}
+            outreachMap={outreachMap}
+            onEmail={setEmailVenue}
+            batchMode={batchMode}
+            selectedVenueIds={selectedVenueIds}
+            onBatchStart={startBatch}
+            onToggleSelect={toggleVenueSelect}
+            onSelectAll={selectAllForBatch}
+            onBatchSend={openBatchModal}
+            onBatchCancel={cancelBatch}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -115,8 +115,8 @@ export default async function VenueDashboardPage() {
     <>
       <VenueNav />
       <div className="min-h-screen pb-28 md:pb-0 p-4 md:p-8" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
-        {/* Top bar */}
-        <div className="flex items-center justify-between mb-6 max-w-6xl">
+        {/* Top bar — pr-14 on mobile clears the fixed notification bell in the corner */}
+        <div className="flex items-center justify-between mb-6 max-w-6xl pr-14 md:pr-0">
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>Overview</h1>
           <Link
             href="/venue/discover"

@@ -28,8 +28,8 @@ export default async function InvoicesPage() {
 
   return (
     <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8 max-w-4xl">
+      {/* Header — pr-14 on mobile clears the fixed notification bell in the corner */}
+      <div className="flex items-center justify-between mb-8 max-w-4xl pr-14 md:pr-0">
         <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>
           Invoices
         </h1>
