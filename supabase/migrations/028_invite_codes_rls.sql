@@ -1,0 +1,11 @@
+-- supabase/migrations/028_invite_codes_rls.sql
+-- invite_codes was created without row-level security ever being turned on,
+-- which meant it was fully readable (every code, active or not) by anyone
+-- hitting the public Supabase API directly with the app's own public anon
+-- key — no app code involved, no invite-code check bypassed, just a raw
+-- table read. Flagged by Supabase's security advisor 2026-09-25. Fixed the
+-- same way every other service-role-only table in this project already is:
+-- RLS enabled, no policies added. The only code path that reads this table
+-- (/api/auth/validate-code) already uses the service-role client, which
+-- bypasses RLS entirely, so nothing else needs to change.
+alter table public.invite_codes enable row level security;

@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-25 (security fix: invite codes table exposed)
+- [Fix] Supabase's security scanner flagged that the beta invite-codes table had never had its access lock turned on — meaning anyone who found the app's public project address could read every invite code directly, no signup page involved. Closed the hole with a migration; nothing else about how invite codes work changed.
+
 ## 2026-09-02 (fix silent confirmation failures)
 - [Fix] Found via a real beta tester — if a confirmation email link didn't work (often because an email app's own safety scanner opens it automatically before you do), the login page used to give zero indication anything went wrong. It now shows a clear message and a "Resend confirmation email" button, so nobody's stuck waiting on you to manually fix their account.
 
