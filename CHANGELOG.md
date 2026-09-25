@@ -1,7 +1,7 @@
 # StageReach Changelog
 
-## 2026-09-25 (fix invoices not marking as paid)
-- [Fix] Found while sending a real test invoice — a venue could pay an invoice in full and it would still show as unpaid on your dashboard. The automatic "mark as paid" step was matching on the wrong piece of information for one of the two payment-confirmation messages Stripe can send. Fixed, and the one affected test invoice has been corrected.
+## 2026-09-25 (fix invoices not marking as paid — real root cause)
+- [Fix] The first fix (matching Stripe's payment confirmation to the right invoice) wasn't the whole story — a second test invoice still didn't update automatically. Turned out Stripe's payment notifications were being redirected to the login page before they ever reached the app, since that address was never told to skip the login check the way a real webhook needs to be. Fixed — auto-mark-as-paid should now work for real going forward.
 
 ## 2026-09-25 (edit home region + venue name search)
 - [Fix] Your home city/zip/search radius could only ever be set once, during signup — there was no way to go back and fix it if you skipped or mistyped something. Added a "Home Region" section to the Artist Profile page so it's editable any time.

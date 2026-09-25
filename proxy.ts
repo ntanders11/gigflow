@@ -43,6 +43,13 @@ export async function proxy(request: NextRequest) {
     pathname === "/sw.js" ||
     pathname === "/api/auth/validate-code" ||
     pathname === "/api/auth/confirm" ||
+    // Stripe calls this directly, server-to-server, with no StageReach
+    // login session at all — without this, the auth check below redirected
+    // every webhook call to /login before it ever reached the handler,
+    // silently breaking auto-mark-as-paid for every invoice ever paid.
+    // Signature verification inside the route itself (constructEvent)
+    // is what actually secures this endpoint, not the login check.
+    pathname === "/api/stripe/webhook" ||
     pathname === "/signup" ||
     pathname === "/venues" ||
     pathname === "/venues/signup" ||
