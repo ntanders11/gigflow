@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Gig } from "@/types";
 import { CHECKLIST_ITEMS } from "@/lib/gigs/checklist";
 
@@ -43,6 +43,7 @@ const DEFAULT_END_TIME = "21:00";
 export default function GigsSection({ venueId, initialGigs, venueOriginatedGigIds }: Props) {
   const [gigs, setGigs] = useState<Gig[]>(initialGigs);
   const [showForm, setShowForm] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [expandedGigId, setExpandedGigId] = useState<string | null>(null);
   const [date, setDate] = useState("");
@@ -81,6 +82,19 @@ export default function GigsSection({ venueId, initialGigs, venueOriginatedGigId
     setEditStartTime(gig.start_time || DEFAULT_START_TIME);
     setEditEndTime(gig.end_time || DEFAULT_END_TIME);
     setEditNotes(gig.notes || "");
+  }
+
+  // Reuses the same "Add Gig Date" form/state as a manual add — pre-filled
+  // with everything except the date, which is left blank so Save (already
+  // disabled until a date is chosen) can't be hit before a new date is
+  // actually picked, avoiding an accidental same-day duplicate.
+  function duplicateGig(gig: Gig) {
+    setDate("");
+    setStartTime(gig.start_time || DEFAULT_START_TIME);
+    setEndTime(gig.end_time || DEFAULT_END_TIME);
+    setNotes(gig.notes || "");
+    setShowForm(true);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   async function saveEdit(id: string) {
@@ -169,7 +183,7 @@ export default function GigsSection({ venueId, initialGigs, venueOriginatedGigId
 
       {/* Add form */}
       {showForm && (
-        <div className="rounded-lg p-4 mb-4 space-y-3" style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <div ref={formRef} className="rounded-lg p-4 mb-4 space-y-3" style={{ background: "#1e2128", border: "1px solid rgba(255,255,255,0.08)" }}>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs mb-1 block" style={{ color: "#9a9591" }}>Date *</label>
@@ -354,6 +368,16 @@ export default function GigsSection({ venueId, initialGigs, venueOriginatedGigId
                         Edit
                       </button>
                     )}
+                    {/* Duplicate is available regardless of who created the
+                        gig — it only ever creates a brand new, artist-owned
+                        entry, never touches the original. */}
+                    <button
+                      onClick={() => duplicateGig(gig)}
+                      className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+                      style={{ background: "rgba(255,255,255,0.05)", color: "#9a9591", border: "1px solid rgba(255,255,255,0.08)" }}
+                    >
+                      Duplicate
+                    </button>
                     {/* Checklist progress badge */}
                     {gig.status === "upcoming" && (
                       <button
