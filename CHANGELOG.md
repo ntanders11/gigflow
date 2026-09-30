@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-30 (venue equipment checklist)
+- [Feature] Venues can now tick off the gear they provide (PA, sound engineer, mics, monitors, lighting, drum kit, amps, keys, riser), say what artists should bring, and add other stage notes — during signup and later on their profile. It all shows on the venue's public profile so artists know what to expect before booking.
+
 ## 2026-09-30 (public homepage for Google verification)
 - [Fix] Google's reviewer bounced the Gmail verification because stagereach.app just sent logged-out visitors to a login form. There's now a real public homepage explaining what StageReach does for artists and venues, how it uses your Google account (send-only, never reads your inbox), with sign-in/sign-up buttons and Privacy/Terms links. Logged-in users still land on their dashboard.
 - [Change] Privacy Policy now includes Google's required "Limited Use" statement and states plainly that the Gmail permission can't read your inbox.

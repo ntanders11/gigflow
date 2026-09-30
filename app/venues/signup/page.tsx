@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { VenueMatchCandidate } from "@/types";
+import EquipmentFields from "@/components/venue/EquipmentFields";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -58,6 +59,8 @@ export default function VenueSignupPage() {
   const [description, setDescription] = useState("");
   const [genres, setGenres] = useState("");
   const [stageEquipment, setStageEquipment] = useState("");
+  const [equipmentProvided, setEquipmentProvided] = useState<string[]>([]);
+  const [artistShouldBring, setArtistShouldBring] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
 
@@ -214,6 +217,8 @@ export default function VenueSignupPage() {
           description: description.trim() || null,
           genres: genres.split(",").map((g) => g.trim()).filter(Boolean),
           stage_equipment: stageEquipment.trim() || null,
+          equipment_provided: equipmentProvided,
+          artist_should_bring: artistShouldBring.trim() || null,
           contact_email: contactEmail.trim() || null,
           contact_phone: contactPhone.trim() || null,
         }),
@@ -400,11 +405,14 @@ export default function VenueSignupPage() {
               <input value={genres} onChange={(e) => setGenres(e.target.value)} placeholder="rock, jazz, acoustic"
                 className="w-full rounded-lg px-3 py-2.5 text-sm outline-none" style={inputStyle} />
             </div>
-            <div>
-              <label className="block text-xs mb-1.5" style={labelStyle}>Stage & equipment</label>
-              <textarea rows={2} value={stageEquipment} onChange={(e) => setStageEquipment(e.target.value)} placeholder="PA system, stage size, backline…"
-                className="w-full rounded-lg px-3 py-2.5 text-sm outline-none resize-none" style={inputStyle} />
-            </div>
+            <EquipmentFields
+              provided={equipmentProvided}
+              onProvidedChange={setEquipmentProvided}
+              artistShouldBring={artistShouldBring}
+              onArtistShouldBringChange={setArtistShouldBring}
+              notes={stageEquipment}
+              onNotesChange={setStageEquipment}
+            />
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs mb-1.5" style={labelStyle}>Contact email</label>

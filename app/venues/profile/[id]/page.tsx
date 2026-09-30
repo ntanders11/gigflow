@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { VenueProfile } from "@/types";
 import RatingsSection from "@/components/ratings/RatingsSection";
+import { equipmentLabel } from "@/lib/venues/equipment";
 
 export default async function PublicVenueProfilePage({
   params,
@@ -63,12 +64,34 @@ export default async function PublicVenueProfilePage({
           </div>
         )}
 
-        {p.stage_equipment && (
+        {(p.equipment_provided?.length > 0 || p.artist_should_bring || p.stage_equipment) && (
           <div className="mb-6">
-            <h2 className="text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#5e5c58" }}>
+            <h2 className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#5e5c58" }}>
               Stage & Equipment
             </h2>
-            <p className="text-sm" style={{ color: "#F4E8D2" }}>{p.stage_equipment}</p>
+            {p.equipment_provided?.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs mb-1.5" style={{ color: "#9a9591" }}>Provided by the venue</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {p.equipment_provided.map((k) => (
+                    <span
+                      key={k}
+                      className="text-xs px-2.5 py-1 rounded-full"
+                      style={{ backgroundColor: "rgba(76,175,125,0.12)", color: "#4caf7d" }}
+                    >
+                      ✓ {equipmentLabel(k)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {p.artist_should_bring && (
+              <div className="mb-3">
+                <p className="text-xs mb-1" style={{ color: "#9a9591" }}>Artists should bring</p>
+                <p className="text-sm" style={{ color: "#F4E8D2" }}>{p.artist_should_bring}</p>
+              </div>
+            )}
+            {p.stage_equipment && <p className="text-sm" style={{ color: "#9a9591" }}>{p.stage_equipment}</p>}
           </div>
         )}
 

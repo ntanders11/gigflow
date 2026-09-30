@@ -237,6 +237,8 @@ export interface VenueProfile {
   description: string | null;
   genres: string[];
   stage_equipment: string | null;
+  equipment_provided: string[];
+  artist_should_bring: string | null;
   photo_url: string | null;
   created_at: string;
   updated_at: string;

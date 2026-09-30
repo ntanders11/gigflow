@@ -8,6 +8,7 @@ import VenueNav from "@/components/venue/VenueNav";
 import PushToggle from "@/components/notifications/PushToggle";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
+import EquipmentFields from "@/components/venue/EquipmentFields";
 
 const inputStyle = {
   background: "#1e2128",
@@ -114,6 +115,8 @@ export default function VenueProfilePage() {
           description: profile.description,
           genres: profile.genres,
           stage_equipment: profile.stage_equipment,
+          equipment_provided: profile.equipment_provided ?? [],
+          artist_should_bring: profile.artist_should_bring,
           contact_email: profile.contact_email,
           contact_phone: profile.contact_phone,
         }),
@@ -235,11 +238,14 @@ export default function VenueProfilePage() {
             <input value={profile.genres.join(", ")} onChange={(e) => setProfile({ ...profile, genres: e.target.value.split(",").map((g) => g.trim()).filter(Boolean) })}
               className="w-full rounded-lg px-3 py-2.5 text-sm outline-none" style={inputStyle} />
           </div>
-          <div>
-            <label className="block text-xs mb-1.5" style={labelStyle}>Stage & equipment</label>
-            <textarea rows={2} value={profile.stage_equipment ?? ""} onChange={(e) => setProfile({ ...profile, stage_equipment: e.target.value })}
-              className="w-full rounded-lg px-3 py-2.5 text-sm outline-none resize-none" style={inputStyle} />
-          </div>
+          <EquipmentFields
+            provided={profile.equipment_provided ?? []}
+            onProvidedChange={(keys) => setProfile({ ...profile, equipment_provided: keys })}
+            artistShouldBring={profile.artist_should_bring ?? ""}
+            onArtistShouldBringChange={(v) => setProfile({ ...profile, artist_should_bring: v })}
+            notes={profile.stage_equipment ?? ""}
+            onNotesChange={(v) => setProfile({ ...profile, stage_equipment: v })}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs mb-1.5" style={labelStyle}>Contact email</label>

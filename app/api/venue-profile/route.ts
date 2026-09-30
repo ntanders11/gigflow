@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { normalizeMatchKey, escapeIlike } from "@/lib/venues/matching";
+import { sanitizeEquipmentKeys } from "@/lib/venues/equipment";
 
 // Creates the blank venue_profiles row immediately after a venue account
 // is authenticated (venue_name left null). This placeholder is what lets
@@ -87,6 +88,7 @@ export async function PATCH(request: NextRequest) {
     venue_name, address, city, venue_type,
     contact_email, contact_phone, description,
     genres, stage_equipment, photo_url,
+    equipment_provided, artist_should_bring,
   } = body;
 
   const { data: current } = await supabase
@@ -109,6 +111,8 @@ export async function PATCH(request: NextRequest) {
       ...(description !== undefined && { description }),
       ...(genres !== undefined && { genres }),
       ...(stage_equipment !== undefined && { stage_equipment }),
+      ...(equipment_provided !== undefined && { equipment_provided: sanitizeEquipmentKeys(equipment_provided) }),
+      ...(artist_should_bring !== undefined && { artist_should_bring }),
       ...(photo_url !== undefined && { photo_url }),
     })
     .eq("user_id", user.id)
