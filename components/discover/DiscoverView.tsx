@@ -50,8 +50,16 @@ export default function DiscoverView() {
   // server-side (Google Geocoding, much more reliable than client-side
   // Nominatim); coords from the browser's own GPS/Wi-Fi lookup skip that
   // step entirely and go straight to the API as lat/lon.
-  async function doSearch(searchCity: string, searchRadius: number, searchCoords: { lat: number; lon: number } | null) {
-    if (!searchCoords && !searchCity.trim()) return;
+  async function doSearch(
+    searchCity: string,
+    searchRadius: number,
+    searchCoords: { lat: number; lon: number } | null,
+    searchName: string = "",
+  ) {
+    if (!searchCoords && !searchCity.trim() && !searchName.trim()) {
+      setError("Enter a location or a venue name to search.");
+      return;
+    }
     setLoading(true);
     setError("");
     setSearched(false);
@@ -61,9 +69,10 @@ export default function DiscoverView() {
     if (searchCoords) {
       params.set("lat", String(searchCoords.lat));
       params.set("lon", String(searchCoords.lon));
-    } else {
+    } else if (searchCity.trim()) {
       params.set("city", searchCity.trim());
     }
+    if (searchName.trim()) params.set("name", searchName.trim());
 
     const res = await fetch(`/api/venues/discover?${params}`);
     const data = await res.json();
@@ -75,7 +84,7 @@ export default function DiscoverView() {
   }
 
   function handleSearch() {
-    doSearch(city, radius, coords);
+    doSearch(city, radius, coords, nameQuery);
   }
 
   // Asks the browser for permission to share the device's location. On
@@ -97,7 +106,7 @@ export default function DiscoverView() {
         setLocating(false);
         setCoords(c);
         setCity("Current location");
-        doSearch("", radius, c);
+        doSearch("", radius, c, nameQuery);
       },
       (err) => {
         setLocating(false);
@@ -195,14 +204,8 @@ export default function DiscoverView() {
   const typeColor = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.color ?? "#9a9591";
   const typeLabel = (type: string) => VENUE_TYPES.find((t) => t.key === type)?.label.replace(/s$/, "").replace(/ies$/, "y") ?? type;
 
-  // Client-side filter over whatever the location search already returned —
-  // no extra API call, since results are already scoped to that area/radius.
-  const filteredResults = nameQuery.trim()
-    ? results.filter((r) => r.name.toLowerCase().includes(nameQuery.trim().toLowerCase()))
-    : results;
-
-  const newVenues = filteredResults.filter((r) => !r.already_in_pipeline);
-  const inPipeline = filteredResults.filter((r) => r.already_in_pipeline);
+  const newVenues = results.filter((r) => !r.already_in_pipeline);
+  const inPipeline = results.filter((r) => r.already_in_pipeline);
 
   return (
     <div>
@@ -259,7 +262,8 @@ export default function DiscoverView() {
             type="text"
             value={nameQuery}
             onChange={(e) => setNameQuery(e.target.value)}
-            placeholder="Narrow results down to a specific venue"
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            placeholder="Look up a specific venue by name"
             className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
             style={{ backgroundColor: "#1e2128", color: "#F4E8D2", border: "1px solid rgba(255,255,255,0.1)" }}
           />
@@ -289,15 +293,13 @@ export default function DiscoverView() {
           {newVenues.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-sm font-medium mb-1" style={{ color: "#5e5c58" }}>
-                {nameQuery.trim() && results.length > 0
-                  ? `No results match "${nameQuery.trim()}" in this area`
-                  : inPipeline.length > 0
+                {inPipeline.length > 0
                   ? "All venues in this area are already in your pipeline"
                   : "No venues found nearby"}
               </p>
               <p className="text-xs" style={{ color: "#5e5c58" }}>
-                {nameQuery.trim() && results.length > 0
-                  ? "Try clearing the venue name filter or searching a different area."
+                {nameQuery.trim()
+                  ? "Try a different spelling, or add a city to narrow it down."
                   : "Try a larger radius or a nearby bigger city."}
               </p>
             </div>

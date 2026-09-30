@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-09-30 (fix venue name search)
+- [Fix] Searching for a venue by name in Discover Venues did nothing unless you also typed a location, and could miss venues in busy areas. It now looks the venue up directly by name, with or without a location, and tells you if both boxes are empty.
+
 ## 2026-09-30 (venue equipment checklist)
 - [Feature] Venues can now tick off the gear they provide (PA, sound engineer, mics, monitors, lighting, drum kit, amps, keys, riser), say what artists should bring, and add other stage notes — during signup and later on their profile. It all shows on the venue's public profile so artists know what to expect before booking.
 

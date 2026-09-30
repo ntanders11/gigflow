@@ -152,7 +152,9 @@ export async function GET(req: NextRequest) {
 
   // Support legacy lat/lon params so old clients don't break,
   // but prefer the new city-based approach (geocoding server-side).
-  let lat: number, lon: number;
+  const nameParam = searchParams.get("name")?.trim() ?? "";
+  let lat: number | null = null;
+  let lon: number | null = null;
   const latParam = parseFloat(searchParams.get("lat") ?? "");
   const lonParam = parseFloat(searchParams.get("lon") ?? "");
 
@@ -166,8 +168,8 @@ export async function GET(req: NextRequest) {
     }
     lat = coords.lat;
     lon = coords.lon;
-  } else {
-    return NextResponse.json({ error: "city or lat/lon is required" }, { status: 400 });
+  } else if (!nameParam) {
+    return NextResponse.json({ error: "city, lat/lon, or name is required" }, { status: 400 });
   }
 
   // Load existing venue names for de-dupe
@@ -176,6 +178,28 @@ export async function GET(req: NextRequest) {
     .select("name")
     .eq("user_id", user.id);
   const existingNames = new Set((existingVenues ?? []).map((v: { name: string }) => v.name.toLowerCase().trim()));
+
+  // A venue name was typed — look it up directly by name instead of filtering
+  // a location search's results, since a nearby search only returns ~20
+  // places and would miss the venue in a busy area. Location (if given) only
+  // biases the ranking; without one, the search isn't limited to an area.
+  if (nameParam) {
+    if (!googleKey) {
+      return NextResponse.json({ error: "Name search unavailable right now." }, { status: 502 });
+    }
+    try {
+      const coords = lat !== null && lon !== null ? { lat, lon } : null;
+      const results = await searchByNameWithGoogle(nameParam, coords, radiusMeters, googleKey, existingNames);
+      return NextResponse.json({ results: applyStageReachMatches(results, await profileMapPromise, await ratingsMapPromise) });
+    } catch (err) {
+      console.error("Google name search failed:", err);
+      return NextResponse.json({ error: "Search unavailable — please try again." }, { status: 502 });
+    }
+  }
+
+  if (lat === null || lon === null) {
+    return NextResponse.json({ error: "city or lat/lon is required" }, { status: 400 });
+  }
 
   // ── 1&2. Google Places + Geoapify, run together and merged ──────────────────
   // Google's primaryType filter is precise but strict — a search area often
@@ -290,32 +314,109 @@ async function searchWithGoogle(
     const mappedType = GOOGLE_TYPE_MAP[primaryType];
     if (!mappedType) continue;
 
-    const placeTypes: string[] = place.types ?? [];
-
-    // Extract city: Google address is "street, city, STATE zip, USA"
-    const fullAddress: string = place.formattedAddress ?? "";
-    const addrWithoutCountry = fullAddress.replace(/, USA$/, "");
-    const addrParts = addrWithoutCountry.split(", ");
-    const city = addrParts.length >= 2 ? addrParts[addrParts.length - 2] : null;
-
-    results.push({
-      osm_id: place.id,
-      name,
-      type: mappedType,
-      city,
-      address: fullAddress || null,
-      website: place.websiteUri || null,
-      phone: place.nationalPhoneNumber || null,
-      rating: typeof place.rating === "number" ? place.rating : null,
-      review_count: place.userRatingCount ?? 0,
-      live_music_tagged: placeTypes.includes("live_music_venue"),
-      already_in_pipeline: existingNames.has(name.toLowerCase().trim()),
-      venue_profile_id: null,
-      avg_rating: null,
-      rating_count: 0,
-    });
+    results.push(placeToResult(place, name, mappedType, existingNames));
   }
 
+  return results;
+}
+
+// Shared by the nearby search and the by-name search so both shape a Google
+// place into a DiscoverResult identically.
+function placeToResult(
+  place: {
+    id: string;
+    types?: string[];
+    formattedAddress?: string;
+    websiteUri?: string;
+    nationalPhoneNumber?: string;
+    rating?: number;
+    userRatingCount?: number;
+  },
+  name: string,
+  mappedType: string,
+  existingNames: Set<string>,
+): DiscoverResult {
+  const placeTypes: string[] = place.types ?? [];
+
+  // Extract city: Google address is "street, city, STATE zip, USA"
+  const fullAddress: string = place.formattedAddress ?? "";
+  const addrWithoutCountry = fullAddress.replace(/, USA$/, "");
+  const addrParts = addrWithoutCountry.split(", ");
+  const city = addrParts.length >= 2 ? addrParts[addrParts.length - 2] : null;
+
+  return {
+    osm_id: place.id,
+    name,
+    type: mappedType,
+    city,
+    address: fullAddress || null,
+    website: place.websiteUri || null,
+    phone: place.nationalPhoneNumber || null,
+    rating: typeof place.rating === "number" ? place.rating : null,
+    review_count: place.userRatingCount ?? 0,
+    live_music_tagged: placeTypes.includes("live_music_venue"),
+    already_in_pipeline: existingNames.has(name.toLowerCase().trim()),
+    venue_profile_id: null,
+    avg_rating: null,
+    rating_count: 0,
+  };
+}
+
+// ── Google Places Text Search (by venue name) ───────────────────────────────
+// Unlike the nearby search, this deliberately doesn't require the place's
+// primaryType to be a bar/club/winery/brewery: someone searching a specific
+// name knows what they're looking for, and anything outside those categories
+// just shows as a generic "Event Venue".
+async function searchByNameWithGoogle(
+  name: string,
+  coords: { lat: number; lon: number } | null,
+  radiusMeters: number,
+  apiKey: string,
+  existingNames: Set<string>,
+): Promise<DiscoverResult[]> {
+  const fieldMask = [
+    "places.id",
+    "places.displayName",
+    "places.formattedAddress",
+    "places.types",
+    "places.primaryType",
+    "places.websiteUri",
+    "places.nationalPhoneNumber",
+    "places.rating",
+    "places.userRatingCount",
+  ].join(",");
+
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": fieldMask,
+    },
+    body: JSON.stringify({
+      textQuery: name,
+      maxResultCount: 10,
+      ...(coords && {
+        locationBias: {
+          circle: { center: { latitude: coords.lat, longitude: coords.lon }, radius: radiusMeters },
+        },
+      }),
+    }),
+    signal: AbortSignal.timeout(8000),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Google Places text search error ${res.status}: ${err.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const results: DiscoverResult[] = [];
+  for (const place of data.places ?? []) {
+    const displayName: string = place.displayName?.text ?? "";
+    if (!displayName) continue;
+    results.push(placeToResult(place, displayName, GOOGLE_TYPE_MAP[place.primaryType ?? ""] ?? "venue", existingNames));
+  }
   return results;
 }
 
