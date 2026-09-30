@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-09-30 (public homepage for Google verification)
+- [Fix] Google's reviewer bounced the Gmail verification because stagereach.app just sent logged-out visitors to a login form. There's now a real public homepage explaining what StageReach does for artists and venues, how it uses your Google account (send-only, never reads your inbox), with sign-in/sign-up buttons and Privacy/Terms links. Logged-in users still land on their dashboard.
+- [Change] Privacy Policy now includes Google's required "Limited Use" statement and states plainly that the Gmail permission can't read your inbox.
+
 ## 2026-09-25 (duplicate a gig date)
 - [Feature] Added a "Duplicate" button next to Edit on every gig. For a recurring booking at the same venue, duplicate the old date instead of re-entering the time and notes from scratch — just pick the new date and save.
 

@@ -10,7 +10,7 @@ export default function PrivacyPage() {
       <div className="max-w-2xl mx-auto">
         <Link href="/" style={{ color: "#D4A64F", fontSize: "13px" }}>← Back to StageReach</Link>
         <h1 className="text-2xl font-bold mt-4 mb-1" style={{ color: "#F4E8D2" }}>Privacy Policy</h1>
-        <p style={{ color: "#5e5c58", fontSize: "13px" }}>Last updated September 1, 2026</p>
+        <p style={{ color: "#5e5c58", fontSize: "13px" }}>Last updated September 30, 2026</p>
 
         <p style={{ ...p, marginTop: "24px" }}>
           StageReach (&quot;we,&quot; &quot;us&quot;) connects gigging musicians with the venues that book them.
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
           <li style={li}><strong style={{ color: "#F4E8D2" }}>Booking info</strong> — gig dates, times, notes, and messages exchanged between artists and venues through the app.</li>
           <li style={li}><strong style={{ color: "#F4E8D2" }}>Ratings and reviews</strong> — written by artists and venues about each other after a gig. These are shown publicly with your name attached, same as any review site.</li>
           <li style={li}><strong style={{ color: "#F4E8D2" }}>Payment info</strong> — invoice amounts and status. Actual card numbers are handled entirely by Stripe, our payment processor — we never see or store them ourselves.</li>
-          <li style={li}><strong style={{ color: "#F4E8D2" }}>Connected email accounts</strong> — if you choose to connect Gmail or Outlook, we use that connection only to send pitch and follow-up emails from your own address on your behalf. We don&apos;t read your inbox for anything beyond what&apos;s needed to send those emails, and you can disconnect it at any time.</li>
+          <li style={li}><strong style={{ color: "#F4E8D2" }}>Connected email accounts</strong> — if you choose to connect Gmail or Outlook, we use that connection only to send pitch and follow-up emails from your own address on your behalf. The permission we request from Google is send-only: StageReach cannot read, search, or access anything in your inbox, and you can disconnect it at any time.</li>
           <li style={li}><strong style={{ color: "#F4E8D2" }}>Location</strong> — only if you tap &quot;Use my current location&quot; while searching. It&apos;s used for that one search and isn&apos;t stored.</li>
           <li style={li}><strong style={{ color: "#F4E8D2" }}>Basic usage info</strong> — things like device type and push notification settings, so features like alerts work correctly.</li>
         </ul>
@@ -55,6 +55,20 @@ export default function PrivacyPage() {
         <p style={p}>
           Each of these has its own privacy practices for the data it handles on our behalf. None of them are
           permitted to use your information for their own advertising.
+        </p>
+
+        <h2 style={h2}>Google user data</h2>
+        <p style={p}>
+          StageReach&apos;s use and transfer to any other app of information received from Google APIs will
+          adhere to the{" "}
+          <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" style={{ color: "#D4A64F" }}>
+            Google API Services User Data Policy
+          </a>
+          , including the Limited Use requirements. Specifically, the only Google data StageReach accesses is
+          your connected Gmail address (to show which account is connected) and the ability to send email on
+          your behalf. We use it solely to send the pitch and follow-up emails you write or approve, we never
+          read or store the contents of your mailbox, we don&apos;t transfer it to anyone else, and we
+          don&apos;t use it for advertising or to train any AI or machine-learning models.
         </p>
 
         <h2 style={h2}>What&apos;s shown publicly</h2>

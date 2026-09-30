@@ -33,6 +33,10 @@ export async function proxy(request: NextRequest) {
   const isLoginPage = pathname === "/login";
   // Public routes that don't require authentication
   const isPublicRoute =
+    // Public homepage — required for Google's OAuth verification review,
+    // which rejects an app whose homepage sits behind a login page. The
+    // page itself sends already-logged-in visitors on to /dashboard.
+    pathname === "/" ||
     pathname.startsWith("/profile/") ||
     // Scoped narrowly to /venues/profile/ — NOT a blanket "/venues/" prefix, which
     // would also expose the private /venues/import and /venues/[id] pages.
