@@ -10,7 +10,6 @@ import { InstagramIcon, SpotifyIcon, YouTubeIcon, WebsiteIcon } from "@/componen
 import { getEmbedUrl } from "@/lib/embeds";
 import FavoriteButton from "@/components/venue/FavoriteButton";
 import VenueNav from "@/components/venue/VenueNav";
-import BackArrow from "@/components/layout/BackArrow";
 
 const SOCIAL_PLATFORMS: { key: keyof SocialLinks; label: string; color: string; Icon: typeof InstagramIcon }[] = [
   { key: "instagram", label: "Instagram", color: "#e1306c", Icon: InstagramIcon },
@@ -102,16 +101,8 @@ export default async function PublicProfilePage({
       {/* A signed-in venue gets its normal navigation (the same tab bar as
           the rest of the venue portal) instead of the bare top bar below,
           so looking up an artist doesn't strand it outside its own app
-          (the back arrow is kept, in its own slim row under the tabs).
           The bottom padding above clears VenueNav's fixed mobile tab bar. */}
-      {viewerType === "venue" && (
-        <>
-          <VenueNav />
-          <div className="max-w-2xl mx-auto px-6 pt-3 -mb-6">
-            <BackArrow fallbackHref={backHref} />
-          </div>
-        </>
-      )}
+      {viewerType === "venue" && <VenueNav />}
 
       {/* Top bar — this page has no other nav (it's meant to work as a
           shareable external link), so this logo link is the only way

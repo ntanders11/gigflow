@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-06 (no back arrow on artist profiles for venues)
+- [Change] Removed the back arrow that sat under the tabs when a venue looks at an artist's profile — the tabs are the way back.
+
 ## 2026-10-06 (artist top tabs)
 - [Change] On desktop, artists now get a row of tabs across the top (Overview, Pipeline, Discover Venues, Outreach, Booking Calendar, Invoices, Messages) like venues do, instead of the left sidebar. Messages is now reachable from it, with an unread count. Your photo and name sit at the far right and open a small menu with My Artist Profile and Sign out. Phones are unchanged.
 
