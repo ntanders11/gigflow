@@ -379,7 +379,8 @@ export type NotificationType =
   | "rating_available"
   | "rating_revealed"
   | "follow_up_sent"
-  | "gig_reminder";
+  | "gig_reminder"
+  | "message_received";
 
 export interface NotificationView {
   id: string;
@@ -389,4 +390,36 @@ export interface NotificationView {
   link: string;
   read: boolean;
   created_at: string;
+}
+
+// ============================================================
+// MESSAGING
+// ============================================================
+
+export type MessageSenderRole = "artist" | "venue";
+
+export interface ConversationView {
+  id: string;
+  counterpart_name: string;
+  counterpart_photo_url: string | null;
+  counterpart_href: string;
+  last_message_preview: string;
+  last_message_at: string;
+  unread_count: number;
+  blocked: boolean;
+}
+
+export interface MessageView {
+  id: string;
+  mine: boolean;
+  body: string;
+  created_at: string;
+  attachment: { name: string; type: string; size: number; url: string } | null;
+}
+
+export interface ThreadView {
+  conversation: ConversationView;
+  messages: MessageView[];
+  blocked_by_me: boolean;
+  booking: { date: string; status: string } | null;
 }
