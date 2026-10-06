@@ -22,7 +22,10 @@ const bookingsLink  = { href: "/venue/bookings",  label: "Calendar",         mob
 // (2026-10-06); on phones it's reached from the Dashboard's "Outstanding"
 // card. "Ratings" (/venue/ratings) is likewise reached from a dashboard card.
 const invoicesLink  = { href: "/venue/invoices",  label: "Invoices",         mobileLabel: "Invoices",  icon: "$" };
-const messagesLink  = { href: "/venue/messages",  label: "Messages",         mobileLabel: "Messages",  icon: "✉" };
+// Messages uses the same ring as the artist bar's Pipeline tab: a plain
+// symbol like the other tabs' (the old envelope glyph shows up as a colorful
+// emoji letter on iPhone, which didn't match).
+const messagesLink  = { href: "/venue/messages",  label: "Messages",         mobileLabel: "Messages",  icon: "◎" };
 const profileLink = { href: "/venue/profile", label: "My Profile", mobileLabel: "Profile", icon: "◉" };
 
 const desktopMainLinks = [dashboardLink, discoverLink, bookingsLink, invoicesLink, messagesLink];

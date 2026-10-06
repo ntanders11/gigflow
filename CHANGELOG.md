@@ -5,6 +5,7 @@
 
 ## 2026-10-06 (tab names)
 - [Change] Tab names are now more consistent: the venue side now says "Discover" (was "Discover Artists") and "Calendar" (was "Bookings", the same page), on both desktop and phone. The first tab (and the page heading) says "Overview" on both the artist and venue sides, desktop and phone — the venue's tab used to say "Dashboard".
+- [Change] The venue phone bar's Messages tab icon is now a plain ring (the same one the artist's Pipeline tab uses) instead of a letter symbol, which showed up as a colorful emoji on iPhone.
 
 ## 2026-10-06 (no back arrow on artist profiles for venues)
 - [Change] Removed the back arrow that sat under the tabs when a venue looks at an artist's profile — the tabs are the way back.
