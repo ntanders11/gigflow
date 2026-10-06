@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -11,20 +12,32 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 // falls out naturally from being last in this array; on the desktop bar,
 // a spacer between the main links and Profile pushes it (and the bell,
 // which moves alongside it) to the right edge — see profileLink below.
-const mainLinks = [
-  { href: "/venue/dashboard", label: "Dashboard",        mobileLabel: "Dashboard", icon: "◆" },
-  // Favorites lives inside Discover Artists now (a "★ Favorites" dropdown
-  // near the top of that page) rather than as its own tab/page.
-  { href: "/venue/discover", label: "Discover Artists",  mobileLabel: "Discover", icon: "⊕" },
-  { href: "/venue/bookings", label: "Bookings",          mobileLabel: "Bookings", icon: "☐" },
-  { href: "/venue/invoices", label: "Invoices",          mobileLabel: "Invoices", icon: "$" },
-  // "Ratings" (/venue/ratings) is deliberately not a main nav link — the
-  // page itself is untouched and fully functional, just reached from the
-  // Dashboard's "Pending Ratings" stat card instead of its own tab, to
-  // keep the main nav from accumulating one tab per feature (2026-09-01).
-];
+const dashboardLink = { href: "/venue/dashboard", label: "Dashboard",        mobileLabel: "Dashboard", icon: "◆" };
+// Favorites lives inside Discover Artists now (a "★ Favorites" dropdown
+// near the top of that page) rather than as its own tab/page.
+const discoverLink  = { href: "/venue/discover",  label: "Discover Artists", mobileLabel: "Discover",  icon: "⊕" };
+const bookingsLink  = { href: "/venue/bookings",  label: "Bookings",         mobileLabel: "Bookings",  icon: "☐" };
+// Invoices keeps its desktop tab but gave up its mobile slot to Messages
+// (2026-10-06); on phones it's reached from the Dashboard's "Outstanding"
+// card. "Ratings" (/venue/ratings) is likewise reached from a dashboard card.
+const invoicesLink  = { href: "/venue/invoices",  label: "Invoices",         mobileLabel: "Invoices",  icon: "$" };
+const messagesLink  = { href: "/venue/messages",  label: "Messages",         mobileLabel: "Messages",  icon: "✉" };
 const profileLink = { href: "/venue/profile", label: "My Profile", mobileLabel: "Profile", icon: "◉" };
-const links = [...mainLinks, profileLink];
+
+const desktopMainLinks = [dashboardLink, discoverLink, bookingsLink, invoicesLink, messagesLink];
+const mobileLinks = [dashboardLink, discoverLink, bookingsLink, messagesLink, profileLink];
+
+function UnreadBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className="inline-flex items-center justify-center rounded-full text-[10px] font-bold px-1"
+      style={{ backgroundColor: "#e25c5c", color: "#fff", minWidth: "16px", height: "16px" }}
+    >
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
 
 // Renders both surfaces from one component so every page that does
 // `<VenueNav />` gets both automatically, with no per-page changes: a
@@ -38,6 +51,20 @@ const links = [...mainLinks, profileLink];
 // reach anything past the first couple of links.
 export default function VenueNav() {
   const pathname = usePathname();
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    function load() {
+      fetch("/api/messages/unread-count")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (!cancelled && d) setUnreadMessages(d.count ?? 0); })
+        .catch(() => {});
+    }
+    load();
+    const t = setInterval(load, 30000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [pathname]);
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(href + "/");
@@ -57,7 +84,7 @@ export default function VenueNav() {
           height={50}
           style={{ objectFit: "contain", objectPosition: "left", height: "36px", width: "108px" }}
         />
-        {mainLinks.map((link) => (
+        {desktopMainLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
@@ -65,6 +92,7 @@ export default function VenueNav() {
             style={{ color: isActive(link.href) ? "#D4A64F" : "#9a9591", fontWeight: isActive(link.href) ? 600 : 400 }}
           >
             {link.label}
+            {link.href === "/venue/messages" && <UnreadBadge count={unreadMessages} />}
           </Link>
         ))}
         {/* Spacer pushes Profile + the notification bell to the right
@@ -93,14 +121,19 @@ export default function VenueNav() {
           paddingBottom: "calc(10px + env(safe-area-inset-bottom))",
         }}
       >
-        {links.map((link) => (
+        {mobileLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
             className="flex flex-col items-center justify-center gap-0.5 rounded-lg transition-all"
             style={{ color: isActive(link.href) ? "#D4A64F" : "#5e5c58", minWidth: "44px", minHeight: "44px", padding: "6px 4px" }}
           >
-            <span style={{ fontSize: "18px" }}>{link.icon}</span>
+            <span className="relative" style={{ fontSize: "18px" }}>
+              {link.icon}
+              {link.href === "/venue/messages" && unreadMessages > 0 && (
+                <span className="absolute -top-1 -right-3"><UnreadBadge count={unreadMessages} /></span>
+              )}
+            </span>
             <span className="text-center" style={{ fontSize: "9px", fontWeight: isActive(link.href) ? 600 : 400 }}>
               {link.mobileLabel}
             </span>

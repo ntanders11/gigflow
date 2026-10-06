@@ -4,6 +4,8 @@ import Link from "next/link";
 import VenueNav from "@/components/venue/VenueNav";
 import { getOwnCompletedVenueProfile } from "@/lib/bookings/venue-auth";
 import { getVenuePendingRelationships } from "@/lib/ratings/eligibility";
+import { getParticipant } from "@/lib/messages/access";
+import { countUnreadMessages } from "@/lib/messages/unread";
 import { buildArtistResults, ArtistResult } from "@/lib/venues/artist-results";
 
 type RequestRow = {
@@ -88,6 +90,15 @@ export default async function VenueDashboardPage() {
     console.error("venue dashboard: pending ratings lookup failed", err);
   }
 
+  // Unread messages — same defensive pattern as the ratings count above.
+  let unreadMessagesCount = 0;
+  try {
+    const participant = await getParticipant(supabase, user.id);
+    if (participant) unreadMessagesCount = await countUnreadMessages(service, participant);
+  } catch (err) {
+    console.error("venue dashboard: unread messages lookup failed", err);
+  }
+
   // Favorited artists — same RLS-scoped read the favorites dropdown on
   // Discover Artists uses.
   const { data: favoriteRows } = await supabase
@@ -105,6 +116,7 @@ export default async function VenueDashboardPage() {
 
   const statCards = [
     { label: "Pending Requests", value: pending.length, trend: "awaiting your response", color: pending.length > 0 ? "#e25c5c" : "#9a9591", href: "/venue/bookings" },
+    { label: "Unread Messages", value: unreadMessagesCount, trend: unreadMessagesCount > 0 ? "waiting for you" : "all caught up", color: unreadMessagesCount > 0 ? "#D4A64F" : "#9a9591", href: "/venue/messages" },
     { label: "Upcoming Gigs", value: upcomingGigs.length, trend: "in the next 30 days", color: "#4caf7d", href: "/venue/bookings" },
     { label: "Outstanding", value: `$${(outstandingCents / 100).toLocaleString("en-US", { minimumFractionDigits: 0 })}`, trend: "owed to artists", color: "#D4A64F", href: "/venue/invoices" },
     { label: "Favorited Artists", value: favorites.length, trend: "saved for later", color: "#9b7fe8", href: "/venue/discover" },
@@ -148,7 +160,7 @@ export default async function VenueDashboardPage() {
         )}
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-8 max-w-6xl">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mb-8 max-w-6xl">
           {statCards.map((stat) => (
             <Link
               key={stat.label}

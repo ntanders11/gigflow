@@ -4,6 +4,8 @@ import Link from "next/link";
 import { VenueStage } from "@/types";
 import NeedsAttentionSection from "@/components/dashboard/NeedsAttentionSection";
 import { getArtistPendingRelationships } from "@/lib/ratings/eligibility";
+import { getParticipant } from "@/lib/messages/access";
+import { countUnreadMessages } from "@/lib/messages/unread";
 
 const STAGE_STYLE: Record<
   VenueStage,
@@ -99,6 +101,15 @@ export default async function DashboardPage() {
     pendingRatingsCount = pendingRatings.length;
   } catch (err) {
     console.error("dashboard: pending ratings lookup failed", err);
+  }
+
+  let unreadMessagesCount = 0;
+  try {
+    const service = await createServiceClient();
+    const participant = await getParticipant(supabase, user.id);
+    if (participant) unreadMessagesCount = await countUnreadMessages(service, participant);
+  } catch (err) {
+    console.error("dashboard: unread messages lookup failed", err);
   }
 
   // Aggregate stats
@@ -207,6 +218,13 @@ export default async function DashboardPage() {
       color: pendingRatingsCount > 0 ? "#e09b50" : "#9a9591",
       href: "/ratings",
     },
+    {
+      label: "Unread Messages",
+      value: unreadMessagesCount,
+      trend: unreadMessagesCount > 0 ? "waiting for you" : "all caught up",
+      color: unreadMessagesCount > 0 ? "#D4A64F" : "#9a9591",
+      href: "/messages",
+    },
   ];
 
   return (
@@ -298,7 +316,7 @@ export default async function DashboardPage() {
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mb-8 max-w-6xl">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8 max-w-6xl">
         {statCards.map((stat) => (
           <Link
             key={stat.label}
