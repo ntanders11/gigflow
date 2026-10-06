@@ -4,7 +4,7 @@
 - [Change] The artist desktop top bar now looks like the venue one — logo and tabs on the left, My Profile and the bell on the right — and uses the same five tabs as the phone: Overview, Pipeline, Calendar, Invoices and Profile. Discover is still the toggle on Pipeline, Import is on the Dashboard, and Messages is on the Dashboard card and the bell. Sign out is at the bottom of the profile page.
 
 ## 2026-10-06 (tab names)
-- [Change] Tab names are now more consistent: the venue side now says "Discover" (was "Discover Artists") and "Calendar" (was "Bookings", the same page), on both desktop and phone. The artist side keeps "Overview" for its first tab and dashboard heading, and the venue dashboard heading stays "Overview" (the venue's tab is still "Dashboard").
+- [Change] Tab names are now more consistent: the venue side now says "Discover" (was "Discover Artists") and "Calendar" (was "Bookings", the same page), on both desktop and phone. The first tab (and the page heading) says "Overview" on both the artist and venue sides, desktop and phone — the venue's tab used to say "Dashboard".
 
 ## 2026-10-06 (no back arrow on artist profiles for venues)
 - [Change] Removed the back arrow that sat under the tabs when a venue looks at an artist's profile — the tabs are the way back.

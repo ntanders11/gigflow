@@ -6,14 +6,14 @@ import { usePathname } from "next/navigation";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { UnreadBadge, useUnreadMessages } from "@/components/messages/UnreadMessages";
 
-// Dashboard leads and is the default landing page for every venue login
-// (see proxy.ts). Desktop bar: Dashboard, Discover, Calendar,
+// Overview leads and is the default landing page for every venue login
+// (see proxy.ts). Desktop bar: Overview, Discover, Calendar,
 // Invoices, Messages, then (after a spacer that pushes them to the right
-// edge) Profile and the notification bell. Mobile bottom bar: Dashboard,
+// edge) Profile and the notification bell. Mobile bottom bar: Overview,
 // Discover, Calendar, Messages, Profile (Invoices has no mobile slot).
 // ("Calendar" is the /venue/bookings page; it was labeled "Bookings" until
 // 2026-10-06.)
-const dashboardLink = { href: "/venue/dashboard", label: "Dashboard",        mobileLabel: "Dashboard", icon: "◆" };
+const dashboardLink = { href: "/venue/dashboard", label: "Overview",         mobileLabel: "Overview",  icon: "◆" };
 // Favorites lives inside Discover Artists now (a "★ Favorites" dropdown
 // near the top of that page) rather than as its own tab/page.
 const discoverLink  = { href: "/venue/discover",  label: "Discover",         mobileLabel: "Discover",  icon: "⊕" };
