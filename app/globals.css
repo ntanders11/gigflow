@@ -3,6 +3,15 @@
 @import "tailwindcss";
 
 :root {
+  /* How far down from the very top of the screen page content starts.
+     On a notched iPhone this is the status-bar height (env safe area). When
+     the app is running from the Home Screen, iOS draws a soft dark fade
+     under the clock — about 40px taller than the status bar itself — and
+     anything resting inside it (a heading, the bell) looks faded at its
+     top edge (measured from a real screenshot, 2026-10-06). So in that mode
+     on phones we start content below the fade. Desktop and plain Safari
+     tabs are untouched. */
+  --app-top-inset: env(safe-area-inset-top);
   --background: #0E0E10;
   --foreground: #F4E8D2;
   --surface: #16181c;
@@ -39,6 +48,12 @@ body {
    !important is deliberate: some boxes set their size inline, and an
    unlayered rule here already beats Tailwind's text-sm utility. Desktop is
    untouched. */
+@media (display-mode: standalone) and (max-width: 767px) {
+  :root {
+    --app-top-inset: calc(env(safe-area-inset-top) + 20px);
+  }
+}
+
 @media (max-width: 767px) {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
   select,

@@ -40,8 +40,10 @@ export default function RootLayout({
           // without this, whatever sits at the very top of every page
           // (a heading, a button) renders underneath the clock/battery
           // icons instead of below them. Mirrors the bottom safe-area
-          // handling the mobile nav bars already do.
-          paddingTop: "env(safe-area-inset-top)",
+          // handling the mobile nav bars already do. (--app-top-inset is
+          // defined in globals.css: the safe area, plus extra room in Home
+          // Screen mode so content clears the fade iOS draws under the clock.)
+          paddingTop: "var(--app-top-inset)",
         }}
       >
         {children}

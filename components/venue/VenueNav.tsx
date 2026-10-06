@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import FloatingBell from "@/components/notifications/FloatingBell";
 import { UnreadBadge, useUnreadMessages } from "@/components/messages/UnreadMessages";
 
 // Overview leads and is the default landing page for every venue login
@@ -123,19 +124,7 @@ export default function VenueNav() {
       {/* Fixed top-right notification bell on mobile — moved out of the
           bottom bar (2026-09-25) to match the artist side, so it doesn't
           cost a tab slot; the 5 links above stay a clean bottom bar. */}
-      <div
-        className="md:hidden fixed z-50 rounded-full flex items-center justify-center"
-        style={{
-          top: "calc(10px + env(safe-area-inset-top))",
-          right: "10px",
-          width: "38px",
-          height: "38px",
-          backgroundColor: "#16181c",
-          border: "1px solid rgba(255,255,255,0.07)",
-        }}
-      >
-        <NotificationBell />
-      </div>
+      <FloatingBell />
     </>
   );
 }

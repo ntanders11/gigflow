@@ -42,10 +42,15 @@ export default function NotificationBell({
   listenForRefreshEvents = false,
   align = "right",
   dropUp = false,
+  tone = "default",
 }: {
   listenForRefreshEvents?: boolean;
   align?: "left" | "right";
   dropUp?: boolean;
+  // "bright" is for the floating phone bell (FloatingBell.tsx), which sits
+  // alone over page content and needs to stand out; "default" is the muted
+  // gray used inside the desktop bars.
+  tone?: "default" | "bright";
 }) {
   const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationView[]>([]);
@@ -120,20 +125,20 @@ export default function NotificationBell({
       <button
         onClick={handleToggle}
         className="relative flex items-center justify-center transition-all hover:brightness-125"
-        style={{ width: "32px", height: "32px", color: "#9a9591" }}
+        style={{ width: "32px", height: "32px", color: tone === "bright" ? "#F4E8D2" : "#9a9591" }}
         aria-label="Notifications"
       >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={tone === "bright" ? 20 : 17} height={tone === "bright" ? 20 : 17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
           <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
         {unreadCount > 0 && (
           <span
             style={{
-              position: "absolute", top: "2px", right: "2px",
+              position: "absolute", top: tone === "bright" ? "-3px" : "2px", right: tone === "bright" ? "-3px" : "2px",
               backgroundColor: "#D4A64F", color: "#0E0E10",
-              fontSize: "9px", fontWeight: 700, borderRadius: "999px",
-              minWidth: "15px", height: "15px", display: "flex",
+              fontSize: "10px", fontWeight: 700, borderRadius: "999px",
+              minWidth: "16px", height: "16px", display: "flex",
               alignItems: "center", justifyContent: "center", padding: "0 3px",
             }}
           >

@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-10-06 (bell and top-of-screen fade)
+- [Fix] On iPhone (when running from the Home Screen), page headings and the notification bell looked faded at the top because iOS draws a soft shadow under the clock and they sat inside it. Content now starts a little lower on phones so it clears the shadow.
+- [Change] The phone notification bell is brighter and easier to see: a cream bell on a lighter circle with a visible edge and shadow, and a slightly bigger unread badge. Artists and venues share the same bell.
+
 ## 2026-10-06 (phone zoom fix)
 - [Fix] On iPhone, tapping a text box (like the email box on the login screen) made Safari zoom the page in, and it could stay zoomed after logging in — so screens looked shifted and cut off at the edges. Text boxes are now big enough on phones that Safari doesn't zoom. Desktop looks the same as before.
 
