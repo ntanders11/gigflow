@@ -17,10 +17,16 @@ function fmtTime(t: string | null): string | null {
   return new Date(`2000-01-01T${t}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
-export async function POST(request: NextRequest) {
-  // Vercel injects Authorization: Bearer <CRON_SECRET> on cron invocations
+// Vercel starts scheduled jobs with a GET request (this route used to accept
+// only POST, so every scheduled run was refused — fixed 2026-10-06). POST is
+// kept so the job can still be triggered by hand with the same secret.
+async function handleReminders(request: NextRequest) {
+  // Vercel injects Authorization: Bearer <CRON_SECRET> on cron invocations.
+  // The secret must actually be set: with it missing, the old check compared
+  // against the text "Bearer undefined", which anyone could have sent.
+  const secret = process.env.CRON_SECRET;
   const auth = request.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!secret || auth !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -109,3 +115,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ reminded: remindedCount, total: gigs.length });
 }
+
+export const GET = handleReminders;
+export const POST = handleReminders;

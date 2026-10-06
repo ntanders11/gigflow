@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-10-06 (gig reminders actually run now)
+- [Fix] The morning gig-day reminder (a bell and phone alert for you and, if they're on StageReach, the venue) was set up but had never actually run — the daily scheduler was being turned away by two different checks. It's fixed: reminders go out around 8 AM Pacific on the day of each gig, once per gig.
+- [Note] The automated follow-up emails have the same problem and are still switched off on purpose, because turning them on would immediately email every venue that's waiting on a follow-up. They need a daily cap first.
+
 ## 2026-10-06 (one calendar button)
 - [Change] The Booking Calendar page had two separate blocks for adding your gigs to your phone's calendar (an iCloud-only button at the top and a copy-the-link box lower down) that did the same thing. They're now one "Add to my calendar" button below the calendar. Tapping it opens a small pop-up with Apple Calendar, Google Calendar, Outlook, and "Copy link" for anything else, plus a note that Google and Outlook can take a few hours to show new gigs.
 

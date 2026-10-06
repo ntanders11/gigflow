@@ -54,6 +54,14 @@ export async function proxy(request: NextRequest) {
     // Signature verification inside the route itself (constructEvent)
     // is what actually secures this endpoint, not the login check.
     pathname === "/api/stripe/webhook" ||
+    // Vercel's daily scheduler calls this with no StageReach login, so —
+    // like the Stripe webhook above — the login check used to redirect every
+    // run to /login before it reached the route, and day-of gig reminders
+    // never went out. The route's own CRON_SECRET check is what secures it.
+    // Deliberately just this one path: the follow-up email job
+    // (/api/venues/follow-up) stays behind the login check on purpose until
+    // Taylor decides how to roll it out safely.
+    pathname === "/api/gigs/reminders" ||
     pathname === "/signup" ||
     pathname === "/venues" ||
     pathname === "/venues/signup" ||
