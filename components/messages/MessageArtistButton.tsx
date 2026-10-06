@@ -11,18 +11,23 @@ export default function MessageArtistButton({ artistUserId }: { artistUserId: st
   async function start() {
     setBusy(true);
     setError("");
-    const res = await fetch("/api/messages/conversations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ artist_user_id: artistUserId }),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError(json.error ?? "Couldn't open a conversation. Try again.");
+    try {
+      const res = await fetch("/api/messages/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artist_user_id: artistUserId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(json.error ?? "Couldn't open a conversation. Try again.");
+        setBusy(false);
+        return;
+      }
+      router.push(`/venue/messages?c=${json.id}`);
+    } catch {
+      setError("Couldn't open a conversation. Check your connection and try again.");
       setBusy(false);
-      return;
     }
-    router.push(`/venue/messages?c=${json.id}`);
   }
 
   return (

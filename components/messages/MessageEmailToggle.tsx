@@ -18,12 +18,18 @@ export default function MessageEmailToggle() {
     const next = !enabled;
     setEnabled(next);
     setError("");
-    const res = await fetch("/api/messages/preferences", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message_emails_enabled: next }),
-    });
-    if (!res.ok) {
+    let ok = false;
+    try {
+      const res = await fetch("/api/messages/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message_emails_enabled: next }),
+      });
+      ok = res.ok;
+    } catch {
+      ok = false;
+    }
+    if (!ok) {
       setEnabled(!next);
       setError("Couldn't save that. Try again.");
     }
