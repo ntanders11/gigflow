@@ -23,10 +23,20 @@ const bookingsLink  = { href: "/venue/bookings",  label: "Calendar",         mob
 // (2026-10-06); on phones it's reached from the Dashboard's "Outstanding"
 // card. "Ratings" (/venue/ratings) is likewise reached from a dashboard card.
 const invoicesLink  = { href: "/venue/invoices",  label: "Invoices",         mobileLabel: "Invoices",  icon: "$" };
-// Messages uses the same ring as the artist bar's Pipeline tab: a plain
-// symbol like the other tabs' (the old envelope glyph shows up as a colorful
-// emoji letter on iPhone, which didn't match).
-const messagesLink  = { href: "/venue/messages",  label: "Messages",         mobileLabel: "Messages",  icon: "◎" };
+// Messages gets a plain outline envelope drawn as a shape, not a text
+// character: the old "✉" character turned into a colorful emoji letter on
+// iPhone, which didn't match the other tabs' plain symbols. Drawn with
+// currentColor, so it follows the tab's color (gray, gold when active) like
+// the other icons do.
+function MailIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block" }}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3.5 7l8.5 6.5L20.5 7" />
+    </svg>
+  );
+}
+const messagesLink  = { href: "/venue/messages",  label: "Messages",         mobileLabel: "Messages",  icon: <MailIcon /> };
 const profileLink = { href: "/venue/profile", label: "My Profile", mobileLabel: "Profile", icon: "◉" };
 
 const desktopMainLinks = [dashboardLink, discoverLink, bookingsLink, invoicesLink, messagesLink];
@@ -108,7 +118,7 @@ export default function VenueNav() {
             className="flex flex-col items-center justify-center gap-0.5 rounded-lg transition-all"
             style={{ color: isActive(link.href) ? "#D4A64F" : "#5e5c58", minWidth: "44px", minHeight: "44px", padding: "6px 4px" }}
           >
-            <span className="relative" style={{ fontSize: "18px" }}>
+            <span className="relative flex items-center justify-center" style={{ fontSize: "18px", height: "27px", minWidth: "20px" }}>
               {link.icon}
               {link.href === "/venue/messages" && unreadMessages > 0 && (
                 <span className="absolute -top-1 -right-3"><UnreadBadge count={unreadMessages} /></span>

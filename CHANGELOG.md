@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-06 (envelope icon)
+- [Change] The venue phone bar's Messages tab now has a plain envelope outline (drawn as a shape, so it looks the same on every phone) instead of the ring. It's gray like the other tabs and turns gold when you're on Messages.
+
 ## 2026-10-06 (bell and top-of-screen fade)
 - [Fix] On iPhone (when running from the Home Screen), page headings and the notification bell looked faded at the top because iOS draws a soft shadow under the clock and they sat inside it. Content now starts a little lower on phones so it clears the shadow.
 - [Change] The phone notification bell is brighter and easier to see: a cream bell on a lighter circle with a visible edge and shadow, and a slightly bigger unread badge. Artists and venues share the same bell.
