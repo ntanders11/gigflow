@@ -235,7 +235,7 @@ export default async function DashboardPage() {
       {/* Top bar — pr-14 on mobile clears the fixed notification bell in the corner */}
       <div className="flex items-center justify-between mb-6 max-w-6xl pr-14 md:pr-0">
         <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>
-          Overview
+          Dashboard
         </h1>
         <div className="flex items-center gap-2">
           <Link
