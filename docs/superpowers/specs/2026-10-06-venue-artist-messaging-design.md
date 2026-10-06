@@ -10,8 +10,8 @@ Let venues and artists talk inside StageReach (pay, set length, load-in, interes
 
 1. **Only a venue can start a conversation**, via a "Message" button next to "Request to Book" on an artist's public `/profile/[id]` (venue viewers only).
 2. **An artist can only reply** inside a conversation a venue already started. There is no "message this venue" entry point on the artist side — artists email venues (existing pitch flow) for first contact. This is deliberate: venues must not be spammed.
-3. **One conversation per venue/artist pair** (unique on `venue_profile_id` + `artist_user_id`). If a booking request exists between them, the thread shows it pinned at the top.
-4. **Block**: either side can block the other. A blocked sender gets a rejection on send; the blocker still sees history.
+3. **One conversation per venue/artist pair** (unique on `venue_profile_id` + `artist_user_id`). If a booking request exists between them, the thread shows it pinned at the top (looked up at read time, not stored on the conversation).
+4. **Block**: either side can block the other. While a conversation is blocked, neither side can send; the blocker still sees history. Only the person who blocked can unblock.
 5. **Report**: either side can report a message; the report emails Taylor (same pattern as rating reports). No in-app moderation UI.
 6. Message text is length-capped (2,000 characters). A message may also carry **one attachment** (see Attachments). No read receipts, typing indicators, or group chats.
 
@@ -19,9 +19,9 @@ Let venues and artists talk inside StageReach (pay, set length, load-in, interes
 
 Both tables: RLS enabled with **no policies**; every read/write goes through server routes using the service-role client (same as `booking_requests` and `venue_artist_ratings`). Migration ends with the three standard grants (`anon`, `authenticated`, `service_role`), per the Data API grants rule in CLAUDE.md.
 
-- `conversations`: `id`, `venue_profile_id`, `artist_user_id`, `booking_request_id` (nullable), `last_message_at`, `blocked_by` (nullable: `'artist' | 'venue'`), `created_at`. Unique on (`venue_profile_id`, `artist_user_id`).
+- `conversations`: `id`, `venue_profile_id`, `artist_user_id`, `last_message_at`, `blocked_by` (nullable: `'artist' | 'venue'`), `created_at`. Unique on (`venue_profile_id`, `artist_user_id`).
 - `messages`: `id`, `conversation_id`, `sender_type` (`'artist' | 'venue'`), `sender_user_id`, `body` (may be empty if an attachment is present), `created_at`, `read_at` (nullable), plus nullable attachment fields `attachment_path`, `attachment_name`, `attachment_type`, `attachment_size`. A message must have a body, an attachment, or both.
-- Email preference: `message_emails_enabled boolean not null default true` added to both `profiles` (artists) and `venue_profiles`.
+- Email preference: a single `message_emails_enabled boolean not null default true` column on `profiles`, used for everyone (artists and venues).
 
 ## Attachments
 
@@ -29,10 +29,10 @@ For things like stage plots, parking maps, and rider sheets.
 
 - **Allowed**: images (JPEG, PNG, WebP, GIF) and PDFs, **max 10 MB each**, one per message. Nothing else.
 - **Private storage**: a new private Supabase Storage bucket `message-attachments` (not the public `artist-photos` bucket the photo upload uses). Files are stored under `<conversation_id>/<message_id>-<sanitized name>`. Nobody gets a permanent public URL; the thread endpoint returns short-lived signed URLs, and only to the two participants of that conversation.
-- **Validation is server-side**: type (checked against an allowlist, and the real content type, not just the file extension), size, participant membership, and block status. A blocked sender can't upload. Original filenames are sanitized before use in the storage path.
-- **Upload flow**: `POST /api/messages/conversations/[id]/attachments` receives the file, validates it, stores it, and returns the attachment fields; the client then includes those in the send request. If the send never happens, an orphaned file may remain (acceptable at this scale; revisit with a cleanup job if it grows).
+- **Validation is server-side**: type (checked against an allowlist, and the real content type, not just the file extension), size, participant membership, and block status. Neither side can upload while the conversation is blocked. Original filenames are sanitized before use in the storage path.
+- **Upload flow** (signed URL): `POST /api/messages/conversations/[id]/attachments` validates the declared type and size and returns a server-issued signed upload URL; the client uploads the file directly to storage with it, then includes the attachment fields in the send request, where the server re-checks the stored file. If the send never happens, an orphaned file may remain (acceptable at this scale; revisit with a cleanup job if it grows).
 - **Display**: images preview inline in the thread (tap to enlarge); PDFs show as a file chip with name and size that opens in a new tab.
-- Creating the bucket is a Supabase dashboard step Taylor (or Claude, guided) must do once; the migration documents it.
+- The private `message-attachments` bucket is created by the migration itself; no manual dashboard step.
 
 ## Routes
 
@@ -40,9 +40,9 @@ For things like stage plots, parking maps, and rider sheets.
 - `POST /api/messages/conversations` — venue only; creates (or returns existing) conversation with an artist and optionally sends the first message.
 - `GET /api/messages/conversations/[id]` — messages in a thread; marks the other side's messages read.
 - `POST /api/messages/conversations/[id]/messages` — send (text, attachment fields, or both); rejects if blocked, or if caller is an artist and the conversation doesn't exist.
-- `POST /api/messages/conversations/[id]/attachments` — upload one file (see Attachments).
-- `POST /api/messages/conversations/[id]/block` and `/report`.
-- Email preference saved through the existing profile PATCH routes (`PATCH /api/venue-profile`, and the artist profile equivalent).
+- `POST /api/messages/conversations/[id]/attachments` — validate an attachment and return a signed upload URL (see Attachments).
+- `POST /api/messages/conversations/[id]/block`, `/unblock` (only by the person who blocked), and `/report`.
+- `GET`/`PATCH /api/messages/preferences` — read and save `message_emails_enabled` (not via the profile PATCH routes).
 
 ## Pages and navigation
 
@@ -59,7 +59,7 @@ For things like stage plots, parking maps, and rider sheets.
 ## Errors / edge cases
 
 - Artist tries to start a conversation → 403.
-- Send while blocked → 403 with a plain message. Duplicate "start conversation" → returns the existing one.
+- Send while blocked (either side) → 403 with a plain message. Duplicate "start conversation" → returns the existing one.
 - Disallowed file type or over 10 MB → 400 with a plain message. Signed links expire, so the thread re-fetches them on load.
 - Email failure never blocks a send (log and move on, like other notification emails).
 
