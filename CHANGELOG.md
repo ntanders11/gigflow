@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-06 (homepage upgrade)
+- [Change] The public homepage now has a proper look: a stronger headline, three "save time / stay organized / get booked and paid" sections, a grid of everything StageReach does, separate sections for artists and venues, and a "now in beta" call to action. The Google account explanation and Privacy/Terms links are still there. Customer quotes and venue counts were deliberately left out until there are real ones.
+
 ## 2026-09-30 (fix venue name search)
 - [Fix] Searching for a venue by name in Discover Venues did nothing unless you also typed a location, and could miss venues in busy areas. It now looks the venue up directly by name, with or without a location, and tells you if both boxes are empty.
 
