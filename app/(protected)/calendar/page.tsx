@@ -65,28 +65,6 @@ export default async function CalendarPage() {
 
       <BookingRequestsSection />
 
-      {/* iCloud subscription banner */}
-      <div
-        className="flex items-center justify-between rounded-xl px-5 py-4 mb-8 max-w-5xl"
-        style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
-      >
-        <div>
-          <p className="text-sm font-semibold mb-0.5" style={{ color: "#F4E8D2" }}>
-            Sync with iCloud Calendar
-          </p>
-          <p className="text-xs" style={{ color: "#9a9591" }}>
-            Subscribe once — your booked gigs will appear automatically and stay up to date.
-          </p>
-        </div>
-        <a
-          href={`webcal://${subscriptionUrl.replace(/^https?:\/\//, "")}`}
-          className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:brightness-110 shrink-0 ml-6"
-          style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
-        >
-          Subscribe in iCloud →
-        </a>
-      </div>
-
       <div className="max-w-5xl">
         <CalendarView
           bookedVenues={bookedVenues}

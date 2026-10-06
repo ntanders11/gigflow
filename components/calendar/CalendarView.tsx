@@ -15,6 +15,7 @@ import {
 import { useState } from "react";
 import Link from "next/link";
 import { BlackoutDate } from "@/types";
+import AddToCalendarButton from "@/components/calendar/AddToCalendarButton";
 
 type Venue = {
   id: string;
@@ -48,7 +49,6 @@ export default function CalendarView({
   initialBlackoutDates: BlackoutDate[];
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [copied, setCopied] = useState(false);
 
   const [blackoutDates, setBlackoutDates] = useState<BlackoutDate[]>(initialBlackoutDates);
   const [showBlockForm, setShowBlockForm] = useState(false);
@@ -80,13 +80,6 @@ export default function CalendarView({
   function isDateBlocked(day: Date): boolean {
     const dayStr = format(day, "yyyy-MM-dd");
     return blackoutDates.some((b) => dayStr >= b.start_date && dayStr <= b.end_date);
-  }
-
-  function copyUrl() {
-    navigator.clipboard.writeText(subscriptionUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
   }
 
   async function addBlackoutDate() {
@@ -339,35 +332,10 @@ export default function CalendarView({
         </div>
       </div>
 
-      {/* Subscription URL — the recommended way to get gigs onto your phone's
-          calendar. Leads the section since it covers every gig automatically,
-          current and future, instead of adding them one at a time. */}
-      <div className="mt-8 rounded-xl px-5 py-4" style={{ backgroundColor: "rgba(212,166,79,0.08)", border: "1px solid rgba(212,166,79,0.25)" }}>
-        <p className="text-sm font-semibold mb-1" style={{ color: "#D4A64F" }}>
-          📅 Subscribe once, every gig shows up automatically
-        </p>
-        <p className="text-xs mb-3" style={{ color: "#9a9591" }}>
-          Add this link to your phone&apos;s calendar app and it&apos;ll always stay current — no need to add gigs one at a time. On iPhone: Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar → paste this URL.
-        </p>
-        <div className="flex items-center gap-2">
-          <code
-            className="flex-1 text-xs px-3 py-2 rounded-lg truncate"
-            style={{ backgroundColor: "#0E0E10", color: "#9b7fe8", border: "1px solid rgba(255,255,255,0.07)" }}
-          >
-            {subscriptionUrl}
-          </code>
-          <button
-            onClick={copyUrl}
-            className="px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0"
-            style={{
-              backgroundColor: copied ? "rgba(76,175,125,0.15)" : "rgba(255,255,255,0.07)",
-              color: copied ? "#4caf7d" : "#9a9591",
-              border: `1px solid ${copied ? "#4caf7d" : "rgba(255,255,255,0.1)"}`,
-            }}
-          >
-            {copied ? "✓ Copied" : "Copy"}
-          </button>
-        </div>
+      {/* One button that opens a pop-up with Apple / Google / Outlook / copy-link
+          options — the way to get gigs onto whatever calendar someone uses. */}
+      <div className="mt-8">
+        <AddToCalendarButton subscriptionUrl={subscriptionUrl} />
       </div>
 
       {/* Booked gigs list */}

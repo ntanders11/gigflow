@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-06 (one calendar button)
+- [Change] The Booking Calendar page had two separate blocks for adding your gigs to your phone's calendar (an iCloud-only button at the top and a copy-the-link box lower down) that did the same thing. They're now one "Add to my calendar" button below the calendar. Tapping it opens a small pop-up with Apple Calendar, Google Calendar, Outlook, and "Copy link" for anything else, plus a note that Google and Outlook can take a few hours to show new gigs.
+
 ## 2026-10-06 (envelope icon)
 - [Change] The venue phone bar's Messages tab now has a plain envelope outline (drawn as a shape, so it looks the same on every phone) instead of the ring. It's gray like the other tabs and turns gold when you're on Messages.
 
