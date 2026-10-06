@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ArtistProfile, Package, VideoSample, SocialLinks, EmailConnection, Zone } from "@/types";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 import PushToggle from "@/components/notifications/PushToggle";
+import MessageEmailToggle from "@/components/messages/MessageEmailToggle";
 import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
 
 const DEFAULT_PACKAGES: Package[] = [
@@ -841,6 +842,7 @@ export default function ArtistProfilePage() {
               </div>
             )}
             <PushToggle />
+            <MessageEmailToggle />
           </div>
 
           {/* Bio */}

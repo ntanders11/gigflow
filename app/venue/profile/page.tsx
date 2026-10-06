@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { VenueProfile } from "@/types";
 import VenueNav from "@/components/venue/VenueNav";
 import PushToggle from "@/components/notifications/PushToggle";
+import MessageEmailToggle from "@/components/messages/MessageEmailToggle";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
 import EquipmentFields from "@/components/venue/EquipmentFields";
@@ -197,6 +198,7 @@ export default function VenueProfilePage() {
           style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
         >
           <PushToggle />
+          <MessageEmailToggle />
         </div>
 
         {error && (
