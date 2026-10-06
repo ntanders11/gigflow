@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-06 (venue tabs on artist profiles)
+- [Change] When a venue looks at an artist's profile, it now sees its usual tabs at the top (Dashboard, Discover Artists, Bookings, Invoices, Messages, My Profile) — on phones, the bottom tab bar — instead of a bare logo bar. The back arrow is kept and now returns to the page you came from.
+
 ## 2026-10-06 (PDF previews in messages)
 - [Feature] PDFs sent in messages now show a small picture of the first page right in the conversation, like pictures already did, so a stage plot or parking map can be seen without opening it. Tapping it still opens the full PDF. If a preview can't be drawn, it shows the plain file name and size instead.
 
