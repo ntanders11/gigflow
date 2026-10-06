@@ -30,10 +30,11 @@ export async function sendNewMessageEmail(
   if (error) console.error("sendNewMessageEmail: profile lookup failed", error);
   if (!profile?.email || profile.message_emails_enabled === false) return;
 
+  const safeName = senderName.replace(/[\r\n]+/g, " ").trim().slice(0, 80);
   const base = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim().replace(/\/$/, "");
   await sendSystemEmail(
     profile.email as string,
-    `${senderName} sent you a message on StageReach`,
-    `${senderName} sent you a message on StageReach. Open it here: ${base}${link}\n\nYou can turn these emails off from your profile page.`
+    `${safeName} sent you a message on StageReach`,
+    `${safeName} sent you a message on StageReach. Open it here: ${base}${link}\n\nYou can turn these emails off from your profile page.`
   );
 }

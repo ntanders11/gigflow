@@ -17,7 +17,7 @@ export default async function VenueMessagesPage({ searchParams }: { searchParams
       <VenueNav />
       <div className="min-h-screen pb-28 md:pb-0 p-4 md:p-8" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
         <h1 className="text-2xl font-bold tracking-tight mb-6 pr-14 md:pr-0">Messages</h1>
-        <MessagesView role="venue" initialConversationId={c} />
+        <MessagesView key={c ?? ""} role="venue" initialConversationId={c} />
       </div>
     </>
   );

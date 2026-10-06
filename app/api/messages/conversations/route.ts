@@ -24,7 +24,9 @@ export async function GET() {
     .order("last_message_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const conversations = await buildConversationViews(service, participant, (rows ?? []) as ConversationRow[]);
+  const views = await buildConversationViews(service, participant, (rows ?? []) as ConversationRow[]);
+  // Artists don't see a conversation until the venue has actually sent something.
+  const conversations = participant.role === "artist" ? views.filter((v) => v.last_message_preview !== "") : views;
   return NextResponse.json({ conversations });
 }
 

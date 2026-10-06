@@ -28,7 +28,7 @@ Both tables: RLS enabled with **no policies**; every read/write goes through ser
 For things like stage plots, parking maps, and rider sheets.
 
 - **Allowed**: images (JPEG, PNG, WebP, GIF) and PDFs, **max 10 MB each**, one per message. Nothing else.
-- **Private storage**: a new private Supabase Storage bucket `message-attachments` (not the public `artist-photos` bucket the photo upload uses). Files are stored under `<conversation_id>/<message_id>-<sanitized name>`. Nobody gets a permanent public URL; the thread endpoint returns short-lived signed URLs, and only to the two participants of that conversation.
+- **Private storage**: a new private Supabase Storage bucket `message-attachments` (not the public `artist-photos` bucket the photo upload uses). Files are stored under `<conversation_id>/<random-uuid>-<sanitized name>`. Nobody gets a permanent public URL; the thread endpoint returns short-lived signed URLs, and only to the two participants of that conversation.
 - **Validation is server-side**: type (checked against an allowlist, and the real content type, not just the file extension), size, participant membership, and block status. Neither side can upload while the conversation is blocked. Original filenames are sanitized before use in the storage path.
 - **Upload flow** (signed URL): `POST /api/messages/conversations/[id]/attachments` validates the declared type and size and returns a server-issued signed upload URL; the client uploads the file directly to storage with it, then includes the attachment fields in the send request, where the server re-checks the stored file. If the send never happens, an orphaned file may remain (acceptable at this scale; revisit with a cleanup job if it grows).
 - **Display**: images preview inline in the thread (tap to enlarge); PDFs show as a file chip with name and size that opens in a new tab.
@@ -65,7 +65,7 @@ For things like stage plots, parking maps, and rider sheets.
 
 ## Testing
 
-No test suite is configured. Verify manually on localhost with a venue account and an artist account: venue starts a thread, artist replies, unread badges update, block stops sends, opt-out suppresses the email, artist cannot start a thread, attachments upload and preview, oversized/disallowed files are rejected, and a signed link doesn't work for someone outside the conversation.
+`npm test` runs Vitest for the pure rules (attachment limits and similar); everything else is verified manually. Verify manually on localhost with a venue account and an artist account: venue starts a thread, artist replies, unread badges update, block stops sends, opt-out suppresses the email, artist cannot start a thread, attachments upload and preview, oversized/disallowed files are rejected, and someone outside the conversation can't get a link to the file (signed links last an hour for the two participants).
 
 ## Out of scope (separate small task)
 

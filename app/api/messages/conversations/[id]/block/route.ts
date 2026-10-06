@@ -21,7 +21,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     const { error } = await ctx.service
       .from("conversations")
       .update({ blocked_by: ctx.participant.role })
-      .eq("id", ctx.conversation.id);
+      .eq("id", ctx.conversation.id)
+      .is("blocked_by", null);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
   return NextResponse.json({ success: true });

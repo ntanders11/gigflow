@@ -47,16 +47,25 @@ export default function MessagesView({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadList = useCallback(async () => {
-    const res = await fetch("/api/messages/conversations");
-    if (res.ok) setConversations((await res.json()).conversations ?? []);
-    setLoadingList(false);
+    try {
+      const res = await fetch("/api/messages/conversations");
+      if (res.ok) setConversations((await res.json()).conversations ?? []);
+    } catch {
+      // Network error: keep whatever is already shown.
+    } finally {
+      setLoadingList(false);
+    }
   }, []);
 
   const latestIdRef = useRef<string | null>(initialConversationId ?? null);
 
   const loadThread = useCallback(async (id: string) => {
     const res = await fetch(`/api/messages/conversations/${id}`);
-    if (!res.ok) return;
+    if (!res.ok) {
+      // Invalid or inaccessible conversation: fall back to the list.
+      if (latestIdRef.current === id) setActiveId(null);
+      return;
+    }
     const data = await res.json();
     // Ignore responses for a conversation that is no longer the active one.
     if (latestIdRef.current === id) setThread(data);
@@ -148,7 +157,8 @@ export default function MessagesView({
 
   async function report(messageId: string) {
     if (!activeId) return;
-    const reason = window.prompt("What's wrong with this message? (optional)") ?? "";
+    const reason = window.prompt("What's wrong with this message? (optional)");
+    if (reason === null) return;
     const res = await fetch(`/api/messages/conversations/${activeId}/report`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -231,6 +241,7 @@ export default function MessagesView({
               <Link href={thread.conversation.counterpart_href} className="flex-1 min-w-0 text-sm font-semibold truncate" style={{ color: "#F4E8D2" }}>
                 {thread.conversation.counterpart_name}
               </Link>
+              {(!thread.conversation.blocked || thread.blocked_by_me) && (
               <div className="relative">
                 <button onClick={() => setMenuOpen((o) => !o)} className="px-2 text-lg" style={{ color: "#9a9591" }} aria-label="Conversation options">⋯</button>
                 {menuOpen && (
@@ -241,6 +252,7 @@ export default function MessagesView({
                   </div>
                 )}
               </div>
+              )}
             </div>
 
             {thread.booking && (

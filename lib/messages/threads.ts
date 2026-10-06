@@ -107,8 +107,9 @@ export async function buildThread(
     .from("messages")
     .select("id, sender_type, body, created_at, attachment_path, attachment_name, attachment_type, attachment_size")
     .eq("conversation_id", conversation.id)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(500);
+  rows?.reverse();
 
   const paths = (rows ?? []).map((m) => m.attachment_path as string | null).filter((p): p is string => !!p);
   const urlByPath = new Map<string, string>();
@@ -136,12 +137,14 @@ export async function buildThread(
 
   // The most relevant booking request between this pair, shown pinned at
   // the top of the thread. Looked up on read, not stored.
+  const todayStr = new Date().toISOString().slice(0, 10);
   const { data: booking } = await service
     .from("booking_requests")
     .select("date, status")
     .eq("venue_profile_id", conversation.venue_profile_id)
     .eq("artist_user_id", conversation.artist_user_id)
     .in("status", ["pending", "accepted"])
+    .gte("date", todayStr)
     .order("date", { ascending: true })
     .limit(1)
     .maybeSingle();

@@ -54,7 +54,7 @@ alter table public.profiles
 -- Widen the notification types. Also adds gig_reminder, which the code
 -- already uses but earlier constraints (023/024) never allowed.
 alter table public.notifications
-  drop constraint notifications_type_check;
+  drop constraint if exists notifications_type_check;
 
 alter table public.notifications
   add constraint notifications_type_check

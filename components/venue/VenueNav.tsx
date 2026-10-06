@@ -7,11 +7,10 @@ import { usePathname } from "next/navigation";
 import NotificationBell from "@/components/notifications/NotificationBell";
 
 // Dashboard leads and is the default landing page for every venue login
-// (see proxy.ts). "My Profile" sits last, immediately before the
-// notification bell on both surfaces — on the mobile bottom bar that
-// falls out naturally from being last in this array; on the desktop bar,
-// a spacer between the main links and Profile pushes it (and the bell,
-// which moves alongside it) to the right edge — see profileLink below.
+// (see proxy.ts). Desktop bar: Dashboard, Discover Artists, Bookings,
+// Invoices, Messages, then (after a spacer that pushes them to the right
+// edge) Profile and the notification bell. Mobile bottom bar: Dashboard,
+// Discover, Bookings, Messages, Profile (Invoices has no mobile slot).
 const dashboardLink = { href: "/venue/dashboard", label: "Dashboard",        mobileLabel: "Dashboard", icon: "◆" };
 // Favorites lives inside Discover Artists now (a "★ Favorites" dropdown
 // near the top of that page) rather than as its own tab/page.
