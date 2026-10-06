@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-06 (phone zoom fix)
+- [Fix] On iPhone, tapping a text box (like the email box on the login screen) made Safari zoom the page in, and it could stay zoomed after logging in — so screens looked shifted and cut off at the edges. Text boxes are now big enough on phones that Safari doesn't zoom. Desktop looks the same as before.
+
 ## 2026-10-06 (artist tabs match phone and venue)
 - [Change] The artist desktop top bar now looks like the venue one — logo and tabs on the left, My Profile and the bell on the right — and uses the same five tabs as the phone: Overview, Pipeline, Calendar, Invoices and Profile. Discover is still the toggle on Pipeline, Import is on the Dashboard, and Messages is on the Dashboard card and the bell. Sign out is at the bottom of the profile page.
 

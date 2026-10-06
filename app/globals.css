@@ -32,6 +32,21 @@ body {
   font-family: 'DM Sans', system-ui, sans-serif;
 }
 
+/* iPhone Safari zooms the whole page in when you tap a text box whose type
+   is smaller than 16px, and it can stay zoomed after the app moves to the
+   next page (e.g. after logging in) — leaving every screen shifted and cut
+   off at the edges. So on phones, every text box is at least 16px.
+   !important is deliberate: some boxes set their size inline, and an
+   unlayered rule here already beats Tailwind's text-sm utility. Desktop is
+   untouched. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 .time-scroll-col::-webkit-scrollbar {
   display: none;
 }
