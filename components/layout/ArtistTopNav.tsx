@@ -8,7 +8,7 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 // The artist side's desktop navigation: a top tab bar laid out like the
 // venue side's (components/venue/VenueNav.tsx — logo and tabs on the left,
 // Profile and the bell on the right) and with the same tabs as the phone's
-// bottom bar (components/layout/MobileNav.tsx): Dashboard, Pipeline,
+// bottom bar (components/layout/MobileNav.tsx): Overview, Pipeline,
 // Calendar, Invoices, Profile. It replaced the left sidebar on 2026-10-06.
 // This bar hides itself below the md breakpoint.
 //
@@ -23,7 +23,7 @@ const mainLinks = [
   // `also` lists other sections that belong under the same tab, so it stays
   // highlighted on those pages (Discover and the venue pages are part of
   // working your pipeline).
-  { href: "/dashboard", label: "Dashboard", also: [] as string[] },
+  { href: "/dashboard", label: "Overview", also: [] as string[] },
   { href: "/pipeline",  label: "Pipeline", also: ["/discover", "/venues"] },
   { href: "/calendar",  label: "Calendar", also: [] as string[] },
   { href: "/invoices",  label: "Invoices", also: [] as string[] },

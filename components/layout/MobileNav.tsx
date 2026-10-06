@@ -23,7 +23,7 @@ export function MobileBottomNav() {
   // app/(protected)/layout.tsx — same reasoning as the venue side's bell,
   // just relocated further so it doesn't cost a tab slot at all.
   const mobileLinks = [
-    { href: "/dashboard",  label: "Dashboard", icon: "◆" },
+    { href: "/dashboard",  label: "Overview",  icon: "◆" },
     { href: "/pipeline",   label: "Pipeline",  icon: "◎" },
     { href: "/calendar",   label: "Calendar",  icon: "☐" },
     { href: "/invoices",   label: "Invoices",  icon: "$" },
