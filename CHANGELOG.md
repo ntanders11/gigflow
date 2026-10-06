@@ -1,5 +1,11 @@
 # StageReach Changelog
 
+## 2026-10-06 (messaging)
+- [Feature] Venues and artists can now message each other inside StageReach. A venue starts a conversation from an artist's profile (artists can reply but not start one, so venues aren't spammed), and either side can attach one image or PDF (stage plots, parking maps, rider sheets — up to 10 MB). There's an unread badge, a Messages page for each side, and block and report options.
+- [Change] On phones, the venue bottom bar now has Messages in place of Invoices; invoices are reached from the Dashboard card.
+- [Feature] A new "Email me about new messages" switch on both profile pages turns off the email only — in-app and phone alerts stay on.
+- [Fix] Day-of gig reminders weren't showing in the notification bell (the database rejected that notification type); fixed alongside the messaging changes.
+
 ## 2026-10-06 (homepage upgrade)
 - [Change] The public homepage now has a proper look: a stronger headline, three "save time / stay organized / get booked and paid" sections, a grid of everything StageReach does, separate sections for artists and venues, and a "now in beta" call to action. The Google account explanation and Privacy/Terms links are still there. Customer quotes and venue counts were deliberately left out until there are real ones.
 
