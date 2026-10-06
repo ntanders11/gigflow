@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-06 (PDF previews in messages)
+- [Feature] PDFs sent in messages now show a small picture of the first page right in the conversation, like pictures already did, so a stage plot or parking map can be seen without opening it. Tapping it still opens the full PDF. If a preview can't be drawn, it shows the plain file name and size instead.
+
 ## 2026-10-06 (messaging)
 - [Feature] Venues and artists can now message each other inside StageReach. A venue starts a conversation from an artist's profile (artists can reply but not start one, so venues aren't spammed), and either side can attach one image or PDF (stage plots, parking maps, rider sheets — up to 10 MB). There's an unread badge, a Messages page for each side, and block and report options.
 - [Change] On phones, the venue bottom bar now has Messages in place of Invoices; invoices are reached from the Dashboard card.

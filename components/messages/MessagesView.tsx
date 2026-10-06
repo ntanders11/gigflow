@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import PdfAttachment from "@/components/messages/PdfAttachment";
 import { ConversationView, ThreadView } from "@/types";
 import {
   ALLOWED_ATTACHMENT_TYPES,
@@ -274,6 +275,8 @@ export default function MessagesView({
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={m.attachment.url} alt={m.attachment.name} className="rounded-lg mb-1 max-h-60" />
                         </a>
+                      ) : m.attachment.type === "application/pdf" ? (
+                        <PdfAttachment messageId={m.id} attachment={m.attachment} />
                       ) : (
                         <a
                           href={m.attachment.url}
