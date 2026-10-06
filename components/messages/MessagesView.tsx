@@ -52,16 +52,27 @@ export default function MessagesView({
     setLoadingList(false);
   }, []);
 
+  const latestIdRef = useRef<string | null>(initialConversationId ?? null);
+
   const loadThread = useCallback(async (id: string) => {
     const res = await fetch(`/api/messages/conversations/${id}`);
-    if (res.ok) setThread(await res.json());
+    if (!res.ok) return;
+    const data = await res.json();
+    // Ignore responses for a conversation that is no longer the active one.
+    if (latestIdRef.current === id) setThread(data);
   }, []);
 
   useEffect(() => { loadList(); }, [loadList]);
 
   useEffect(() => {
-    if (!activeId) { setThread(null); return; }
-    loadThread(activeId);
+    latestIdRef.current = activeId;
+    setThread(null);
+    setDraft("");
+    setFile(null);
+    setError("");
+    setMenuOpen(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (activeId) loadThread(activeId);
   }, [activeId, loadThread]);
 
   // Simple polling — no realtime connection. Only while the tab is visible.
