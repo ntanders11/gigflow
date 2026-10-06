@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import { UnreadBadge, useUnreadMessages } from "@/components/messages/UnreadMessages";
 
 // Dashboard leads and is the default landing page for every venue login
 // (see proxy.ts). Desktop bar: Dashboard, Discover Artists, Bookings,
@@ -26,23 +26,11 @@ const profileLink = { href: "/venue/profile", label: "My Profile", mobileLabel: 
 const desktopMainLinks = [dashboardLink, discoverLink, bookingsLink, invoicesLink, messagesLink];
 const mobileLinks = [dashboardLink, discoverLink, bookingsLink, messagesLink, profileLink];
 
-function UnreadBadge({ count }: { count: number }) {
-  if (count <= 0) return null;
-  return (
-    <span
-      className="inline-flex items-center justify-center rounded-full text-[10px] font-bold px-1"
-      style={{ backgroundColor: "#e25c5c", color: "#fff", minWidth: "16px", height: "16px" }}
-    >
-      {count > 9 ? "9+" : count}
-    </span>
-  );
-}
-
 // Renders both surfaces from one component so every page that does
 // `<VenueNav />` gets both automatically, with no per-page changes: a
 // desktop top bar (hidden on mobile) and a fixed mobile bottom tab bar
 // (hidden on desktop) modeled directly on the artist side's
-// components/layout/Sidebar.tsx — same fixed positioning, safe-area
+// components/layout/MobileNav.tsx — same fixed positioning, safe-area
 // padding, and 44x44pt touch targets, so the two account types feel like
 // the same app instead of two different ones. The old version was a single
 // non-wrapping horizontal row of 6 links + logo + bell that just overflowed
@@ -50,20 +38,7 @@ function UnreadBadge({ count }: { count: number }) {
 // reach anything past the first couple of links.
 export default function VenueNav() {
   const pathname = usePathname();
-  const [unreadMessages, setUnreadMessages] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    function load() {
-      fetch("/api/messages/unread-count")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => { if (!cancelled && d) setUnreadMessages(d.count ?? 0); })
-        .catch(() => {});
-    }
-    load();
-    const t = setInterval(load, 30000);
-    return () => { cancelled = true; clearInterval(t); };
-  }, [pathname]);
+  const unreadMessages = useUnreadMessages(pathname);
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(href + "/");

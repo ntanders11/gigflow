@@ -23,7 +23,7 @@ function timeAgo(iso: string): string {
 //
 // align controls which side the dropdown's edge is pinned to — pass
 // "left" whenever a right-pinned dropdown wouldn't fit (the desktop
-// Sidebar is only 224px wide, far narrower than the 320px dropdown; the
+// the old left sidebar (since replaced by a top bar) was only 224px wide, far narrower than the 320px dropdown; the
 // bell there sits at the sidebar's right edge, but "right"-pinning would
 // still push most of the dropdown off-screen to the left, so it's
 // pinned "left" instead to grow rightward into the main content area.

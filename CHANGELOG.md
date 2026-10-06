@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-06 (artist top tabs)
+- [Change] On desktop, artists now get a row of tabs across the top (Overview, Pipeline, Discover Venues, Outreach, Booking Calendar, Invoices, Messages) like venues do, instead of the left sidebar. Messages is now reachable from it, with an unread count. Your photo and name sit at the far right and open a small menu with My Artist Profile and Sign out. Phones are unchanged.
+
 ## 2026-10-06 (venue tabs on artist profiles)
 - [Change] When a venue looks at an artist's profile, it now sees its usual tabs at the top (Dashboard, Discover Artists, Bookings, Invoices, Messages, My Profile) — on phones, the bottom tab bar — instead of a bare logo bar. The back arrow is kept and now returns to the page you came from.
 

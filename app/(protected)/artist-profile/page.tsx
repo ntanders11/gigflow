@@ -215,7 +215,7 @@ export default function ArtistProfilePage() {
       const data: ArtistProfile = await res.json();
       setProfile(data);
       setSocialEdits(data.social_links || DEFAULT_SOCIAL);
-      // Sidebar shows its own copy of name/photo, loaded once on mount — nudge it to refresh.
+      // The top nav shows its own copy of name/photo, loaded once on mount — nudge it to refresh.
       window.dispatchEvent(new Event("stagereach:profile-updated"));
     }
     setSaving(false);
