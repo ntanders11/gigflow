@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArtistProfile, Package, VideoSample, SocialLinks } from "@/types";
 import RatingsSection from "@/components/ratings/RatingsSection";
 import RequestToBookButton from "@/components/booking/RequestToBookButton";
+import MessageArtistButton from "@/components/messages/MessageArtistButton";
 import { InstagramIcon, SpotifyIcon, YouTubeIcon, WebsiteIcon } from "@/components/icons/SocialIcons";
 import { getEmbedUrl } from "@/lib/embeds";
 import FavoriteButton from "@/components/venue/FavoriteButton";
@@ -166,6 +167,11 @@ export default async function PublicProfilePage({
             </div>
           )}
         </div>
+        {viewerType === "venue" && (
+          <div className="mb-6 -mt-3">
+            <MessageArtistButton artistUserId={id} />
+          </div>
+        )}
 
         {/* Bio */}
         {p.bio && (
