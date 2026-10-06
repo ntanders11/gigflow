@@ -663,3 +663,21 @@ Also generated a new Resend API key and updated it in both `.env.local` (local d
 **Confirmed resolved same session:** Sent two real test pitch emails via the live app — both landed straight in the inbox (not spam), confirmed by searching Mail directly. The deliverability fix works end-to-end.
 
 **Confirmed resolved (no action needed):** Queried the `invite_codes` table directly via the Supabase REST API using the service role key — all 5 codes from `013_add_stagereach_codes.sql` (`STAGEREACH2026`, `STAGEREACH`, `BETA`, `MUSICIAN`, `GIGFLOW`) were already present and active, added back on 2026-05-28/29. The migration had already been run; this was just an unconfirmed item on the list, not an actual bug. The shareable signup link (`stagereach.app/signup?code=STAGEREACH2026`) has been working the whole time.
+
+## 2026-10-06 — Messaging, PDF previews, navigation rework, cron fix
+
+**Discussed and decided:**
+- **Homepage.** Reworked `/` into a Dusk.fm-style layout (hero, three pillars, feature grid, artist/venue sections, "now in beta" call to action). Deliberately no testimonials or venue counts until there are real ones; the Google-account section and Privacy/Terms links stay for OAuth verification.
+- **In-app messaging** between venues and artists, built with the subagent-driven flow (fresh helper per task, review per task, final whole-branch review). Rules Taylor set: only a venue can start a conversation (artists reply; first contact from artists stays email so venues aren't spammed); block/unblock and report; one image-or-PDF attachment per message up to 10 MB in private storage; email only for the first unread message in a thread with an "Email me about new messages" switch that affects the email only. On the venue phone bar, Messages took Invoices' slot. Migration `030_messaging.sql` applied by Taylor; it also fixed the `gig_reminder` notification type that had been failing to insert. Deferred follow-ups noted in CLAUDE.md: no per-venue cap on new conversations, orphaned uploads not cleaned up.
+- **PDF previews** in messages: first-page thumbnail (pdfjs-dist), falls back to a file chip.
+- **Navigation.** Artist desktop sidebar replaced by a top tab bar laid out like the venue bar, with the phone's five tabs: Overview, Pipeline, Calendar, Invoices, Profile (Messages/Discover/Import reached from Dashboard cards, the Pipeline toggle and the bell). Venue tabs renamed to Overview, Discover, Calendar, Invoices, Messages; Messages icon is a drawn envelope outline. Both dashboard headings say "Overview" (Taylor tried "Dashboard", preferred "Overview"). Venues viewing an artist's public profile get the venue tab bar, no back arrow.
+- **iPhone fixes.** Text boxes are 16px on phones so Safari stops zooming on tap; content and the floating bell start below the Home Screen app's top fade; the bell is brighter and centered on the page header row. Verified against Taylor's screenshots, not on a real device.
+- **Calendar.** Two overlapping "subscribe" blocks replaced by one "Add to my calendar" button with an Apple / Google / Outlook / copy-link pop-up. Google and Outlook links follow documented formats but weren't click-tested.
+- **Cron jobs never ran.** Both Vercel crons were refused (routes accepted only POST; proxy redirected the login-less call to /login). Fixed `/api/gigs/reminders` only. `/api/venues/follow-up` left off on purpose — enabling it would email ~148 waiting venues at once; needs a daily cap first.
+- **Working agreement.** Fable is the brain (plan, decide, review); the cheapest capable helper (Haiku/Sonnet) is the hands and feet for all GigFlow/StageReach coding. Saved to memory.
+
+**Left open:**
+- Taylor to confirm `CRON_SECRET` is set in Vercel and press Run on the gig-reminders cron so a real phone push is observed (local test proved the notification, not the push — no VAPID keys locally). A leftover test alert "Tonight: St. Josef Winery" is in Taylor's bell.
+- Bell doesn't refresh on its own until a page load (offered a once-a-minute refresh; not decided).
+- Automated follow-up emails: add a cap, then apply the same cron fix.
+- Stale remote branch `wip/artist-top-bar-five-tabs` on GitHub can be deleted (fully merged).
