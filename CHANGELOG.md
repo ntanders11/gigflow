@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-06 (bell alignment)
+- [Fix] On phones, the notification bell sat a little lower than the page heading and its button (like "Overview" and "Pipeline"). It's now level with them. Pages with a taller or shorter header row can still be a few pixels off.
+
 ## 2026-10-06 (gig reminders actually run now)
 - [Fix] The morning gig-day reminder (a bell and phone alert for you and, if they're on StageReach, the venue) was set up but had never actually run — the daily scheduler was being turned away by two different checks. It's fixed: reminders go out around 8 AM Pacific on the day of each gig, once per gig.
 - [Note] The automated follow-up emails have the same problem and are still switched off on purpose, because turning them on would immediately email every venue that's waiting on a follow-up. They need a daily cap first.

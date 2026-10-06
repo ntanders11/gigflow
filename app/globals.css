@@ -9,8 +9,10 @@
      under the clock — about 40px taller than the status bar itself — and
      anything resting inside it (a heading, the bell) looks faded at its
      top edge (measured from a real screenshot, 2026-10-06). So in that mode
-     on phones we start content below the fade. Desktop and plain Safari
-     tabs are untouched. */
+     on phones we start content below the fade (26px extra: just enough for
+     the floating bell's top to clear it while the bell stays level with page
+     headings — see FloatingBell.tsx). Desktop and plain Safari tabs are
+     untouched. */
   --app-top-inset: env(safe-area-inset-top);
   --background: #0E0E10;
   --foreground: #F4E8D2;
@@ -50,7 +52,7 @@ body {
    untouched. */
 @media (display-mode: standalone) and (max-width: 767px) {
   :root {
-    --app-top-inset: calc(env(safe-area-inset-top) + 20px);
+    --app-top-inset: calc(env(safe-area-inset-top) + 26px);
   }
 }
 
