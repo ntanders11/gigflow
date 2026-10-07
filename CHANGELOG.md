@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-07 (one Connect email button)
+- [Change] On the Artist Profile page, the two separate Gmail and Outlook rows under Connected Accounts are now one "Connect email" button that opens a small pop-up to pick Gmail or Outlook. You connect one account at a time; once connected, it shows as a single row with Disconnect.
+
 ## 2026-10-06 (bell alignment)
 - [Fix] On phones, the notification bell sat a little lower than the page heading and its button (like "Overview" and "Pipeline"). It's now level with them. Pages with a taller or shorter header row can still be a few pixels off.
 

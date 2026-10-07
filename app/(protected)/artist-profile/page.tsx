@@ -8,6 +8,7 @@ import PhotoCropModal from "@/components/profile/PhotoCropModal";
 import PushToggle from "@/components/notifications/PushToggle";
 import MessageEmailToggle from "@/components/messages/MessageEmailToggle";
 import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
+import ConnectEmailButton from "@/components/profile/ConnectEmailButton";
 
 const DEFAULT_PACKAGES: Package[] = [
   { id: "solo", label: "Solo", price_min: null, price_max: null, description: "", duration: "", color: "#D4A64F" },
@@ -763,10 +764,15 @@ export default function ArtistProfilePage() {
 
             {connectionsLoading ? (
               <p style={{ color: "#5e5c58", fontSize: "11px" }}>Loading…</p>
+            ) : connections.length === 0 ? (
+              // Nothing connected yet: one button, which opens a Gmail /
+              // Outlook choice. One account at a time — sending only ever
+              // uses one, so a second would add nothing.
+              <ConnectEmailButton />
             ) : (
               <div className="flex flex-col gap-2">
-                {(["gmail", "outlook"] as const).map((provider) => {
-                  const connection = connections.find((c) => c.provider === provider);
+                {connections.map((connection) => {
+                  const provider = connection.provider;
                   const label = provider === "gmail" ? "Gmail" : "Outlook";
                   return (
                     <div
@@ -776,18 +782,14 @@ export default function ArtistProfilePage() {
                     >
                       <div>
                         <div style={{ color: "#F4E8D2", fontSize: "12px", fontWeight: 500 }}>{label}</div>
-                        {connection ? (
-                          <div style={{ color: "#9a9591", fontSize: "10px" }}>{connection.connected_email}</div>
-                        ) : (
-                          <div style={{ color: "#5e5c58", fontSize: "10px" }}>Not connected</div>
-                        )}
-                        {connection?.status === "needs_reconnect" && (
+                        <div style={{ color: "#9a9591", fontSize: "10px" }}>{connection.connected_email}</div>
+                        {connection.status === "needs_reconnect" && (
                           <div style={{ color: "#D4A64F", fontSize: "10px", marginTop: "2px" }}>
                             Reconnect needed — sends fell back to your shared StageReach address
                           </div>
                         )}
                       </div>
-                      {connection && connection.status === "active" ? (
+                      {connection.status === "active" ? (
                         provider === "outlook" && confirmingDisconnect === "outlook" ? (
                           <span className="inline-flex items-center gap-2 flex-wrap justify-end">
                             <span className="text-xs" style={{ color: "#e25c5c" }}>
@@ -825,15 +827,14 @@ export default function ArtistProfilePage() {
                           </button>
                         )
                       ) : (
-                        // Covers both "never connected" and "needs_reconnect" — in the
-                        // latter case, clicking Connect re-runs the OAuth flow and the
-                        // callback's upsert resets status back to 'active'.
+                        // needs_reconnect: re-running the OAuth flow for the same
+                        // provider resets its status back to 'active' on callback.
                         <a
                           href={`/api/auth/${provider}/connect`}
                           className="text-xs px-2.5 py-1 rounded font-semibold transition-all hover:brightness-110 inline-block"
                           style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
                         >
-                          Connect
+                          Reconnect
                         </a>
                       )}
                     </div>
