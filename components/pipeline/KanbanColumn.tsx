@@ -51,7 +51,7 @@ export default function KanbanColumn({
   const selectedCount = venues.filter((v) => selectedVenueIds.has(v.id)).length;
 
   return (
-    <div className="flex flex-col flex-1 min-w-36" style={{ opacity: isOtherBatch ? 0.4 : 1, transition: "opacity 0.2s" }}>
+    <div className="flex flex-col flex-1 min-w-36 md:min-w-[14rem]" style={{ opacity: isOtherBatch ? 0.4 : 1, transition: "opacity 0.2s" }}>
       {/* Column header — mobile only */}
       <div className="md:hidden flex items-center justify-between mb-2 px-1">
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#9a9591" }}>

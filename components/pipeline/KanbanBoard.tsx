@@ -98,7 +98,7 @@ export default function KanbanBoard({ venues, setVenues, outreachMap, onEmail, b
         />
       )}
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-3 pb-4 overflow-x-auto min-w-0">
+        <div className="flex gap-3 pb-4">
           {STAGES.map(({ key }) => (
             <KanbanColumn
               key={key}

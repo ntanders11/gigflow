@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Venue, VenueStage, STAGES, OutreachInfo } from "@/types";
@@ -41,6 +41,9 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const router = useRouter();
   const emailCheck = useCanSendEmail();
+  // The stage labels live in the sticky header, outside the scrolling board;
+  // this keeps them scrolled to the same spot as the columns underneath.
+  const labelsRef = useRef<HTMLDivElement>(null);
 
   async function fillMissingAddresses() {
     const missing = venues.filter((v) => !v.address?.trim());
@@ -325,11 +328,12 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
         )}
         {/* Stage labels — hidden on mobile, they're on each column header instead */}
         {view === "pipeline" && (
-        <div className="hidden md:flex gap-3">
+        <div ref={labelsRef} className="hidden md:block overflow-hidden">
+        <div className="flex gap-3">
           {STAGES.map(({ key, label }) => (
             <div
               key={key}
-              className="flex-1 min-w-36 flex items-center justify-between pb-3"
+              className="flex-1 min-w-36 md:min-w-[14rem] flex items-center justify-between pb-3"
             >
               <h2 className="text-sm font-semibold" style={{ color: "#F4E8D2" }}>
                 {label}
@@ -345,6 +349,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
               </span>
             </div>
           ))}
+        </div>
         </div>
         )}
       </div>
@@ -434,7 +439,10 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
 
       {/* Board */}
       {view === "pipeline" && (
-        <div className="px-4 md:px-8 pt-4 pb-8 overflow-x-auto">
+        <div
+          className="px-4 md:px-8 pt-4 pb-8 overflow-x-auto"
+          onScroll={(e) => { if (labelsRef.current) labelsRef.current.scrollLeft = e.currentTarget.scrollLeft; }}
+        >
           <KanbanBoard
             venues={filtered}
             setVenues={setVenues}

@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (pipeline sideways shift)
+- [Fix] On the desktop Pipeline page, the stage labels (Contacted, Responded…) now scroll sideways together with the columns, and the page itself no longer shifts off to the side.
+
 ## 2026-10-16 (automatic follow-up controls)
 - [Feature] Artists now have an "Automatic follow-ups" switch (off by default) and can edit the follow-up message on their profile page. When the job is turned on, only artists who opted in get follow-ups, venues contacted more than 60 days ago are skipped, and each artist sends at most 10 a day.
 
