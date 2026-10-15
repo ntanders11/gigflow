@@ -380,7 +380,8 @@ export type NotificationType =
   | "rating_revealed"
   | "follow_up_sent"
   | "gig_reminder"
-  | "message_received";
+  | "message_received"
+  | "connect_email_reminder";
 
 export interface NotificationView {
   id: string;
