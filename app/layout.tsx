@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import ErrorReporter from "@/components/monitoring/ErrorReporter";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 
@@ -46,6 +47,7 @@ export default function RootLayout({
           paddingTop: "var(--app-top-inset)",
         }}
       >
+        <ErrorReporter />
         {children}
       </body>
     </html>

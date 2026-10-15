@@ -63,6 +63,9 @@ export async function proxy(request: NextRequest) {
     // approved): it is opt-in per artist, capped at 10/day each, and refuses
     // anything without CRON_SECRET.
     pathname === "/api/gigs/reminders" ||
+    // Browser error reports can come from logged-out pages too; the route is
+    // rate limited and only ever writes to the error log.
+    pathname === "/api/log-error" ||
     pathname === "/api/venues/follow-up" ||
     pathname === "/signup" ||
     pathname === "/venues" ||
