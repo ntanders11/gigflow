@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-15 (nudge artists to connect email)
+- [Change] Found that artists who signed up before email connecting existed (and one who skipped it) were still sending through StageReach's shared address, which hit Resend's daily cap of about 100. Sent those four artists a bell notification asking them to connect Gmail or Outlook from their profile. Added a `connect_email_reminder` notification type for this (migration 031).
+
 ## 2026-10-07 (one Connect email button)
 - [Change] On the Artist Profile page, the two separate Gmail and Outlook rows under Connected Accounts are now one "Connect email" button that opens a small pop-up to pick Gmail or Outlook. You connect one account at a time; once connected, it shows as a single row with Disconnect.
 
