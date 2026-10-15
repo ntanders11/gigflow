@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-15 (venue calendar subscription)
+- [Feature] Venues can now add their accepted bookings to Apple, Google or Outlook calendar from their Calendar page, with the same one-tap pop-up artists have. Each venue gets a private link that can't be guessed from their public profile. The page heading also now says "Calendar" to match its tab.
+
 ## 2026-10-15 (feedback box)
 - [Feature] Artist and venue profile pages now have a "Do you have feedback?" box. What people type is saved so it can be reviewed at the start of each working session instead of getting lost in texts and DMs.
 

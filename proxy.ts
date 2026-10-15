@@ -43,6 +43,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/venues/profile/") ||
     pathname.startsWith("/api/public/") ||
     pathname === "/api/calendar/ics" ||
+    // Venue calendar feed — calendar apps fetch it with no login; secured by a private token in the link.
+    pathname === "/api/calendar/venue-ics" ||
     pathname === "/manifest.webmanifest" ||
     pathname === "/sw.js" ||
     pathname === "/api/auth/validate-code" ||

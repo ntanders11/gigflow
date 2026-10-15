@@ -239,6 +239,7 @@ export interface VenueProfile {
   stage_equipment: string | null;
   equipment_provided: string[];
   artist_should_bring: string | null;
+  calendar_token: string;
   photo_url: string | null;
   created_at: string;
   updated_at: string;

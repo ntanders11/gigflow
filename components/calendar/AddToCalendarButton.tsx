@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-const CALENDAR_NAME = "StageReach Gigs";
 
 // One button on the Booking Calendar page. Tapping it opens a small pop-up
 // with a way to subscribe for whatever calendar app someone uses — Apple,
@@ -14,7 +13,17 @@ const CALENDAR_NAME = "StageReach Gigs";
 // /api/calendar/ics link); only the way it gets handed to each calendar app
 // differs. Subscribing means the calendar app re-checks the feed on its own
 // schedule, so new gigs show up without anyone adding them one by one.
-export default function AddToCalendarButton({ subscriptionUrl }: { subscriptionUrl: string }) {
+export default function AddToCalendarButton({
+  subscriptionUrl,
+  calendarName = "StageReach Gigs",
+  title = "Add your gigs to your calendar",
+  description = "Subscribe once and every booked gig shows up automatically.",
+}: {
+  subscriptionUrl: string;
+  calendarName?: string;
+  title?: string;
+  description?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -23,7 +32,7 @@ export default function AddToCalendarButton({ subscriptionUrl }: { subscriptionU
   const webcalUrl = `webcal://${subscriptionUrl.replace(/^https?:\/\//, "")}`;
   const appleHref = webcalUrl;
   const googleHref = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
-  const outlookHref = `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(subscriptionUrl)}&name=${encodeURIComponent(CALENDAR_NAME)}`;
+  const outlookHref = `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(subscriptionUrl)}&name=${encodeURIComponent(calendarName)}`;
 
   useEffect(() => {
     if (!open) return;
@@ -55,8 +64,8 @@ export default function AddToCalendarButton({ subscriptionUrl }: { subscriptionU
         style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
       >
         <div>
-          <p className="text-sm font-semibold mb-0.5" style={{ color: "#F4E8D2" }}>Add your gigs to your calendar</p>
-          <p className="text-xs" style={{ color: "#9a9591" }}>Subscribe once and every booked gig shows up automatically.</p>
+          <p className="text-sm font-semibold mb-0.5" style={{ color: "#F4E8D2" }}>{title}</p>
+          <p className="text-xs" style={{ color: "#9a9591" }}>{description}</p>
         </div>
         <button
           onClick={() => setOpen(true)}
@@ -76,7 +85,7 @@ export default function AddToCalendarButton({ subscriptionUrl }: { subscriptionU
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Add your gigs to your calendar"
+            aria-label={title}
             className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5"
             style={{
               backgroundColor: "#16181c",
@@ -128,7 +137,7 @@ export default function AddToCalendarButton({ subscriptionUrl }: { subscriptionU
             </p>
             <p className="text-xs mt-2" style={{ color: "#5e5c58" }}>
               Your calendar app checks for changes on its own schedule. Apple is usually quick; Google and Outlook can
-              take several hours to show a new gig.
+              take several hours to show a new entry.
             </p>
           </div>
         </div>
