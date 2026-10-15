@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { VenueMatchCandidate } from "@/types";
 import EquipmentFields from "@/components/venue/EquipmentFields";
 import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
+import CaptchaBox, { captchaRequired } from "@/components/auth/CaptchaBox";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -45,6 +46,7 @@ export default function VenueSignupPage() {
   // Step 1
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   // Step 2 (search)
   const [searchName, setSearchName] = useState("");
@@ -132,7 +134,10 @@ export default function VenueSignupPage() {
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/api/auth/confirm?next=/venues/signup` },
+        options: {
+          emailRedirectTo: `${window.location.origin}/api/auth/confirm?next=/venues/signup`,
+          captchaToken: captchaToken ?? undefined,
+        },
       });
 
       if (signUpError) {
@@ -308,8 +313,9 @@ export default function VenueSignupPage() {
               <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-lg px-3 py-2.5 text-sm outline-none" style={inputStyle} />
             </div>
-            <button type="submit" disabled={saving}
-              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
+            <CaptchaBox onToken={setCaptchaToken} />
+            <button type="submit" disabled={saving || (captchaRequired && !captchaToken)}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-50"
               style={{ backgroundColor: "#D4A64F", color: "#0E0E10", opacity: saving ? 0.7 : 1 }}>
               {saving ? "Creating account…" : "Continue"}
             </button>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import CaptchaBox, { captchaRequired } from "@/components/auth/CaptchaBox";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError]       = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,7 +32,10 @@ export default function SignupPage() {
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/api/auth/confirm?next=/onboarding` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/api/auth/confirm?next=/onboarding`,
+        captchaToken: captchaToken ?? undefined,
+      },
     });
 
     if (signUpError) {
@@ -103,6 +108,8 @@ export default function SignupPage() {
             />
           </div>
 
+          <CaptchaBox onToken={setCaptchaToken} />
+
           {error && (
             <p className="text-sm rounded-lg px-3 py-2" style={{ color: "#e25c5c", backgroundColor: "rgba(226,92,92,0.1)", border: "1px solid rgba(226,92,92,0.2)" }}>
               {error}
@@ -111,7 +118,7 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (captchaRequired && !captchaToken)}
             className="w-full rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
             style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
           >

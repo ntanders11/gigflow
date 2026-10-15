@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (signup captcha)
+- [Feature] Artist and venue signup now include a Cloudflare "I'm not a robot" check to keep bots from creating fake accounts. It switches on once the keys are added in Vercel and Supabase.
+
 ## 2026-10-16 (email must be connected)
 - [Change] Artists can no longer send pitch or follow-up emails until they connect Gmail or Outlook. Previously unconnected artists sent through StageReach's shared sender, which has a ~100-per-day limit for everyone combined. The send screens now show a "Connect your email to send" notice and a disabled Send button, and a batch stops immediately instead of failing one venue at a time.
 
