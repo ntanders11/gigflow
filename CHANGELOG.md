@@ -1,7 +1,7 @@
 # StageReach Changelog
 
-## 2026-10-16 (promo photos)
-- [Feature] Artists can add up to 8 promo photos — in a new optional step during setup and in a "Promo Photos" card on their profile page, where they can also remove them. The photos are private: once a venue has an accepted booking with an artist, they can view and download the full-size photos from that booking on their Calendar page to promote the show. They never appear on the artist's public profile.
+## 2026-10-16 (promo photos removed)
+- [Change] Took out the promo photos feature (added the same day) — the photo files turned out to be too large to handle for now. Nothing had been uploaded, and artists' profiles and venues' calendars are back to how they were.
 
 ## 2026-10-15 (private artist calendar links)
 - [Fix] An artist's calendar subscription link was built from their account ID, which is also in their public profile address, so anyone with the profile link could read their gig list. Each artist now has a private random code in their link instead. Old links stop working, so anyone subscribed needs to re-subscribe from the Calendar page.

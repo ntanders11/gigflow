@@ -6,9 +6,8 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
-import PromoPhotosEditor from "@/components/promo/PromoPhotosEditor";
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 interface FormData {
   // Step 1
@@ -38,7 +37,7 @@ const INITIAL: FormData = {
 function ProgressBar({ step }: { step: Step }) {
   return (
     <div className="flex items-center gap-1 mb-6">
-      {[1, 2, 3, 4, 5, 6].map((s) => (
+      {[1, 2, 3, 4, 5].map((s) => (
         <div
           key={s}
           className="h-1 flex-1 rounded-full transition-colors duration-300"
@@ -46,7 +45,7 @@ function ProgressBar({ step }: { step: Step }) {
         />
       ))}
       <span className="text-xs ml-3 shrink-0" style={{ color: "#9a9591" }}>
-        Step {step} of 6
+        Step {step} of 5
       </span>
     </div>
   );
@@ -73,12 +72,12 @@ export default function OnboardingPage() {
   const [cropFileName, setCropFileName] = useState("");
   const [cropFileType, setCropFileType] = useState("");
 
-  // Step 6: email connect (step 5 is the optional promo photos step)
+  // Step 5: email connect
   const [emailConnectError, setEmailConnectError] = useState<string | null>(null);
 
   // If we're landing here after a failed OAuth attempt (redirected from the
   // Artist Profile page's error handling — see that page's own useEffect),
-  // jump straight to step 6 (connect email) instead of defaulting to step 1. This can't be
+  // jump straight to step 5 instead of defaulting to step 1. This can't be
   // done as a useState lazy initializer — window.location isn't available
   // during server rendering, so reading it there would crash with
   // "window is not defined" on the server render, the exact same class of
@@ -89,18 +88,18 @@ export default function OnboardingPage() {
     const error = params.get("error");
     if (error) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of a post-redirect URL param, same justified pattern already used in app/(protected)/artist-profile/page.tsx
-      setStep(6);
+      setStep(5);
       setEmailConnectError("That didn't work — you can try again, or connect later from your profile.");
       window.history.replaceState({}, "", "/onboarding");
     }
   }, []);
 
-  // Whenever step 6 is shown (whether by normal progression or by the
+  // Whenever step 5 is shown (whether by normal progression or by the
   // effect above returning here after a failure), tag the next OAuth
   // outcome as belonging to onboarding. A fresh cookie is set on every
-  // arrival at step 6 so a retry after a failure is tagged again too.
+  // arrival at step 5 so a retry after a failure is tagged again too.
   useEffect(() => {
-    if (step === 6) {
+    if (step === 5) {
       document.cookie = "onboarding_email_connect=1; path=/; max-age=600; SameSite=Lax";
     }
   }, [step]);
@@ -487,29 +486,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── Step 5: promo photos (optional) ── */}
+        {/* ── Step 5 ── */}
         {step === 5 && (
-          <div>
-            <h2 className="text-base font-semibold mb-1" style={{ color: "#F4E8D2" }}>Promo photos</h2>
-            <p className="text-xs mb-5" style={{ color: "#9a9591" }}>
-              Optional. Photos a venue can use to promote your shows once you&apos;re booked.
-            </p>
-            <PromoPhotosEditor />
-            <button
-              onClick={() => setStep(6)}
-              className="w-full mt-6 rounded-lg py-2 text-sm font-semibold"
-              style={continueBtn}
-            >
-              Continue →
-            </button>
-            <button onClick={() => setStep(6)} className="w-full mt-3 text-xs" style={{ color: "#5e5c58" }}>
-              Skip for now
-            </button>
-          </div>
-        )}
-
-        {/* ── Step 6: connect email ── */}
-        {step === 6 && (
           <div>
             <h2 className="text-base font-semibold mb-1" style={{ color: "#F4E8D2" }}>Connect your email</h2>
             <p className="text-xs mb-5" style={{ color: "#9a9591" }}>
