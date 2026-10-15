@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-15 (feedback box)
+- [Feature] Artist and venue profile pages now have a "Do you have feedback?" box. What people type is saved so it can be reviewed at the start of each working session instead of getting lost in texts and DMs.
+
 ## 2026-10-15 (add to phone tip)
 - [Feature] The last step of artist setup and of venue setup now shows step-by-step instructions for adding StageReach to your phone's home screen (different steps for iPhone and Android). It only appears on phones, and not once the app is already installed. On iPhone it also explains that this is the only way to get alerts.
 

@@ -11,6 +11,7 @@ import PhotoCropModal from "@/components/profile/PhotoCropModal";
 import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
 import EquipmentFields from "@/components/venue/EquipmentFields";
 import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
+import FeedbackBox from "@/components/feedback/FeedbackBox";
 
 const inputStyle = {
   background: "#1e2128",
@@ -277,6 +278,10 @@ export default function VenueProfilePage() {
             instead of competing with the photo up top. */}
         <div className="mt-8" style={{ maxWidth: "260px" }}>
           <RatingsSummaryCard endpoint={`/api/public/venues/${profile.id}/ratings`} viewAllHref="/venue/ratings" />
+        </div>
+
+        <div className="mt-8">
+          <FeedbackBox />
         </div>
 
         {/* Sign out — same standalone full-width button as the artist

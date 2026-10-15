@@ -9,6 +9,7 @@ import PushToggle from "@/components/notifications/PushToggle";
 import MessageEmailToggle from "@/components/messages/MessageEmailToggle";
 import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
 import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
+import FeedbackBox from "@/components/feedback/FeedbackBox";
 import ConnectEmailButton from "@/components/profile/ConnectEmailButton";
 
 const DEFAULT_PACKAGES: Package[] = [
@@ -1181,6 +1182,10 @@ export default function ArtistProfilePage() {
           <RatingsSummaryCard endpoint={`/api/public/artists/${userId}/ratings`} viewAllHref="/ratings" />
         </div>
       )}
+
+      <div className="max-w-5xl mt-8">
+        <FeedbackBox />
+      </div>
 
       {/* Sign out — its own standalone button, separate from the rest of
           the profile fields, so it's easy to find and hard to hit by
