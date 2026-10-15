@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import FloatingBell from "@/components/notifications/FloatingBell";
+import FloatingMessages from "@/components/messages/FloatingMessages";
 
 // Artist navigation for phones: the bottom tab bar and the floating bell.
 // (The desktop navigation is the top tab bar in ArtistTopNav.tsx — this
@@ -67,5 +68,10 @@ export function MobileBottomNav() {
 // per-page change, and it no longer competes with the 5 bottom tabs for
 // space (2026-09-25).
 export function MobileNotificationBell() {
-  return <FloatingBell listenForRefreshEvents />;
+  return (
+    <>
+      <FloatingMessages />
+      <FloatingBell listenForRefreshEvents />
+    </>
+  );
 }

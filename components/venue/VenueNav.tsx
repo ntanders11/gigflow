@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import FloatingBell from "@/components/notifications/FloatingBell";
 import { UnreadBadge, useUnreadMessages } from "@/components/messages/UnreadMessages";
+import MailIcon from "@/components/messages/MailIcon";
 
 // Overview leads and is the default landing page for every venue login
 // (see proxy.ts). Desktop bar: Overview, Discover, Calendar,
@@ -28,14 +29,6 @@ const invoicesLink  = { href: "/venue/invoices",  label: "Invoices",         mob
 // iPhone, which didn't match the other tabs' plain symbols. Drawn with
 // currentColor, so it follows the tab's color (gray, gold when active) like
 // the other icons do.
-function MailIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block" }}>
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M3.5 7l8.5 6.5L20.5 7" />
-    </svg>
-  );
-}
 const messagesLink  = { href: "/venue/messages",  label: "Messages",         mobileLabel: "Messages",  icon: <MailIcon /> };
 const profileLink = { href: "/venue/profile", label: "My Profile", mobileLabel: "Profile", icon: "◉" };
 

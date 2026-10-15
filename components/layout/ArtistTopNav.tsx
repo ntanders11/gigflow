@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import { UnreadBadge, useUnreadMessages } from "@/components/messages/UnreadMessages";
 
 // The artist side's desktop navigation: a top tab bar laid out like the
 // venue side's (components/venue/VenueNav.tsx — logo and tabs on the left,
@@ -16,8 +17,9 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 //   - Discover Venues: the "Discover New Venues" toggle on Pipeline
 //     (it also keeps Pipeline highlighted here).
 //   - Import / Outreach: the Dashboard's header button and Pipeline's empty state.
-//   - Messages and Ratings: the Dashboard's "Unread Messages" / "Pending
-//     Ratings" cards, and the notification bell.
+//   - Messages: its own tab here on desktop, an envelope beside the bell on
+//     phones, the Dashboard's "Unread Messages" card, and the bell.
+//   - Ratings: the Dashboard's "Pending Ratings" card and the bell.
 //   - Sign out: the bottom of the Artist Profile page, as on the venue side.
 const mainLinks = [
   // `also` lists other sections that belong under the same tab, so it stays
@@ -27,11 +29,15 @@ const mainLinks = [
   { href: "/pipeline",  label: "Pipeline", also: ["/discover", "/venues"] },
   { href: "/calendar",  label: "Calendar", also: [] as string[] },
   { href: "/invoices",  label: "Invoices", also: [] as string[] },
+  // Desktop only (2026-10-16): the phone keeps five bottom tabs and gets a
+  // small envelope beside the bell instead (components/messages/FloatingMessages.tsx).
+  { href: "/messages",  label: "Messages", also: [] as string[] },
 ];
 const profileLink = { href: "/artist-profile", label: "My Profile" };
 
 export default function ArtistTopNav() {
   const pathname = usePathname();
+  const unreadMessages = useUnreadMessages(pathname);
 
   function isActive(href: string, also: string[] = []) {
     const hit = (h: string) => pathname === h || pathname.startsWith(h + "/");
@@ -63,6 +69,7 @@ export default function ArtistTopNav() {
             style={{ color: active ? "#D4A64F" : "#9a9591", fontWeight: active ? 600 : 400 }}
           >
             {link.label}
+            {link.href === "/messages" && <UnreadBadge count={unreadMessages} />}
           </Link>
         );
       })}

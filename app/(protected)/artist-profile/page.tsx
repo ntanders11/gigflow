@@ -326,8 +326,8 @@ export default function ArtistProfilePage() {
         />
       )}
       {/* Header */}
-      {/* pr-14 on mobile clears the fixed notification bell in the corner */}
-      <div className="flex flex-wrap items-start justify-between gap-2 mb-6 max-w-5xl pr-14 md:pr-0">
+      {/* pr-28 on mobile clears the floating messages icon and notification bell in the corner */}
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-6 max-w-5xl pr-28 md:pr-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#F4E8D2" }}>
             My Artist Profile

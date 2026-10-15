@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (artist messages easier to find)
+- [Change] Messages was hard to find on the artist side. On desktop there's now a Messages tab in the top bar (with a count of unread messages). On phones there's a small envelope icon beside the notification bell, also with the unread count. The phone's bottom bar stays at five tabs.
+
 ## 2026-10-16 (promo photos removed)
 - [Change] Took out the promo photos feature (added the same day) — the photo files turned out to be too large to handle for now. Nothing had been uploaded, and artists' profiles and venues' calendars are back to how they were.
 
