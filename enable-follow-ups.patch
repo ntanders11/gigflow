@@ -1,0 +1,44 @@
+--- a/app/api/venues/follow-up/route.ts	2026-10-15 16:01:07
++++ b/app/api/venues/follow-up/route.ts	2026-10-15 16:01:07
+@@ -15,10 +15,14 @@
+   template: string | null;
+ }
+ 
+-export async function POST(request: NextRequest) {
+-  // Vercel injects Authorization: Bearer <CRON_SECRET> on cron invocations
++// Vercel starts scheduled jobs with GET (this used to accept only POST, so
++// no scheduled run ever got through); POST stays for triggering by hand.
++async function handleFollowUps(request: NextRequest) {
++  // Vercel injects Authorization: Bearer <CRON_SECRET> on cron invocations.
++  // The secret must be set, or the text "Bearer undefined" would be accepted.
++  const secret = process.env.CRON_SECRET;
+   const auth = request.headers.get("authorization");
+-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
++  if (!secret || auth !== `Bearer ${secret}`) {
+     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+   }
+ 
+@@ -187,3 +191,6 @@
+     results,
+   });
+ }
++
++export const GET = handleFollowUps;
++export const POST = handleFollowUps;
+--- a/proxy.ts	2026-10-15 16:01:07
++++ b/proxy.ts	2026-10-15 16:01:07
+@@ -59,10 +59,11 @@
+     // like the Stripe webhook above — the login check used to redirect every
+     // run to /login before it reached the route, and day-of gig reminders
+     // never went out. The route's own CRON_SECRET check is what secures it.
+-    // Deliberately just this one path: the follow-up email job
+-    // (/api/venues/follow-up) stays behind the login check on purpose until
+-    // Taylor decides how to roll it out safely.
++    // The automatic follow-up job is opened the same way (2026-10-16, Taylor
++    // approved): it is opt-in per artist, capped at 10/day each, and refuses
++    // anything without CRON_SECRET.
+     pathname === "/api/gigs/reminders" ||
++    pathname === "/api/venues/follow-up" ||
+     pathname === "/signup" ||
+     pathname === "/venues" ||
+     pathname === "/venues/signup" ||

@@ -59,10 +59,11 @@ export async function proxy(request: NextRequest) {
     // like the Stripe webhook above — the login check used to redirect every
     // run to /login before it reached the route, and day-of gig reminders
     // never went out. The route's own CRON_SECRET check is what secures it.
-    // Deliberately just this one path: the follow-up email job
-    // (/api/venues/follow-up) stays behind the login check on purpose until
-    // Taylor decides how to roll it out safely.
+    // The automatic follow-up job is opened the same way (2026-10-16, Taylor
+    // approved): it is opt-in per artist, capped at 10/day each, and refuses
+    // anything without CRON_SECRET.
     pathname === "/api/gigs/reminders" ||
+    pathname === "/api/venues/follow-up" ||
     pathname === "/signup" ||
     pathname === "/venues" ||
     pathname === "/venues/signup" ||
