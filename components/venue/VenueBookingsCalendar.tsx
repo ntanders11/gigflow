@@ -14,6 +14,7 @@ import {
 } from "date-fns";
 import { useState } from "react";
 import { VenueBookingRequestView } from "@/types";
+import PromoPhotosForVenue from "@/components/promo/PromoPhotosForVenue";
 
 const STATUS_DOT_COLOR: Record<VenueBookingRequestView["status"], string> = {
   pending: "#D4A64F",
@@ -370,6 +371,7 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
   }
 
   return (
+    <div>
     <div
       className="rounded-xl p-4 flex items-center gap-4"
       style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
@@ -435,6 +437,8 @@ function DayDetailCard({ r, onCancelled }: { r: VenueBookingRequestView; onCance
           )}
         </div>
       </div>
+    </div>
+    {r.status === "accepted" && <PromoPhotosForVenue artistUserId={r.artist_user_id} artistName={r.artist_name} />}
     </div>
   );
 }

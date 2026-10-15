@@ -10,6 +10,7 @@ import MessageEmailToggle from "@/components/messages/MessageEmailToggle";
 import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
 import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
 import FeedbackBox from "@/components/feedback/FeedbackBox";
+import PromoPhotosEditor from "@/components/promo/PromoPhotosEditor";
 import ConnectEmailButton from "@/components/profile/ConnectEmailButton";
 
 const DEFAULT_PACKAGES: Package[] = [
@@ -1036,6 +1037,17 @@ export default function ArtistProfilePage() {
                 No samples yet. Add a YouTube or Spotify link so venues can hear what you sound like.
               </p>
             )}
+          </div>
+
+          {/* Promo Photos — private; only venues with an accepted booking can see them */}
+          <div
+            className="rounded-xl p-5"
+            style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <div style={{ fontSize: "9px", color: "#5e5c58", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>
+              Promo Photos
+            </div>
+            <PromoPhotosEditor />
           </div>
 
           {/* Rates & Packages */}
