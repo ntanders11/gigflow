@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (QR code for venues)
+- [Feature] Venues now have a "Share with artists" card on their profile page with a QR code they can download and put on a flyer, a sign, or at the bar. Scanning it opens stagereach.app, where artists can sign up for free.
+
 ## 2026-10-16 (times start at 7 PM)
 - [Fix] The venue's "Request to Book" form started with blank times, so you had to set the hour, minutes, and AM/PM yourself. It now starts at 7:00 PM to 9:00 PM like the gig forms, so you only change the numbers. All the time boxes now share the same starting time.
 
