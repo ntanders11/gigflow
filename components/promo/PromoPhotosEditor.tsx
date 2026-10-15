@@ -81,7 +81,7 @@ export default function PromoPhotosEditor() {
   return (
     <div>
       <p className="text-xs mb-3" style={{ color: "#9a9591", lineHeight: 1.6 }}>
-        Add up to {MAX_PROMO_PHOTOS} photos venues can use to promote your shows. They&apos;re private: only a venue you&apos;ve
+        {`Add up to ${MAX_PROMO_PHOTOS} photos venues can use to promote your shows.`}{" "} They&apos;re private: only a venue you&apos;ve
         booked can see and download them, and they never appear on your public profile. By adding them you&apos;re
         okay with that venue using them to promote the show.
       </p>

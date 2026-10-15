@@ -11,20 +11,21 @@ export type PromoPhotoView = {
 type PhotoRow = { id: string; storage_path: string; file_name: string };
 
 // Turns stored photo rows into short-lived (1 hour) signed links. Two links
-// per photo: one for displaying it, one that makes the browser download it.
+// per photo: one for displaying it, one that makes the browser download it
+// under the photo's original file name (not the internal storage name).
 export async function toPhotoViews(service: SupabaseClient, rows: PhotoRow[]): Promise<PromoPhotoView[]> {
   if (rows.length === 0) return [];
-  const paths = rows.map((r) => r.storage_path);
-  const { data: shown } = await service.storage.from(PROMO_BUCKET).createSignedUrls(paths, 3600);
-  const { data: downloads } = await service.storage.from(PROMO_BUCKET).createSignedUrls(paths, 3600, { download: true });
+  const bucket = service.storage.from(PROMO_BUCKET);
+  const { data: shown } = await bucket.createSignedUrls(rows.map((r) => r.storage_path), 3600);
   const shownBy = new Map((shown ?? []).map((s) => [s.path, s.signedUrl]));
-  const downBy = new Map((downloads ?? []).map((s) => [s.path, s.signedUrl]));
-  return rows
-    .filter((r) => shownBy.get(r.storage_path))
-    .map((r) => ({
-      id: r.id,
-      file_name: r.file_name,
-      url: shownBy.get(r.storage_path)!,
-      download_url: downBy.get(r.storage_path) ?? shownBy.get(r.storage_path)!,
-    }));
+
+  const views = await Promise.all(
+    rows.map(async (r) => {
+      const url = shownBy.get(r.storage_path);
+      if (!url) return null;
+      const { data: dl } = await bucket.createSignedUrl(r.storage_path, 3600, { download: r.file_name });
+      return { id: r.id, file_name: r.file_name, url, download_url: dl?.signedUrl ?? url };
+    })
+  );
+  return views.filter((v): v is PromoPhotoView => v !== null);
 }
