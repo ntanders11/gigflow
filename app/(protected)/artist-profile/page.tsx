@@ -11,6 +11,7 @@ import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
 import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
 import FeedbackBox from "@/components/feedback/FeedbackBox";
 import TimeZoneField from "@/components/profile/TimeZoneField";
+import AutoFollowUpSettings from "@/components/profile/AutoFollowUpSettings";
 import ConnectEmailButton from "@/components/profile/ConnectEmailButton";
 
 const DEFAULT_PACKAGES: Package[] = [
@@ -1185,6 +1186,7 @@ export default function ArtistProfilePage() {
       )}
 
       <div className="max-w-5xl mt-8">
+        <AutoFollowUpSettings />
         <TimeZoneField />
         <FeedbackBox />
       </div>

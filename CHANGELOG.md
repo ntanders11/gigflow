@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (automatic follow-up controls)
+- [Feature] Artists now have an "Automatic follow-ups" switch (off by default) and can edit the follow-up message on their profile page. When the job is turned on, only artists who opted in get follow-ups, venues contacted more than 60 days ago are skipped, and each artist sends at most 10 a day.
+
 ## 2026-10-16 (follow-up daily cap)
 - [Change] Prepared the automatic follow-up emails for a safe launch: each artist's batch is capped at 10 per day (oldest first), and skipped if their email isn't connected. The automatic follow-ups are still switched off.
 

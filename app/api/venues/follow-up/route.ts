@@ -5,30 +5,14 @@ import { sendArtistEmail } from "@/lib/email/send-artist-email";
 import { createNotification } from "@/lib/notifications/create";
 import { isWithinFollowUpCooldown } from "@/lib/bookings/follow-up";
 import { pickDailyBatch } from "@/lib/bookings/follow-up-cap";
+import { renderFollowUpBody } from "@/lib/bookings/follow-up-template";
 
 interface ArtistInfo {
   name: string;
   email: string;
   phone: string | null;
   website: string | null;
-}
-
-function buildFollowUpBody(venueName: string, artist: ArtistInfo): string {
-  const signature = [
-    artist.name,
-    artist.phone,
-    artist.website,
-  ].filter(Boolean).join("\n");
-
-  return `Hi there,
-
-I wanted to follow up on my email from last week about playing at ${venueName}.
-
-I know inboxes get busy — just wanted to make sure my note didn't get buried. I'd love to find a time to connect and see if there's a fit.
-
-Happy to work around your schedule. Thanks for your time!
-
-${signature}`;
+  template: string | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -39,14 +23,30 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createServiceClient();
-  const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const fiveDaysAgo = new Date(Date.now() - 5 * dayMs).toISOString();
+  // Leads older than this are skipped: a "following up on my email from last
+  // week" message to someone contacted months ago would read as wrong.
+  const sixtyDaysAgo = new Date(Date.now() - 60 * dayMs).toISOString();
+
+  // Opt-in only: just artists who turned automatic follow-ups on in their profile.
+  const { data: optedIn } = await supabase
+    .from("artist_profiles")
+    .select("user_id")
+    .eq("auto_follow_up_enabled", true);
+  const optedInIds = (optedIn ?? []).map((a) => a.user_id as string);
+  if (optedInIds.length === 0) {
+    return NextResponse.json({ sent: 0, message: "No artists have automatic follow-ups turned on" });
+  }
 
   const { data: venues, error: venueError } = await supabase
     .from("venues")
     .select("id, name, contact_email, user_id, last_contacted_at")
+    .in("user_id", optedInIds)
     .eq("stage", "contacted")
     .not("contact_email", "is", null)
-    .lt("last_contacted_at", fiveDaysAgo);
+    .lt("last_contacted_at", fiveDaysAgo)
+    .gte("last_contacted_at", sixtyDaysAgo);
 
   if (venueError) {
     return NextResponse.json({ error: venueError.message }, { status: 500 });
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
   const { data: artistProfiles } = await supabase
     .from("artist_profiles")
-    .select("user_id, display_name, phone, social_links")
+    .select("user_id, display_name, phone, social_links, auto_follow_up_enabled, auto_follow_up_template")
     .in("user_id", uniqueUserIds);
 
   const { data: profileEmails } = await supabase
@@ -104,6 +104,7 @@ export async function POST(request: NextRequest) {
       email: pr?.email ?? "",
       phone: ap?.phone ?? null,
       website: ap?.social_links?.website ?? null,
+      template: ap?.auto_follow_up_template ?? null,
     });
   }
 
@@ -119,7 +120,8 @@ export async function POST(request: NextRequest) {
     try {
       const artist = artistMap.get(venue.user_id)!;
       const subject = `Following up — live music inquiry for ${venue.name}`;
-      const body = buildFollowUpBody(venue.name, artist);
+      const signature = [artist.name, artist.phone, artist.website].filter(Boolean).join("\n");
+      const body = renderFollowUpBody(artist.template, venue.name, signature);
       const htmlBody = body
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
