@@ -1,75 +1,23 @@
 // app/signup/page.tsx
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
-type CodeStatus = "idle" | "checking" | "valid" | "invalid";
-
-function SignupForm() {
+export default function SignupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [code, setCode]         = useState(searchParams.get("code")?.toUpperCase() ?? "");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [codeStatus, setCodeStatus] = useState<CodeStatus>("idle");
   const [error, setError]       = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
-
-  // Auto-validate if code came from URL
-  useEffect(() => {
-    const urlCode = searchParams.get("code");
-    if (urlCode) handleCodeBlur();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Validate invite code on blur
-  async function handleCodeBlur() {
-    if (!code.trim()) return;
-    setCodeStatus("checking");
-    try {
-      const res = await fetch("/api/auth/validate-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: code.trim() }),
-      });
-      const data = await res.json();
-      setCodeStatus(data.valid ? "valid" : "invalid");
-    } catch {
-      setCodeStatus("invalid");
-    }
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
-    // Re-validate code before submitting
-    if (codeStatus !== "valid") {
-      try {
-        const res = await fetch("/api/auth/validate-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: code.trim() }),
-        });
-        const data = await res.json();
-        if (!data.valid) {
-          setCodeStatus("invalid");
-          setError("Invalid invite code.");
-          setLoading(false);
-          return;
-        }
-        setCodeStatus("valid");
-      } catch {
-        setError("Could not validate invite code. Please try again.");
-        setLoading(false);
-        return;
-      }
-    }
 
     const supabase = createClient();
     // emailRedirectTo points at /api/auth/confirm, which exchanges the
@@ -122,36 +70,6 @@ function SignupForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Invite Code */}
-          <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: "#9a9591" }}>
-              Invite Code
-            </label>
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => { setCode(e.target.value.toUpperCase()); setCodeStatus("idle"); }}
-              onBlur={handleCodeBlur}
-              required
-              placeholder="GIGFLOW-BETA-01"
-              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
-              style={{
-                ...inputStyle,
-                borderColor: codeStatus === "valid" ? "rgba(76,175,125,0.5)"
-                           : codeStatus === "invalid" ? "rgba(226,92,92,0.5)"
-                           : "rgba(255,255,255,0.07)",
-                letterSpacing: "0.05em",
-              }}
-              onFocus={(e) => { if (codeStatus === "idle" || codeStatus === "checking") e.target.style.borderColor = focusBorder; }}
-            />
-            {codeStatus === "valid" && (
-              <p className="text-xs mt-1" style={{ color: "#4caf7d" }}>✓ Valid invite code</p>
-            )}
-            {codeStatus === "invalid" && (
-              <p className="text-xs mt-1" style={{ color: "#e25c5c" }}>Invalid invite code</p>
-            )}
-          </div>
-
           {/* Email */}
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: "#9a9591" }}>Email</label>
@@ -215,13 +133,5 @@ function SignupForm() {
         </p>
       </div>
     </div>
-  );
-}
-
-export default function SignupPage() {
-  return (
-    <Suspense>
-      <SignupForm />
-    </Suspense>
   );
 }

@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (artist signup is open)
+- [Change] Removed the beta invite code from artist signup — anyone can now create an artist account with just an email and password, same as venues. Old invite links still work; the code is just ignored.
+
 ## 2026-10-16 (artist messages easier to find)
 - [Change] Messages was hard to find on the artist side. On desktop there's now a Messages tab in the top bar (with a count of unread messages). On phones there's a small envelope icon beside the notification bell, also with the unread count. The phone's bottom bar stays at five tabs.
 

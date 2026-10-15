@@ -47,7 +47,6 @@ export async function proxy(request: NextRequest) {
     pathname === "/api/calendar/venue-ics" ||
     pathname === "/manifest.webmanifest" ||
     pathname === "/sw.js" ||
-    pathname === "/api/auth/validate-code" ||
     pathname === "/api/auth/confirm" ||
     // Stripe calls this directly, server-to-server, with no StageReach
     // login session at all — without this, the auth check below redirected
