@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
+import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -528,6 +529,8 @@ export default function OnboardingPage() {
                 Continue without connecting for now
               </button>
             )}
+
+            <AddToHomeScreenTip />
           </div>
         )}
       </div>

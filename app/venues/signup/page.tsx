@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { VenueMatchCandidate } from "@/types";
 import EquipmentFields from "@/components/venue/EquipmentFields";
+import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -430,6 +431,7 @@ export default function VenueSignupPage() {
               style={{ backgroundColor: "#D4A64F", color: "#0E0E10", opacity: saving ? 0.7 : 1 }}>
               {saving ? "Saving…" : "Finish Setup"}
             </button>
+            <AddToHomeScreenTip />
           </form>
         )}
       </div>

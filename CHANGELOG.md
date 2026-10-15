@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-15 (add to phone tip)
+- [Feature] The last step of artist setup and of venue setup now shows step-by-step instructions for adding StageReach to your phone's home screen (different steps for iPhone and Android). It only appears on phones, and not once the app is already installed. On iPhone it also explains that this is the only way to get alerts.
+
 ## 2026-10-15 (nudge artists to connect email)
 - [Change] Found that artists who signed up before email connecting existed (and one who skipped it) were still sending through StageReach's shared address, which hit Resend's daily cap of about 100. Sent those four artists a bell notification asking them to connect Gmail or Outlook from their profile. Added a `connect_email_reminder` notification type for this (migration 031).
 
