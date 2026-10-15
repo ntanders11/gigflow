@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (printable flyer for venues)
+- [Feature] Venues can print a ready-made flyer — "Sign up on StageReach" with the QR code and stagereach.app — straight from the "Share with artists" card on their profile page (the "Print flyer" button). It's one US Letter page.
+
 ## 2026-10-16 (QR code for venues)
 - [Feature] Venues now have a "Share with artists" card on their profile page with a QR code they can download and put on a flyer, a sign, or at the bar. Scanning it opens stagereach.app, where artists can sign up for free.
 

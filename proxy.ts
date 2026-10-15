@@ -67,6 +67,8 @@ export async function proxy(request: NextRequest) {
     pathname === "/venues" ||
     pathname === "/venues/signup" ||
     pathname === "/privacy" ||
+    // Printable "sign up on StageReach" flyer for venues — holds only the stagereach.app QR code.
+    pathname === "/flyer" ||
     pathname === "/terms";
 
   if (!user && !isLoginPage && !isPublicRoute) {
