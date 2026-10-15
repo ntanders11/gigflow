@@ -14,6 +14,7 @@ import {
 } from "date-fns";
 import { useState } from "react";
 import { VenueBookingRequestView } from "@/types";
+import { DEFAULT_START_TIME, DEFAULT_END_TIME } from "@/lib/gigs/default-times";
 
 const STATUS_DOT_COLOR: Record<VenueBookingRequestView["status"], string> = {
   pending: "#D4A64F",
@@ -33,13 +34,6 @@ function cancelledBySubLabel(r: VenueBookingRequestView): string | null {
   if (r.status !== "cancelled") return null;
   return r.cancelled_by === "artist" ? "Cancelled by the artist" : "Cancelled by you";
 }
-
-// Same reasoning as the artist-side add-gig form: a blank native
-// <input type="time"> can silently stay empty in Safari until every
-// segment is explicitly set, so the edit form starts on a real time
-// rather than blank.
-const DEFAULT_START_TIME = "19:00";
-const DEFAULT_END_TIME = "21:00";
 
 // Nth occurrence (n=0 is the date itself) on a weekly or monthly cadence
 // from a starting date. Plain Date math, not date-fns's addWeeks/addMonths

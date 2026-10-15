@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { Gig } from "@/types";
 import { CHECKLIST_ITEMS } from "@/lib/gigs/checklist";
+import { DEFAULT_START_TIME, DEFAULT_END_TIME } from "@/lib/gigs/default-times";
 
 interface Props {
   venueId: string;
@@ -29,16 +30,6 @@ function fmtDate(dateStr: string) {
     weekday: "short", month: "short", day: "numeric", year: "numeric",
   });
 }
-
-// A blank native <input type="time"> can silently keep reporting an
-// empty value in Safari until every segment (hour, minute, AM/PM) has
-// been explicitly set by the user — if any segment is left on its
-// placeholder, .value stays "" even though the field looks filled in.
-// Starting the field on an already-complete time (rather than blank)
-// means there's no "partially set" state to fall into: the user can
-// accept the default or adjust it, but the value is always valid.
-const DEFAULT_START_TIME = "19:00";
-const DEFAULT_END_TIME = "21:00";
 
 export default function GigsSection({ venueId, initialGigs, venueOriginatedGigIds }: Props) {
   const [gigs, setGigs] = useState<Gig[]>(initialGigs);

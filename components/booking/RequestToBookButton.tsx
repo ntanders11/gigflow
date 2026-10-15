@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { DEFAULT_START_TIME, DEFAULT_END_TIME } from "@/lib/gigs/default-times";
 import Link from "next/link";
 
 const inputStyle = {
@@ -50,8 +51,8 @@ export default function RequestToBookButton({
 function RequestBookingModal({ artistUserId, onClose }: { artistUserId: string; onClose: () => void }) {
   const [unavailableDates, setUnavailableDates] = useState<Set<string>>(new Set());
   const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [startTime, setStartTime] = useState(DEFAULT_START_TIME);
+  const [endTime, setEndTime] = useState(DEFAULT_END_TIME);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
