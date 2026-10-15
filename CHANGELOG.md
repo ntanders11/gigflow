@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-15 (private artist calendar links)
+- [Fix] An artist's calendar subscription link was built from their account ID, which is also in their public profile address, so anyone with the profile link could read their gig list. Each artist now has a private random code in their link instead. Old links stop working, so anyone subscribed needs to re-subscribe from the Calendar page.
+
 ## 2026-10-15 (venue calendar subscription)
 - [Feature] Venues can now add their accepted bookings to Apple, Google or Outlook calendar from their Calendar page, with the same one-tap pop-up artists have. Each venue gets a private link that can't be guessed from their public profile. The page heading also now says "Calendar" to match its tab.
 

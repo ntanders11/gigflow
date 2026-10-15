@@ -176,6 +176,7 @@ export interface ArtistProfile {
   social_links: SocialLinks;
   video_samples: VideoSample[];
   packages: Package[];
+  calendar_token?: string;
   created_at: string;
   updated_at: string;
 }

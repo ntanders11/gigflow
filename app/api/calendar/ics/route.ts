@@ -19,27 +19,40 @@ function escapeICS(str: string) {
     .replace(/\n/g, "\\n");
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(req: NextRequest) {
-  const uid = req.nextUrl.searchParams.get("uid");
+  const token = req.nextUrl.searchParams.get("t");
+
+  const supabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   let userId: string | null = null;
 
-  if (uid) {
-    userId = uid;
+  if (token !== null) {
+    // Calendar apps fetch this with no login, so access is by the artist's
+    // private calendar_token. It used to be the artist's account id (`uid`),
+    // which is public in /profile/<id> — that style of link no longer works.
+    if (!UUID_RE.test(token)) return new NextResponse("Not found", { status: 404 });
+    const { data: owner } = await supabase
+      .from("artist_profiles")
+      .select("user_id")
+      .eq("calendar_token", token)
+      .maybeSingle();
+    if (!owner) return new NextResponse("Not found", { status: 404 });
+    userId = owner.user_id as string;
   } else {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    // No token: a logged-in artist downloading their own calendar.
+    const authClient = await createClient();
+    const { data: { user } } = await authClient.auth.getUser();
     userId = user?.id ?? null;
   }
 
   if (!userId) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
-
-  const supabase = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
 
   // Pull from gigs table, joining venue for name/city/address
   const { data: gigs, error } = await supabase

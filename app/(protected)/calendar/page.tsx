@@ -50,9 +50,15 @@ export default async function CalendarPage() {
     notes: g.notes,
   }));
 
-  // Build the subscription URL using the user's ID as a token
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://gigflow-git-main-taylor-anderson.vercel.app";
-  const subscriptionUrl = `${baseUrl}/api/calendar/ics?uid=${user.id}`;
+  // The subscription link carries the artist's private calendar_token — not
+  // their account id, which is public in their /profile/<id> address.
+  const { data: tokenRow } = await supabase
+    .from("artist_profiles")
+    .select("calendar_token")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://stagereach.app";
+  const subscriptionUrl = `${baseUrl}/api/calendar/ics?t=${tokenRow?.calendar_token ?? ""}`;
 
   return (
     <div className="min-h-screen p-4 md:p-8" style={{ backgroundColor: "#0E0E10", color: "#F4E8D2" }}>
