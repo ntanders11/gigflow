@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (reminders follow time zones)
+- [Change] The "gig today" reminder now works out "today" in the gig's own time zone and waits until the local morning, instead of using one fixed time for everyone.
+
 ## 2026-10-16 (time zones)
 - [Feature] Artists and venues can now choose their time zone on their profile page. Calendar feeds show each gig at the venue's local time instead of always Pacific time. Existing accounts stay on Pacific until changed.
 

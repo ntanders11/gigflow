@@ -11,6 +11,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { createNotification } from "@/lib/notifications/create";
 import { CHECKLIST_ITEMS } from "@/lib/gigs/checklist";
+import { gigTimeZone } from "@/lib/time-zones";
+import { isReminderDue } from "@/lib/gigs/reminder-timing";
 
 function fmtTime(t: string | null): string | null {
   if (!t) return null;
@@ -31,17 +33,45 @@ async function handleReminders(request: NextRequest) {
   }
 
   const service = await createServiceClient();
-  const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  const now = new Date();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 
-  const { data: gigs, error: gigsError } = await service
+  // "Today" depends on the gig's own time zone, which can be a calendar day
+  // ahead of or behind UTC — so pull yesterday-to-tomorrow (UTC) as
+  // candidates, then keep only the gigs whose local date is today and whose
+  // local morning has started (see lib/gigs/reminder-timing.ts).
+  const { data: candidates, error: gigsError } = await service
     .from("gigs")
     .select("id, user_id, venue_id, date, start_time, end_time, checklist")
     .eq("status", "upcoming")
-    .eq("date", todayStr)
+    .gte("date", isoDay(new Date(now.getTime() - dayMs)))
+    .lte("date", isoDay(new Date(now.getTime() + dayMs)))
     .is("reminder_sent_at", null);
 
   if (gigsError) return NextResponse.json({ error: gigsError.message }, { status: 500 });
-  if (!gigs || gigs.length === 0) {
+  if (!candidates || candidates.length === 0) {
+    return NextResponse.json({ reminded: 0, message: "No gigs today need a reminder" });
+  }
+
+  const venueIds0 = [...new Set(candidates.map((g) => g.venue_id as string))];
+  const { data: venues0 } = await service.from("venues").select("id, venue_profile_id").in("id", venueIds0);
+  const profileIdByVenue = new Map((venues0 ?? []).map((v) => [v.id as string, v.venue_profile_id as string | null]));
+  const profileIds0 = [...new Set([...profileIdByVenue.values()].filter(Boolean) as string[])];
+  const { data: vps0 } = await service
+    .from("venue_profiles").select("id, time_zone").in("id", profileIds0.length > 0 ? profileIds0 : [""]);
+  const venueZoneByProfile = new Map((vps0 ?? []).map((p) => [p.id as string, p.time_zone as string | null]));
+  const { data: aps0 } = await service
+    .from("artist_profiles").select("user_id, time_zone").in("user_id", [...new Set(candidates.map((g) => g.user_id as string))]);
+  const artistZoneByUser = new Map((aps0 ?? []).map((a) => [a.user_id as string, a.time_zone as string | null]));
+
+  const gigs = candidates.filter((g) => {
+    const profileId = profileIdByVenue.get(g.venue_id as string);
+    const tz = gigTimeZone(profileId ? venueZoneByProfile.get(profileId) : null, artistZoneByUser.get(g.user_id as string));
+    return isReminderDue(now, g.date as string, tz);
+  });
+
+  if (gigs.length === 0) {
     return NextResponse.json({ reminded: 0, message: "No gigs today need a reminder" });
   }
 
