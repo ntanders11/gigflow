@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { ArtistProfile } from "@/types";
 import { buildFollowUpSubject, buildFollowUpBody } from "@/lib/email-templates";
+import { useCanSendEmail } from "@/components/email/useCanSendEmail";
+import ConnectEmailNotice from "@/components/email/ConnectEmailNotice";
 
 interface VenueRow {
   id: string;
@@ -36,6 +38,7 @@ interface Props {
 }
 
 export default function BulkFollowUpModal({ onClose, onSent }: Props) {
+  const emailCheck = useCanSendEmail();
   const [phase, setPhase] = useState<Phase>("loading");
   const [venues, setVenues] = useState<VenueRow[]>([]);
   const [profile, setProfile] = useState<ArtistProfile | null>(null);
@@ -82,6 +85,17 @@ export default function BulkFollowUpModal({ onClose, onSent }: Props) {
         } else {
           failed++;
           newResults.push({ name: v.name, status: "failed" });
+          // No working Gmail/Outlook: the rest would be refused too — stop.
+          const data = await res.json().catch(() => ({}));
+          if (data.code === "not_connected" || data.code === "needs_reconnect") {
+            for (const rest of venues.slice(i + 1)) {
+              failed++;
+              newResults.push({ name: rest.name, status: "failed" });
+            }
+            setProgress({ done: venues.length, sent, failed });
+            setResults([...newResults]);
+            break;
+          }
         }
       } catch {
         failed++;
@@ -205,6 +219,12 @@ export default function BulkFollowUpModal({ onClose, onSent }: Props) {
           )}
         </div>
 
+        {phase === "confirm" && venues.length > 0 && !emailCheck.canSend && (
+          <div className="px-5 pb-3 shrink-0">
+            <ConnectEmailNotice />
+          </div>
+        )}
+
         {/* Footer */}
         <div className="px-5 py-4 shrink-0 flex gap-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
           {phase === "confirm" && venues.length > 0 && (
@@ -218,7 +238,8 @@ export default function BulkFollowUpModal({ onClose, onSent }: Props) {
               </button>
               <button
                 onClick={sendAll}
-                className="flex-1 text-sm py-2.5 rounded-lg font-semibold transition-all hover:brightness-110"
+                disabled={!emailCheck.canSend}
+                className="flex-1 text-sm py-2.5 rounded-lg font-semibold transition-all hover:brightness-110 disabled:opacity-40"
                 style={{ backgroundColor: "#D4A64F", color: "#0E0E10" }}
               >
                 Send {venues.length} email{venues.length !== 1 ? "s" : ""}

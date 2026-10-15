@@ -1,8 +1,12 @@
-import { Resend } from "resend";
 import { createServiceClient } from "@/lib/supabase/server";
 import * as gmail from "@/lib/email/gmail";
 import * as outlook from "@/lib/email/outlook";
 import { TokenRefreshError } from "@/lib/email/errors";
+import { BLOCKED_MESSAGES, decideSend, pickConnection, type BlockedCode, type ConnectionStatusInfo } from "@/lib/email/send-rules";
+
+// Re-exported so existing imports (e.g. the diagnostics route) keep working.
+export { pickConnection };
+export type { ConnectionStatusInfo };
 
 const REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
@@ -16,10 +20,14 @@ interface SendArtistEmailParams {
   replyTo?: string;
 }
 
-interface SendArtistEmailResult {
+export interface SendArtistEmailResult {
   success: boolean;
-  provider: "gmail" | "outlook" | "resend";
+  provider: "gmail" | "outlook" | null;
   providerMessageId: string | null;
+  // Set when success is false. "not_connected" / "needs_reconnect" mean the
+  // artist has no working Gmail/Outlook, so nothing was attempted;
+  // "send_failed" means their provider refused or errored.
+  code?: BlockedCode | "send_failed";
   error?: string;
 }
 
@@ -32,27 +40,6 @@ interface EmailConnectionRow {
   expires_at: string;
   status: "active" | "needs_reconnect";
   updated_at: string;
-}
-
-// Note: updated_at is bumped by ANY token refresh, including ones triggered
-// outside this file (e.g. app/api/calendar/sync/route.ts refreshing an
-// Outlook token for calendar purposes, not sending). If a UI caller for
-// calendar sync is ever added, a calendar-only action could incidentally
-// change which provider "wins" here — for the artist's next email send,
-// and for what /api/email-status reports as currently active.
-// Currently inert — calendar/sync has no UI caller anywhere in the app.
-export interface ConnectionStatusInfo {
-  status: "active" | "needs_reconnect";
-  updated_at: string;
-}
-
-export function pickConnection<T extends ConnectionStatusInfo>(connections: T[]): T | null {
-  if (connections.length === 0) return null;
-  const active = connections.filter((c) => c.status === "active");
-  const pool = active.length > 0 ? active : connections;
-  return pool.reduce((newest, c) =>
-    new Date(c.updated_at) > new Date(newest.updated_at) ? c : newest
-  );
 }
 
 async function sendViaConnection(
@@ -102,37 +89,10 @@ async function sendViaConnection(
   return { success: false, providerMessageId: null, authFailure: result.status === 401, error: result.error };
 }
 
-async function sendViaResend(params: SendArtistEmailParams): Promise<SendArtistEmailResult> {
-  const apiKey = (process.env.RESEND_API_KEY ?? "").trim();
-  const fromEmail = (process.env.RESEND_FROM_EMAIL ?? "").trim();
-
-  if (!apiKey) {
-    console.error("send-artist-email: RESEND_API_KEY is not set");
-    return { success: false, provider: "resend", providerMessageId: null, error: "Email service not configured (missing API key)" };
-  }
-  if (!fromEmail) {
-    console.error("send-artist-email: RESEND_FROM_EMAIL is not set");
-    return { success: false, provider: "resend", providerMessageId: null, error: "Email service not configured (missing from address)" };
-  }
-
-  const fromAddress = params.fromName ? `${params.fromName} <${fromEmail}>` : fromEmail;
-  const resend = new Resend(apiKey);
-  const { data, error } = await resend.emails.send({
-    from: fromAddress,
-    ...(params.replyTo ? { replyTo: params.replyTo } : {}),
-    to: params.to,
-    subject: params.subject,
-    text: params.text,
-    html: params.html,
-  });
-
-  if (error) {
-    return { success: false, provider: "resend", providerMessageId: null, error: error.message };
-  }
-
-  return { success: true, provider: "resend", providerMessageId: data?.id ?? null };
-}
-
+// Sends only through the artist's own connected Gmail/Outlook. There is no
+// fallback to the shared StageReach (Resend) sender on purpose: it has a daily
+// cap shared by every artist, and a pitch quietly going out from a generic
+// address isn't what the artist expects. If nothing works, say so.
 export async function sendArtistEmail(params: SendArtistEmailParams): Promise<SendArtistEmailResult> {
   const supabase = await createServiceClient();
 
@@ -142,39 +102,34 @@ export async function sendArtistEmail(params: SendArtistEmailParams): Promise<Se
     .eq("user_id", params.userId);
 
   if (connectionsError) {
-    console.error(
-      `send-artist-email: failed to look up connections for user ${params.userId}, falling back to Resend:`,
-      connectionsError.message
-    );
+    console.error(`send-artist-email: failed to look up connections for user ${params.userId}:`, connectionsError.message);
+    return { success: false, provider: null, providerMessageId: null, code: "send_failed", error: BLOCKED_MESSAGES.send_failed };
   }
 
-  const connection = pickConnection((connections as EmailConnectionRow[]) ?? []);
-
-  if (connection) {
-    try {
-      const result = await sendViaConnection(connection, params);
-      if (result.success) {
-        return { success: true, provider: connection.provider, providerMessageId: result.providerMessageId };
-      }
-      if (result.authFailure) {
-        await supabase.from("email_connections").update({ status: "needs_reconnect" }).eq("id", connection.id);
-      }
-      console.error(
-        `send-artist-email: ${connection.provider} send failed for user ${params.userId}, falling back to Resend:`,
-        result.error
-      );
-    } catch (err) {
-      console.error(
-        `send-artist-email: ${connection.provider} send threw for user ${params.userId}, falling back to Resend:`,
-        err
-      );
-    }
+  const decision = decideSend((connections as EmailConnectionRow[]) ?? []);
+  if (decision.kind === "blocked") {
+    return { success: false, provider: null, providerMessageId: null, code: decision.code, error: BLOCKED_MESSAGES[decision.code] };
   }
 
+  const connection = decision.connection;
   try {
-    return await sendViaResend(params);
+    const result = await sendViaConnection(connection, params);
+    if (result.success) {
+      return { success: true, provider: connection.provider, providerMessageId: result.providerMessageId };
+    }
+    if (result.authFailure) {
+      await supabase.from("email_connections").update({ status: "needs_reconnect" }).eq("id", connection.id);
+    }
+    console.error(`send-artist-email: ${connection.provider} send failed for user ${params.userId}:`, result.error);
+    return {
+      success: false,
+      provider: connection.provider,
+      providerMessageId: null,
+      code: result.authFailure ? "needs_reconnect" : "send_failed",
+      error: result.authFailure ? BLOCKED_MESSAGES.needs_reconnect : BLOCKED_MESSAGES.send_failed,
+    };
   } catch (err) {
-    console.error(`send-artist-email: Resend send threw for user ${params.userId}:`, err);
-    return { success: false, provider: "resend", providerMessageId: null, error: `Resend send threw: ${err}` };
+    console.error(`send-artist-email: ${connection.provider} send threw for user ${params.userId}:`, err);
+    return { success: false, provider: connection.provider, providerMessageId: null, code: "send_failed", error: BLOCKED_MESSAGES.send_failed };
   }
 }

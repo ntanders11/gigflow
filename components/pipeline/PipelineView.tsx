@@ -8,6 +8,8 @@ import AddVenueModal from "@/components/venue/AddVenueModal";
 import PitchEmailModal from "@/components/venue/PitchEmailModal";
 import BatchEmailModal, { SendResult } from "@/components/pipeline/BatchEmailModal";
 import DiscoverView from "@/components/discover/DiscoverView";
+import { useCanSendEmail } from "@/components/email/useCanSendEmail";
+import ConnectEmailNotice from "@/components/email/ConnectEmailNotice";
 
 const KanbanBoard = dynamic(() => import("./KanbanBoard"), { ssr: false });
 
@@ -38,6 +40,7 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
   const [selectedVenueIds, setSelectedVenueIds] = useState<Set<string>>(new Set());
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const router = useRouter();
+  const emailCheck = useCanSendEmail();
 
   async function fillMissingAddresses() {
     const missing = venues.filter((v) => !v.address?.trim());
@@ -189,6 +192,11 @@ export default function PipelineView({ initialVenues, initialStageFilter, outrea
 
   return (
     <div>
+      {!emailCheck.canSend && (
+        <div className="mb-4">
+          <ConnectEmailNotice />
+        </div>
+      )}
       {showAddModal && (
         <AddVenueModal
           onClose={() => setShowAddModal(false)}

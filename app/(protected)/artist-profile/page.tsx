@@ -787,7 +787,7 @@ export default function ArtistProfilePage() {
                         <div style={{ color: "#9a9591", fontSize: "10px" }}>{connection.connected_email}</div>
                         {connection.status === "needs_reconnect" && (
                           <div style={{ color: "#D4A64F", fontSize: "10px", marginTop: "2px" }}>
-                            Reconnect needed — sends fell back to your shared StageReach address
+                            Reconnect needed — emails will not send until you reconnect
                           </div>
                         )}
                       </div>

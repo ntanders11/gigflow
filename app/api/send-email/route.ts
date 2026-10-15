@@ -56,8 +56,14 @@ export async function POST(request: NextRequest) {
   });
 
   if (!sendResult.success) {
-    console.error("send-email: send failed:", sendResult.error);
-    return NextResponse.json({ error: sendResult.error ?? "Failed to send email" }, { status: 500 });
+    console.error("send-email: send failed:", sendResult.code, sendResult.error);
+    // 409 = "can't do this yet": the artist has no working Gmail/Outlook, so
+    // nothing was attempted. The screens use `code` to show a connect prompt.
+    const blocked = sendResult.code === "not_connected" || sendResult.code === "needs_reconnect";
+    return NextResponse.json(
+      { error: sendResult.error ?? "Failed to send email", code: sendResult.code },
+      { status: blocked ? 409 : 500 }
+    );
   }
 
   console.log(`send-email: sent via ${sendResult.provider} → id=${sendResult.providerMessageId ?? "(none)"}`);

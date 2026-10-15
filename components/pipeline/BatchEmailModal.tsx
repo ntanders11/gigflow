@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Venue, ArtistProfile } from "@/types";
+import { useCanSendEmail } from "@/components/email/useCanSendEmail";
+import ConnectEmailNotice from "@/components/email/ConnectEmailNotice";
 import {
   buildSubjectTemplate,
   buildBodyTemplate,
@@ -61,6 +63,8 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const emailCheck = useCanSendEmail();
+
   async function handleSend() {
     setStep("sending");
     const sendResults: SendResult[] = [];
@@ -93,6 +97,14 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
           success: res.ok,
           error: res.ok ? undefined : (data.error ?? "Unknown error"),
         });
+        // No working Gmail/Outlook: every remaining send would be refused the
+        // same way, so stop here and mark the rest as not sent.
+        if (!res.ok && (data.code === "not_connected" || data.code === "needs_reconnect")) {
+          for (const rest of venues.slice(i + 1)) {
+            sendResults.push({ venueId: rest.id, venueName: rest.name, success: false, error: data.error });
+          }
+          break;
+        }
       } catch {
         sendResults.push({
           venueId: venue.id,
@@ -234,6 +246,11 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
               )}
             </div>
 
+            {!emailCheck.canSend && (
+              <div className="px-6 pb-3 shrink-0">
+                <ConnectEmailNotice />
+              </div>
+            )}
             <div
               className="flex items-center justify-end gap-3 px-6 py-4 shrink-0"
               style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
@@ -247,7 +264,7 @@ export default function BatchEmailModal({ venues, mode, onClose, onComplete }: P
               </button>
               <button
                 onClick={handleSend}
-                disabled={!bodyTemplate.trim()}
+                disabled={!bodyTemplate.trim() || !emailCheck.canSend}
                 className="text-sm px-4 py-2 rounded-lg font-semibold transition-all hover:brightness-110 disabled:opacity-40"
                 style={{ backgroundColor: accentColor, color: "#0E0E10" }}
               >

@@ -63,7 +63,7 @@ export async function GET() {
     if (connectionsError) {
       report.personal_email_check_error = `Exception: ${connectionsError.message}`;
     } else if (!connections || connections.length === 0) {
-      report.personal_email = "No personal Gmail/Outlook connected — sending uses the shared StageReach address";
+      report.personal_email = "⚠️ No personal Gmail/Outlook connected — sending pitch/follow-up emails is blocked until one is connected";
     } else {
       const rows = connections as PersonalConnectionRow[];
 
@@ -75,14 +75,15 @@ export async function GET() {
       }
 
       // pickConnection only returns null when there are zero connections — when every
-      // connection is needs_reconnect, it still returns the most-recently-updated one
-      // (that's the one sendArtistEmail genuinely attempts before its own Resend fallback).
-      // So the outcome line must check the returned row's own status, not just null-vs-not.
+      // connection is needs_reconnect, it still returns the most-recently-updated one.
+      // sendArtistEmail itself only ever uses an *active* connection and never falls
+      // back to the shared sender, so the outcome line must check the returned row's
+      // own status, not just null-vs-not.
       const selected = pickConnection(rows);
       report.personal_email_active =
         selected && selected.status === "active"
           ? `✅ Sending will currently use: ${selected.provider === "gmail" ? "Gmail" : "Outlook"} (${selected.connected_email})`
-          : "⚠️ No working personal connection — sending is currently falling back to the shared StageReach address";
+          : "⚠️ No working personal connection — sending is blocked until you reconnect";
     }
   } catch (e) {
     report.personal_email_check_error = `Exception: ${e instanceof Error ? e.message : String(e)}`;

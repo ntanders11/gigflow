@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { Venue, Interaction, ArtistProfile } from "@/types";
 import { buildSubject, buildFollowUpSubject, buildBody, buildFollowUpBody } from "@/lib/email-templates";
+import { useCanSendEmail } from "@/components/email/useCanSendEmail";
+import ConnectEmailNotice from "@/components/email/ConnectEmailNotice";
 
 interface Props {
   venue: Venue;
@@ -42,6 +44,8 @@ export default function PitchEmailModal({ venue, onClose, onSuccess, followUp = 
         );
       });
   }, [venue.name, venue.contact_name, followUp]);
+
+  const emailCheck = useCanSendEmail();
 
   async function handleSend() {
     if (!to.trim()) {
@@ -162,6 +166,7 @@ export default function PitchEmailModal({ venue, onClose, onSuccess, followUp = 
                   {errorMessage}
                 </p>
               )}
+              {!emailCheck.canSend && <ConnectEmailNotice tone="light" />}
             </div>
 
             {/* Footer */}
@@ -175,7 +180,7 @@ export default function PitchEmailModal({ venue, onClose, onSuccess, followUp = 
               </button>
               <button
                 onClick={handleSend}
-                disabled={sending}
+                disabled={sending || !emailCheck.canSend}
                 className="text-sm bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {sending ? (

@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (email must be connected)
+- [Change] Artists can no longer send pitch or follow-up emails until they connect Gmail or Outlook. Previously unconnected artists sent through StageReach's shared sender, which has a ~100-per-day limit for everyone combined. The send screens now show a "Connect your email to send" notice and a disabled Send button, and a batch stops immediately instead of failing one venue at a time.
+
 ## 2026-10-16 (ink-saver flyer)
 - [Change] The printable flyer now defaults to an ink-saver version — a plain white page with the StageReach name in dark text instead of the black logo banner, using about 63% less ink. The full-color version is still one click away on the flyer page.
 
