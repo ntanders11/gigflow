@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (ink-saver flyer)
+- [Change] The printable flyer now defaults to an ink-saver version — a plain white page with the StageReach name in dark text instead of the black logo banner, using about 63% less ink. The full-color version is still one click away on the flyer page.
+
 ## 2026-10-16 (printable flyer for venues)
 - [Feature] Venues can print a ready-made flyer — "Sign up on StageReach" with the QR code and stagereach.app — straight from the "Share with artists" card on their profile page (the "Print flyer" button). It's one US Letter page.
 

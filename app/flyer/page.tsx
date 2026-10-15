@@ -14,7 +14,11 @@ export const metadata: Metadata = {
 // rendered on the server so the code is baked into the page. The on-screen
 // preview is the same size as the printed page; the Print button and the
 // instructions are hidden when printing.
-export default async function FlyerPage() {
+export default async function FlyerPage({ searchParams }: { searchParams: Promise<{ ink?: string }> }) {
+  const { ink } = await searchParams;
+  // Ink-saver (white page, plain text name) is the default; ?ink=full is the
+  // original dark-banner version with the logo.
+  const full = ink === "full";
   const qr = await landingQrDataUrl(1200);
 
   return (
@@ -27,6 +31,11 @@ export default async function FlyerPage() {
         .flyer-controls p { color: #4a4743; font-size: 13px; margin: 0; }
         .flyer { zoom: var(--flyer-zoom, 1); width: 8.5in; height: 11in; margin: 0 auto; background: #fff; color: #111; position: relative; overflow: hidden; box-shadow: 0 6px 30px rgba(0,0,0,0.25); display: flex; flex-direction: column; font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; }
         .flyer-top { background: #0E0E10; padding: 0.4in 0 0.35in; display: flex; justify-content: center; border-bottom: 0.1in solid #D4A64F; }
+        .flyer-controls a { color: #8a6a1f; text-decoration: underline; font-size: 13px; }
+        .flyer-lite-top { padding: 0.75in 0 0.15in; text-align: center; }
+        .flyer-wordmark { font-size: 30pt; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #111; line-height: 1; }
+        .flyer-tag { font-size: 10pt; letter-spacing: 0.25em; text-transform: uppercase; color: #6b6762; margin-top: 0.1in; }
+        .flyer-rule { width: 1.4in; height: 0; border-top: 2px solid #D4A64F; margin: 0.22in auto 0; }
         .flyer-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 0.7in; }
         .flyer h1 { font-size: 50pt; line-height: 1.05; font-weight: 800; margin: 0 0 0.2in; letter-spacing: -0.02em; }
         .flyer-sub { font-size: 18pt; line-height: 1.35; color: #3b3935; margin: 0 0 0.3in; max-width: 6.2in; }
@@ -43,24 +52,41 @@ export default async function FlyerPage() {
       `}</style>
 
       <div className="flyer-controls">
-        <p>
-          This prints on one US Letter page. In the print window, choose &ldquo;Save as PDF&rdquo; if you&apos;d rather
-          have a file.
-        </p>
+        <div>
+          <p>
+            This prints on one US Letter page. In the print window, choose &ldquo;Save as PDF&rdquo; if you&apos;d rather
+            have a file.
+          </p>
+          <p style={{ marginTop: "6px" }}>
+            {full ? (
+              <>Full-color version (uses more ink). <a href="/flyer">Switch to the ink-saver version</a></>
+            ) : (
+              <>Ink-saver version (white page). <a href="/flyer?ink=full">Switch to the full-color version</a></>
+            )}
+          </p>
+        </div>
         <PrintButton />
       </div>
 
       <div className="flyer">
-        <div className="flyer-top">
-          <Image
-            src="/stagereach-logo.png"
-            alt="StageReach"
-            width={600}
-            height={200}
-            priority
-            style={{ height: "1.1in", width: "auto", objectFit: "contain" }}
-          />
-        </div>
+        {full ? (
+          <div className="flyer-top">
+            <Image
+              src="/stagereach-logo.png"
+              alt="StageReach"
+              width={600}
+              height={200}
+              priority
+              style={{ height: "1.1in", width: "auto", objectFit: "contain" }}
+            />
+          </div>
+        ) : (
+          <div className="flyer-lite-top">
+            <div className="flyer-wordmark">StageReach</div>
+            <div className="flyer-tag">Find your next stage</div>
+            <div className="flyer-rule" />
+          </div>
+        )}
         <div className="flyer-body">
           <h1>Sign up on StageReach</h1>
           <p className="flyer-sub">
