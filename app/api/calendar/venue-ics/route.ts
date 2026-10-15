@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { gigTimeZone } from "@/lib/time-zones";
 import { createServiceClient } from "@/lib/supabase/server";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   const { data: venue } = await service
     .from("venue_profiles")
-    .select("id, venue_name, address, city")
+    .select("id, venue_name, address, city, time_zone")
     .eq("calendar_token", token)
     .maybeSingle();
   if (!venue) return new NextResponse("Not found", { status: 404 });
@@ -45,6 +46,7 @@ export async function GET(req: NextRequest) {
     for (const a of artists ?? []) nameByUser.set(a.user_id as string, (a.display_name as string) ?? "");
   }
 
+  const tz = gigTimeZone(venue.time_zone as string | null, null);
   const venueName = (venue.venue_name as string) ?? "your venue";
   const location = escapeICS((venue.address as string) ?? (venue.city as string) ?? venueName);
   const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z/, "Z");
@@ -64,8 +66,8 @@ export async function GET(req: NextRequest) {
       "BEGIN:VEVENT",
       `UID:stagereach-booking-${b.id}@stagereach.app`,
       `DTSTAMP:${now}`,
-      `DTSTART;TZID=America/Los_Angeles:${toICSDate(b.date as string, sh, sm)}`,
-      `DTEND;TZID=America/Los_Angeles:${toICSDate(b.date as string, eh, em)}`,
+      `DTSTART;TZID=${tz}:${toICSDate(b.date as string, sh, sm)}`,
+      `DTEND;TZID=${tz}:${toICSDate(b.date as string, eh, em)}`,
       `SUMMARY:${escapeICS(`${artist} at ${venueName}`)}`,
       `LOCATION:${location}`,
       "END:VEVENT",
@@ -79,7 +81,7 @@ export async function GET(req: NextRequest) {
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "X-WR-CALNAME:StageReach Bookings",
-    "X-WR-TIMEZONE:America/Los_Angeles",
+    `X-WR-TIMEZONE:${tz}`,
     ...events,
     "END:VCALENDAR",
   ].join("\r\n");

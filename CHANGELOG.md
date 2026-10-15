@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (time zones)
+- [Feature] Artists and venues can now choose their time zone on their profile page. Calendar feeds show each gig at the venue's local time instead of always Pacific time. Existing accounts stay on Pacific until changed.
+
 ## 2026-10-16 (signup captcha)
 - [Feature] Artist and venue signup now include a Cloudflare "I'm not a robot" check to keep bots from creating fake accounts. It switches on once the keys are added in Vercel and Supabase.
 

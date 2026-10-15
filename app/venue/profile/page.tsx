@@ -12,6 +12,7 @@ import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
 import EquipmentFields from "@/components/venue/EquipmentFields";
 import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
 import FeedbackBox from "@/components/feedback/FeedbackBox";
+import TimeZoneField from "@/components/profile/TimeZoneField";
 import ArtistSignupQr from "@/components/venue/ArtistSignupQr";
 
 const inputStyle = {
@@ -286,6 +287,7 @@ export default function VenueProfilePage() {
         </div>
 
         <div className="mt-8">
+          <TimeZoneField />
           <FeedbackBox />
         </div>
 
