@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-16 (follow-up daily cap)
+- [Change] Prepared the automatic follow-up emails for a safe launch: each artist's batch is capped at 10 per day (oldest first), and skipped if their email isn't connected. The automatic follow-ups are still switched off.
+
 ## 2026-10-16 (reminders follow time zones)
 - [Change] The "gig today" reminder now works out "today" in the gig's own time zone and waits until the local morning, instead of using one fixed time for everyone.
 

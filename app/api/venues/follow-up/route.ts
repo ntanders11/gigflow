@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { sendArtistEmail } from "@/lib/email/send-artist-email";
 import { createNotification } from "@/lib/notifications/create";
 import { isWithinFollowUpCooldown } from "@/lib/bookings/follow-up";
+import { pickDailyBatch } from "@/lib/bookings/follow-up-cap";
 
 interface ArtistInfo {
   name: string;
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
 
   const { data: venues, error: venueError } = await supabase
     .from("venues")
-    .select("id, name, contact_email, user_id")
+    .select("id, name, contact_email, user_id, last_contacted_at")
     .eq("stage", "contacted")
     .not("contact_email", "is", null)
     .lt("last_contacted_at", fiveDaysAgo);
@@ -72,8 +73,10 @@ export async function POST(request: NextRequest) {
     if (!prev || f.occurred_at > prev) lastFollowUpByVenue.set(f.venue_id, f.occurred_at);
   }
 
-  const eligible = venues.filter(
-    (v) => !isWithinFollowUpCooldown(lastFollowUpByVenue.get(v.id) ?? null)
+  // Daily cap: at most N per artist per run, longest-waiting first, so a big
+  // backlog trickles out instead of going all at once.
+  const eligible = pickDailyBatch(
+    venues.filter((v) => !isWithinFollowUpCooldown(lastFollowUpByVenue.get(v.id) ?? null))
   );
 
   if (eligible.length === 0) {
@@ -107,7 +110,12 @@ export async function POST(request: NextRequest) {
   const now = new Date().toISOString();
   const results: { venue: string; status: string }[] = [];
 
+  // Artists whose email isn't connected: every send would be refused, so skip
+  // the rest of their batch instead of trying each one.
+  const blockedArtists = new Set<string>();
+
   for (const venue of eligible) {
+    if (blockedArtists.has(venue.user_id)) continue;
     try {
       const artist = artistMap.get(venue.user_id)!;
       const subject = `Following up — live music inquiry for ${venue.name}`;
@@ -130,6 +138,9 @@ export async function POST(request: NextRequest) {
       });
 
       if (!sendResult.success) {
+        if (sendResult.code === "not_connected" || sendResult.code === "needs_reconnect") {
+          blockedArtists.add(venue.user_id);
+        }
         results.push({ venue: venue.name, status: `error: ${sendResult.error}` });
         continue;
       }
