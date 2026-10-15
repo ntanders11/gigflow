@@ -8,6 +8,7 @@ import PhotoCropModal from "@/components/profile/PhotoCropModal";
 import PushToggle from "@/components/notifications/PushToggle";
 import MessageEmailToggle from "@/components/messages/MessageEmailToggle";
 import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
+import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
 import ConnectEmailButton from "@/components/profile/ConnectEmailButton";
 
 const DEFAULT_PACKAGES: Package[] = [
@@ -843,6 +844,7 @@ export default function ArtistProfilePage() {
               </div>
             )}
             <PushToggle />
+            <AddToHomeScreenTip />
             <MessageEmailToggle />
           </div>
 

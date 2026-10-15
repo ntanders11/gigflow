@@ -381,7 +381,8 @@ export type NotificationType =
   | "follow_up_sent"
   | "gig_reminder"
   | "message_received"
-  | "connect_email_reminder";
+  | "connect_email_reminder"
+  | "announcement";
 
 export interface NotificationView {
   id: string;

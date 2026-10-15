@@ -10,6 +10,7 @@ import MessageEmailToggle from "@/components/messages/MessageEmailToggle";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
 import RatingsSummaryCard from "@/components/ratings/RatingsSummaryCard";
 import EquipmentFields from "@/components/venue/EquipmentFields";
+import AddToHomeScreenTip from "@/components/pwa/AddToHomeScreenTip";
 
 const inputStyle = {
   background: "#1e2128",
@@ -198,6 +199,7 @@ export default function VenueProfilePage() {
           style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
         >
           <PushToggle />
+          <AddToHomeScreenTip />
           <MessageEmailToggle />
         </div>
 
