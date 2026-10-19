@@ -237,6 +237,19 @@ export default async function VenueDashboardPage() {
           )}
         </div>
 
+        {/* Calendar subscription nudge — the button itself lives on the Calendar page */}
+        <Link
+          href="/venue/bookings"
+          className="mb-8 max-w-6xl rounded-xl px-5 py-4 flex items-center justify-between gap-3 transition-all hover:brightness-110"
+          style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <div>
+            <p className="text-sm font-semibold mb-0.5" style={{ color: "#F4E8D2" }}>📅 See your bookings in your own calendar</p>
+            <p className="text-xs" style={{ color: "#9a9591" }}>Works with Apple, Google and Outlook — set it up once.</p>
+          </div>
+          <span className="text-xs shrink-0" style={{ color: "#D4A64F" }}>Set up →</span>
+        </Link>
+
         {/* Two-column section */}
         <div className="flex flex-col md:flex-row gap-6 max-w-6xl">
           {/* Left: Pending Requests */}

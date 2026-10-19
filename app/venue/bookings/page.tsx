@@ -35,9 +35,9 @@ export default function VenueBookingsPage() {
       {!loading && (
         <div className="max-w-2xl mx-auto px-6 py-10">
           <h1 className="text-xl font-bold mb-6" style={{ color: "#F4E8D2" }}>Calendar</h1>
-          <VenueBookingsCalendar requests={requests} onChanged={load} />
+          {/* At the top (was below the grid) so venues see it without scrolling */}
           {calendarToken && (
-            <div className="mt-8">
+            <div className="mb-6">
               <AddToCalendarButton
                 subscriptionUrl={`${window.location.origin}/api/calendar/venue-ics?t=${calendarToken}`}
                 calendarName="StageReach Bookings"
@@ -46,6 +46,7 @@ export default function VenueBookingsPage() {
               />
             </div>
           )}
+          <VenueBookingsCalendar requests={requests} onChanged={load} />
         </div>
       )}
     </div>

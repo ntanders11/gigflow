@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-18 (venue calendar button easier to find)
+- [Change] The venue "Add to my calendar" button now sits at the top of the Calendar page instead of below the grid, and the venue Overview has a card pointing to it.
+
 ## 2026-10-16 (error log)
 - [Feature] StageReach now keeps its own error log. Crashes and unexpected errors, on the server and in people's browsers, are recorded (repeats are counted, not duplicated), and people who hit a crash see a friendly "Something went wrong — Try again" screen instead of a blank page.
 
