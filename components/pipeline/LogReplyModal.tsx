@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Venue } from "@/types";
+import { remindOptions } from "@/lib/venues/remind-dates";
 
 interface Props {
   venue: Venue;
@@ -22,6 +23,10 @@ export default function LogReplyModal({ venue, onClose, onLogged }: Props) {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState("");
+  // "They said not now": park the venue as Dormant with a date to check back
+  const options = remindOptions();
+  const [later, setLater]     = useState(false);
+  const [remindOn, setRemindOn] = useState(options[2].date);
 
   async function handleSave() {
     setSaving(true);
@@ -50,7 +55,11 @@ export default function LogReplyModal({ venue, onClose, onLogged }: Props) {
       const stageRes = await fetch(`/api/venues/${venue.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage: "responded" }),
+        body: JSON.stringify(
+          later
+            ? { stage: "dormant", remind_on: remindOn, remind_note: notes.trim() || null, remind_notified_at: null }
+            : { stage: "responded" }
+        ),
       });
 
       if (!stageRes.ok) throw new Error("Failed to update stage");
@@ -132,6 +141,45 @@ export default function LogReplyModal({ venue, onClose, onLogged }: Props) {
               color: "#F4E8D2",
             }}
           />
+        </div>
+
+        {/* They said "not now" */}
+        <div>
+          <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: "#F4E8D2" }}>
+            <input type="checkbox" checked={later} onChange={(e) => setLater(e.target.checked)} />
+            They said not now — remind me to check back
+          </label>
+          {later && (
+            <div className="mt-2 space-y-2">
+              <div className="flex flex-wrap gap-2">
+                {options.map((o) => (
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() => setRemindOn(o.date)}
+                    className="text-xs px-3 py-1.5 rounded-lg"
+                    style={{
+                      backgroundColor: remindOn === o.date ? "#D4A64F" : "#1e2128",
+                      color: remindOn === o.date ? "#0E0E10" : "#F4E8D2",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                    }}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="date"
+                value={remindOn}
+                onChange={(e) => setRemindOn(e.target.value)}
+                className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                style={{ backgroundColor: "#1e2128", border: "1px solid rgba(255,255,255,0.08)", color: "#F4E8D2" }}
+              />
+              <p className="text-xs" style={{ color: "#5e5c58" }}>
+                Moves the venue to Dormant (not Responded). What you wrote above becomes the reminder note.
+              </p>
+            </div>
+          )}
         </div>
 
         {error && (

@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-22 (remind me later)
+- [Feature] "Remind me later" on every venue: set a date (quick choices like January or Spring) and a note, the venue moves to Dormant, and on that day you get a notification and phone alert. Reminders also show in a new Reminders section on the Overview, and the Log Reply window has a "They said not now" option.
+
 ## 2026-10-18 (venue calendar button easier to find)
 - [Change] The venue Overview has a card pointing to the "Add to my calendar" button, which sits directly under the month grid on the Calendar page.
 

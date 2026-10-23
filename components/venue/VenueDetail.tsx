@@ -9,6 +9,7 @@ import InvoiceModal from "@/components/invoice/InvoiceModal";
 import InvoiceStatusBadge from "@/components/invoice/InvoiceStatusBadge";
 import DeleteInvoiceButton from "@/components/invoice/DeleteInvoiceButton";
 import GigsSection from "@/components/venue/GigsSection";
+import RemindLaterModal from "@/components/venue/RemindLaterModal";
 import { Invoice } from "@/types";
 
 interface Props {
@@ -145,6 +146,17 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
     setLoggingInteraction(false);
   }
 
+  const [showRemindModal, setShowRemindModal] = useState(false);
+
+  async function clearReminder() {
+    await fetch(`/api/venues/${venue.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ remind_on: null, remind_note: null, remind_notified_at: null }),
+    });
+    setVenue((v) => ({ ...v, remind_on: null, remind_note: null }));
+  }
+
   async function archiveVenue() {
     await fetch(`/api/venues/${venue.id}`, {
       method: "PATCH",
@@ -167,6 +179,13 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
 
   return (
     <>
+    {showRemindModal && (
+      <RemindLaterModal
+        venue={venue}
+        onClose={() => setShowRemindModal(false)}
+        onSaved={(u) => { setVenue((v) => ({ ...v, ...u })); setShowRemindModal(false); }}
+      />
+    )}
     {showDeleteConfirm && (
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
         <div className="rounded-xl p-6 w-80" style={{ backgroundColor: "#16181c", border: "1px solid rgba(255,255,255,0.07)" }}>
@@ -226,6 +245,14 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
           <p className="text-sm mt-1" style={{ color: "#9a9591" }}>
             {[venue.type, venue.city].filter(Boolean).join(" · ")}
           </p>
+          {venue.remind_on && (
+            <p className="text-xs mt-2" style={{ color: "#D4A64F" }}>
+              ⏰ Reminder {new Date(venue.remind_on + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              {venue.remind_note ? ` — ${venue.remind_note}` : ""}
+              {" "}
+              <button onClick={clearReminder} className="underline" style={{ color: "#9a9591" }}>Clear</button>
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {venue.venue_profile_id && (
@@ -240,6 +267,13 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
           <span className={cn("text-xs px-2 py-1 rounded-full font-medium", STAGE_COLORS[venue.stage])}>
             {STAGES.find((s) => s.key === venue.stage)?.label}
           </span>
+          <button
+            onClick={() => setShowRemindModal(true)}
+            className="text-xs px-2 py-1 rounded-lg transition-all hover:brightness-125"
+            style={{ backgroundColor: "rgba(212,166,79,0.1)", color: "#D4A64F", border: "1px solid rgba(212,166,79,0.25)" }}
+          >
+            ⏰ Remind me later
+          </button>
           {venue.stage !== "dormant" && (
             <button
               onClick={archiveVenue}

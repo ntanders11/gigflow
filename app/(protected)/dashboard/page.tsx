@@ -55,7 +55,7 @@ export default async function DashboardPage() {
 
   const { data: venues } = await supabase
     .from("venues")
-    .select("id, name, type, city, stage, updated_at, follow_up_date, last_contacted_at, contact_email, contact_name")
+    .select("id, name, type, city, stage, updated_at, follow_up_date, remind_on, remind_note, last_contacted_at, contact_email, contact_name")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
 
@@ -67,6 +67,13 @@ export default async function DashboardPage() {
     .order("date", { ascending: true });
 
   const allVenues = venues ?? [];
+
+  // "Remind me later" venues, soonest first. Due ones (today or earlier) lead.
+  const reminderToday = new Date().toISOString().slice(0, 10);
+  const reminders = allVenues
+    .filter((v) => v.remind_on)
+    .sort((a, b) => (a.remind_on as string).localeCompare(b.remind_on as string))
+    .slice(0, 6);
 
   const { count: totalInteractions } = await supabase
     .from("interactions")
@@ -551,6 +558,40 @@ export default async function DashboardPage() {
           ))}
         </div>
       </div>
+
+      {/* Reminders — venues set aside with "Remind me later" */}
+      {reminders.length > 0 && (
+        <div className="mb-8 max-w-6xl">
+          <h2 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "#9a9591" }}>
+            Reminders
+          </h2>
+          <div className="space-y-2">
+            {reminders.map((v) => {
+              const due = (v.remind_on as string) <= reminderToday;
+              return (
+                <Link
+                  key={v.id}
+                  href={`/venues/${v.id}`}
+                  className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-all hover:brightness-110"
+                  style={{
+                    backgroundColor: "#16181c",
+                    border: `1px solid ${due ? "rgba(212,166,79,0.4)" : "rgba(255,255,255,0.07)"}`,
+                  }}
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: "#F4E8D2" }}>{v.name}</p>
+                    {v.remind_note && <p className="text-xs truncate" style={{ color: "#9a9591" }}>{v.remind_note}</p>}
+                  </div>
+                  <span className="text-xs shrink-0" style={{ color: due ? "#D4A64F" : "#9a9591" }}>
+                    {due ? "Due · " : ""}
+                    {new Date((v.remind_on as string) + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Two-column section */}
       <div className="flex flex-col md:flex-row gap-6 max-w-6xl">

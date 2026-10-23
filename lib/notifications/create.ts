@@ -12,6 +12,8 @@ const PUSHABLE_TYPES = new Set<NotificationType>([
   // Time-sensitive by nature — the whole point is catching someone before
   // the gig, so this is worth a phone alert like the booking events above.
   "gig_reminder",
+  // A date the artist chose themselves — worth a phone alert on the day.
+  "venue_reminder",
   // A person is waiting on a reply — worth a phone alert.
   "message_received",
 ]);

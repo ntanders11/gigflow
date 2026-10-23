@@ -55,6 +55,9 @@ export interface Venue {
   notes: string | null;
   last_contacted_at: string | null;
   follow_up_date: string | null;
+  // "Not now — remind me": date to check back in, plus a short note
+  remind_on: string | null;
+  remind_note: string | null;
   address: string | null;
   gig_time: string | null;
   gig_end_time: string | null;
@@ -384,6 +387,7 @@ export type NotificationType =
   | "gig_reminder"
   | "message_received"
   | "connect_email_reminder"
+  | "venue_reminder"
   | "announcement";
 
 export interface NotificationView {
