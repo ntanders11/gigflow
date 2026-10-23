@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-22 (Outlook reply detection)
+- [Feature] Optional reply detection for Outlook: once a day (or when you tap "Check for replies now"), StageReach looks for replies from venues in your pipeline, moves them to Responded, and sends you a notification. It only reads who a message is from and its subject line, never the message itself. Off by default; turn it on from your profile page.
+
 ## 2026-10-22 (reminder returns venue to Contacted)
 - [Change] When a "Remind me later" date arrives, a venue that is still Dormant now moves back to Contacted automatically, along with the notification.
 

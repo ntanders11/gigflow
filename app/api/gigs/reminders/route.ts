@@ -14,6 +14,7 @@ import { CHECKLIST_ITEMS } from "@/lib/gigs/checklist";
 import { gigTimeZone } from "@/lib/time-zones";
 import { isReminderDue } from "@/lib/gigs/reminder-timing";
 import { sendDueVenueReminders } from "@/lib/venues/send-due-reminders";
+import { scanAllOptedInOutlook } from "@/lib/replies/scan-outlook";
 
 function fmtTime(t: string | null): string | null {
   if (!t) return null;
@@ -36,6 +37,8 @@ async function handleReminders(request: NextRequest) {
   const service = await createServiceClient();
   // Same daily job also delivers "remind me later" venue reminders that are due.
   await sendDueVenueReminders(service).catch((err) => console.error("venue reminders failed", err));
+  // ...and checks opted-in Outlook inboxes for venue replies.
+  await scanAllOptedInOutlook(service).catch((err) => console.error("reply scan failed", err));
 
   const now = new Date();
   const dayMs = 24 * 60 * 60 * 1000;

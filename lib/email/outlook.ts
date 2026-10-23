@@ -2,6 +2,14 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { TokenRefreshError } from "@/lib/email/errors";
 
 export const OUTLOOK_SCOPE = "Calendars.ReadWrite Mail.Send User.Read offline_access";
+// Only for artists who opt in to reply detection. Never added to OUTLOOK_SCOPE:
+// asking for a permission an existing connection hasn't granted would make its
+// token refresh fail and break sending.
+export const OUTLOOK_READ_SCOPE = `${OUTLOOK_SCOPE} Mail.Read`;
+
+export function hasReadScope(scope: string | null | undefined): boolean {
+  return /mail\.read/i.test(scope ?? "");
+}
 
 interface TokenResponse {
   access_token: string;
@@ -15,7 +23,7 @@ function tokenEndpoint(): string {
   return `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
 }
 
-export async function exchangeCode(code: string, redirectUri: string): Promise<TokenResponse> {
+export async function exchangeCode(code: string, redirectUri: string, scope: string = OUTLOOK_SCOPE): Promise<TokenResponse> {
   const res = await fetch(tokenEndpoint(), {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -25,7 +33,7 @@ export async function exchangeCode(code: string, redirectUri: string): Promise<T
       code,
       redirect_uri: redirectUri,
       grant_type: "authorization_code",
-      scope: OUTLOOK_SCOPE,
+      scope,
     }),
   });
 
@@ -50,6 +58,12 @@ export async function fetchConnectedEmail(accessToken: string): Promise<string> 
 }
 
 export async function refreshToken(connectionId: string, refreshTokenValue: string): Promise<string> {
+  // A connection that was granted Mail.Read must keep asking for it, or the
+  // refreshed token would lose the ability to read; one that wasn't must not.
+  const lookup = await createServiceClient();
+  const { data: row } = await lookup.from("email_connections").select("scope").eq("id", connectionId).maybeSingle();
+  const scope = hasReadScope(row?.scope as string | null) ? OUTLOOK_READ_SCOPE : OUTLOOK_SCOPE;
+
   const res = await fetch(tokenEndpoint(), {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -58,7 +72,7 @@ export async function refreshToken(connectionId: string, refreshTokenValue: stri
       client_secret: process.env.AZURE_CLIENT_SECRET!,
       refresh_token: refreshTokenValue,
       grant_type: "refresh_token",
-      scope: OUTLOOK_SCOPE,
+      scope,
     }),
   });
 

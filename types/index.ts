@@ -388,6 +388,7 @@ export type NotificationType =
   | "message_received"
   | "connect_email_reminder"
   | "venue_reminder"
+  | "reply_received"
   | "announcement";
 
 export interface NotificationView {

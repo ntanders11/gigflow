@@ -1,8 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { OUTLOOK_SCOPE } from "@/lib/email/outlook";
+import { OUTLOOK_SCOPE, OUTLOOK_READ_SCOPE } from "@/lib/email/outlook";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // ?reply_detection=1: the artist opted in to reply detection, so also ask for
+  // permission to read mail. Ordinary connects keep the original permissions.
+  const wantsReadMail = req.nextUrl.searchParams.get("reply_detection") === "1";
   const clientId = process.env.AZURE_CLIENT_ID!;
   const tenantId = process.env.AZURE_TENANT_ID!;
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/outlook`;
@@ -13,7 +16,7 @@ export async function GET() {
     response_type: "code",
     redirect_uri: redirectUri,
     response_mode: "query",
-    scope: OUTLOOK_SCOPE,
+    scope: wantsReadMail ? OUTLOOK_READ_SCOPE : OUTLOOK_SCOPE,
     prompt: "consent",
     state,
   });
@@ -26,5 +29,8 @@ export async function GET() {
     path: "/",
     sameSite: "lax",
   });
+  if (wantsReadMail) {
+    response.cookies.set("outlook_reply_detection", "1", { httpOnly: true, maxAge: 600, path: "/", sameSite: "lax" });
+  }
   return response;
 }
