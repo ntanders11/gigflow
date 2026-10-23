@@ -5,12 +5,12 @@ import { localDateAndHour, REMIND_FROM_HOUR } from "@/lib/gigs/reminder-timing";
 
 // Turns "remind me on <date>" into one bell notification + phone alert on that
 // day (in the artist's own time zone, from the local morning). remind_notified_at
-// stops it ever repeating; it does not change the venue's stage.
+// stops it ever repeating. A Dormant venue is moved back to Contacted.
 export async function sendDueVenueReminders(service: SupabaseClient, now: Date = new Date()): Promise<number> {
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const { data: due } = await service
     .from("venues")
-    .select("id, user_id, name, remind_on, remind_note")
+    .select("id, user_id, name, stage, remind_on, remind_note")
     .not("remind_on", "is", null)
     .lte("remind_on", tomorrow)
     .is("remind_notified_at", null);
@@ -33,7 +33,15 @@ export async function sendDueVenueReminders(service: SupabaseClient, now: Date =
         body: (v.remind_note as string | null) || "You set a reminder to check back in.",
         link: `/venues/${v.id as string}`,
       });
-      await service.from("venues").update({ remind_notified_at: now.toISOString() }).eq("id", v.id);
+      // When the reminder comes up, a Dormant venue goes back into the pipeline as
+      // Contacted (it has been reached before). Other stages are left alone.
+      await service
+        .from("venues")
+        .update({
+          remind_notified_at: now.toISOString(),
+          ...(v.stage === "dormant" ? { stage: "contacted" } : {}),
+        })
+        .eq("id", v.id);
       sent++;
     } catch (err) {
       console.error(`venue reminder failed for ${v.id}`, err);

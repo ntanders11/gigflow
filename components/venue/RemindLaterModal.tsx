@@ -107,7 +107,7 @@ export default function RemindLaterModal({ venue, onClose, onSaved }: Props) {
           />
         </div>
 
-        <p className="text-xs" style={label}>The venue moves to Dormant, and you get a notification on that day.</p>
+        <p className="text-xs" style={label}>The venue moves to Dormant now, then back to Contacted with a notification on that day.</p>
         {error && <p className="text-xs" style={{ color: "#e25c5c" }}>{error}</p>}
 
         <div className="flex gap-2">

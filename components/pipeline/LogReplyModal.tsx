@@ -176,7 +176,7 @@ export default function LogReplyModal({ venue, onClose, onLogged }: Props) {
                 style={{ backgroundColor: "#1e2128", border: "1px solid rgba(255,255,255,0.08)", color: "#F4E8D2" }}
               />
               <p className="text-xs" style={{ color: "#5e5c58" }}>
-                Moves the venue to Dormant (not Responded). What you wrote above becomes the reminder note.
+                Moves the venue to Dormant (not Responded), then back to Contacted on that day. What you wrote above becomes the reminder note.
               </p>
             </div>
           )}

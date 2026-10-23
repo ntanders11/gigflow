@@ -1,5 +1,8 @@
 # StageReach Changelog
 
+## 2026-10-22 (reminder returns venue to Contacted)
+- [Change] When a "Remind me later" date arrives, a venue that is still Dormant now moves back to Contacted automatically, along with the notification.
+
 ## 2026-10-22 (remind me later)
 - [Feature] "Remind me later" on every venue: set a date (quick choices like January or Spring) and a note, the venue moves to Dormant, and on that day you get a notification and phone alert. Reminders also show in a new Reminders section on the Overview, and the Log Reply window has a "They said not now" option.
 
