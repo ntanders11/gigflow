@@ -63,7 +63,8 @@ export default function ReplyDetectionSettings() {
             StageReach checks your Outlook inbox once a day for replies from venues in your pipeline, marks them Responded,
             and notifies you. It also spots undeliverable notices (pausing follow-ups to that venue) and suggests a
             reminder date when a reply says something like &quot;not booking until spring&quot;. It reads the sender, subject
-            and a short preview, and saves only the subject line — it never stores the message itself. Off by default.
+            and a short preview. For a venue's reply it saves the subject and the first couple of lines (so you can see
+            where things stand without opening your email) — never the whole message. Off by default.
           </p>
         </div>
         {state.enabled && (

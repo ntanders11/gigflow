@@ -34,3 +34,12 @@ describe("normalizeEmail", () => {
     expect(normalizeEmail(null)).toBe("");
   });
 });
+
+describe("cleanPreview", () => {
+  it("tidies whitespace and shortens long text", async () => {
+    const { cleanPreview } = await import("./match");
+    expect(cleanPreview("Hi  Taylor,\r\n\r\nThanks!  ")).toBe("Hi Taylor, Thanks!");
+    expect(cleanPreview("x".repeat(300)).length).toBe(220);
+    expect(cleanPreview(null)).toBe("");
+  });
+});

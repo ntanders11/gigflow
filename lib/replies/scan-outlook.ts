@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { refreshToken } from "@/lib/email/outlook";
 import { createNotification } from "@/lib/notifications/create";
-import { isAutoReply, nextStageForReply, normalizeEmail, InboxMessage } from "./match";
+import { isAutoReply, nextStageForReply, normalizeEmail, cleanPreview, InboxMessage } from "./match";
 import { isBounceNotice, findBouncedAddresses } from "./bounce";
 import { suggestRemindDate, formatSuggestedDate } from "./suggest-date";
 
@@ -107,11 +107,12 @@ export async function scanOutlookReplies(service: SupabaseClient, conn: Connecti
       const venue = venueByEmail.get(m.fromAddress);
       if (!venue || seenIds.has(m.id)) continue;
       try {
+        const snippet = cleanPreview(m.preview);
         await service.from("interactions").insert({
           venue_id: venue.id,
           user_id: conn.user_id,
           type: "reply",
-          notes: `Reply received by email${m.subject ? `: ${m.subject}` : ""}`,
+          notes: [`Reply received by email${m.subject ? `: ${m.subject}` : ""}`, snippet && `“${snippet}”`].filter(Boolean).join("\n"),
           occurred_at: m.receivedAt,
           resend_id: m.id,
           sent_via: "outlook",
@@ -128,9 +129,10 @@ export async function scanOutlookReplies(service: SupabaseClient, conn: Connecti
           userId: conn.user_id,
           type: "reply_received",
           title: `${venue.name} replied`,
-          body: suggestion
-            ? `Looks like they're booking ${suggestion.label}. Tap to set a reminder for ${formatSuggestedDate(suggestion.date)}.`
-            : m.subject || "Open the venue to see where things stand.",
+          body: [
+            snippet ? `“${snippet}”` : m.subject || "Open the venue to see where things stand.",
+            suggestion && `Looks like they're booking ${suggestion.label}. Tap to set a reminder for ${formatSuggestedDate(suggestion.date)}.`,
+          ].filter(Boolean).join(" "),
           link: suggestion ? `/venues/${venue.id}?remind=${suggestion.date}` : `/venues/${venue.id}`,
         });
         replies++;

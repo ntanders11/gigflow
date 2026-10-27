@@ -31,6 +31,13 @@ export function isAutoReply(m: Pick<InboxMessage, "subject" | "headers" | "fromA
   return false;
 }
 
+// The first couple of lines of a reply, tidied for display in the venue's history
+// and the notification so the artist can tell where things stand at a glance.
+export function cleanPreview(text: string | null | undefined, max = 220): string {
+  const t = (text ?? "").replace(/\s+/g, " ").trim();
+  return t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t;
+}
+
 // Contacted/Discovered venues that answer become Responded. Any other stage
 // (Dormant, Responded, Negotiating, Booked) is left where it is — the artist is
 // still told, but nothing is moved behind their back.
