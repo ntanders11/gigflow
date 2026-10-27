@@ -6,6 +6,8 @@ import { remindOptions } from "@/lib/venues/remind-dates";
 
 interface Props {
   venue: Venue;
+  // A date suggested from a venue's reply (e.g. "not booking until January")
+  suggestedDate?: string;
   onClose: () => void;
   onSaved: (updates: Pick<Venue, "stage" | "remind_on" | "remind_note">) => void;
 }
@@ -13,9 +15,9 @@ interface Props {
 // "Not now — remind me": puts the venue aside as Dormant with a date to check
 // back in and a short note. The daily job sends the bell notification when the
 // date arrives.
-export default function RemindLaterModal({ venue, onClose, onSaved }: Props) {
+export default function RemindLaterModal({ venue, suggestedDate, onClose, onSaved }: Props) {
   const options = remindOptions();
-  const [date, setDate] = useState(venue.remind_on ?? options[2].date);
+  const [date, setDate] = useState(suggestedDate ?? venue.remind_on ?? options[2].date);
   const [note, setNote] = useState(venue.remind_note ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");

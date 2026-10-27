@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-10-27
+- [Feature] Outlook inbox check now spots bounced emails: the venue gets a red "Email bounced" tag and automatic/batch follow-ups skip it until you change its contact email (or clear the tag). Part of the opt-in reply detection, which is still switched off until its setup is done.
+- [Feature] When a venue's reply says things like "not booking until January" or "try us next spring", the reply notification suggests a reminder date and opens the "Remind me later" window pre-filled — you just tap save. Nothing moves on its own.
+
 ## 2026-10-22 (Outlook reply detection)
 - [Feature] Optional reply detection for Outlook: once a day (or when you tap "Check for replies now"), StageReach looks for replies from venues in your pipeline, moves them to Responded, and sends you a notification. It only reads who a message is from and its subject line, never the message itself. Off by default; turn it on from your profile page.
 

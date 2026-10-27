@@ -13,6 +13,8 @@ export interface InboxMessage {
   subject: string;
   receivedAt: string;
   headers?: { name: string; value: string }[];
+  // Microsoft's short (~255 char) preview of the message; read, never stored.
+  preview?: string;
 }
 
 // Auto-replies, bounces and out-of-office notices are not a venue answering.

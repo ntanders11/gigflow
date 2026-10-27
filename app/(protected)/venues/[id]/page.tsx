@@ -5,10 +5,13 @@ import VenueDetail from "@/components/venue/VenueDetail";
 
 export default async function VenueDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ remind?: string }>;
 }) {
   const { id } = await params;
+  const { remind } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -58,6 +61,7 @@ export default async function VenueDetailPage({
       interactions={(interactions as Interaction[]) ?? []}
       initialGigs={(gigs as Gig[]) ?? []}
       venueOriginatedGigIds={venueOriginatedGigIds}
+      suggestedRemind={remind && /^\d{4}-\d{2}-\d{2}$/.test(remind) ? remind : undefined}
     />
   );
 }

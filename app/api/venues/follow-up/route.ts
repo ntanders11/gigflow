@@ -49,6 +49,7 @@ async function handleFollowUps(request: NextRequest) {
     .in("user_id", optedInIds)
     .eq("stage", "contacted")
     .not("contact_email", "is", null)
+    .is("email_bounced_at", null)
     .lt("last_contacted_at", fiveDaysAgo)
     .gte("last_contacted_at", sixtyDaysAgo);
 

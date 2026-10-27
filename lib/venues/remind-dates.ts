@@ -3,12 +3,12 @@
 
 export interface RemindOption { key: string; label: string; date: string }
 
-function iso(y: number, m: number, d: number): string {
+export function iso(y: number, m: number, d: number): string {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
 // Adds whole months to a date, clamping to the end of a short month.
-function addMonths(from: Date, months: number): string {
+export function addMonths(from: Date, months: number): string {
   const y = from.getFullYear();
   const m = from.getMonth() + months;
   const target = new Date(y, m, 1);
@@ -17,7 +17,7 @@ function addMonths(from: Date, months: number): string {
 }
 
 // The next occurrence of month/day strictly after today.
-function nextOccurrence(today: Date, month: number, day: number): string {
+export function nextOccurrence(today: Date, month: number, day: number): string {
   const thisYear = iso(today.getFullYear(), month, day);
   const todayIso = iso(today.getFullYear(), today.getMonth() + 1, today.getDate());
   return thisYear > todayIso ? thisYear : iso(today.getFullYear() + 1, month, day);

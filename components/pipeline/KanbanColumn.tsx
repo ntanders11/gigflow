@@ -38,8 +38,9 @@ export default function KanbanColumn({
   // instead of always reading "No email" even when the real reason is
   // that a follow-up was already sent (the common case for a venue
   // that's been sitting in "Contacted" for a while).
-  function disabledReason(venue: Venue): "no_email" | "already_followed_up" | null {
+  function disabledReason(venue: Venue): "no_email" | "bounced" | "already_followed_up" | null {
     if (!venue.contact_email?.trim()) return "no_email";
+    if (venue.email_bounced_at) return "bounced";
     if (batchMode === "followup" && isWithinFollowUpCooldown(outreachMap[venue.id]?.lastFollowUpDate ?? null)) {
       return "already_followed_up";
     }

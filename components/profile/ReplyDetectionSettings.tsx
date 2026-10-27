@@ -61,8 +61,9 @@ export default function ReplyDetectionSettings() {
           <h2 className="text-sm font-semibold mb-1" style={{ color: "#F4E8D2" }}>Reply detection</h2>
           <p className="text-xs" style={{ color: "#9a9591" }}>
             StageReach checks your Outlook inbox once a day for replies from venues in your pipeline, marks them Responded,
-            and notifies you. It only matches the sender&apos;s address and saves the subject line — it never stores the
-            message itself. Off by default.
+            and notifies you. It also spots undeliverable notices (pausing follow-ups to that venue) and suggests a
+            reminder date when a reply says something like &quot;not booking until spring&quot;. It reads the sender, subject
+            and a short preview, and saves only the subject line — it never stores the message itself. Off by default.
           </p>
         </div>
         {state.enabled && (

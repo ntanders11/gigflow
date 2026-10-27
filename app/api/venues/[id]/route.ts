@@ -17,6 +17,18 @@ export async function PATCH(
 
   const body = await request.json();
 
+  // A new contact email means the old "bounced" tag no longer applies.
+  if (typeof body.contact_email === "string" && body.email_bounced_at === undefined) {
+    const { data: current } = await supabase
+      .from("venues")
+      .select("contact_email")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const norm = (e: string | null | undefined) => (e ?? "").trim().toLowerCase();
+    if (current && norm(current.contact_email) !== norm(body.contact_email)) body.email_bounced_at = null;
+  }
+
   const { data, error } = await supabase
     .from("venues")
     .update(body)

@@ -58,6 +58,8 @@ export interface Venue {
   // "Not now — remind me": date to check back in, plus a short note
   remind_on: string | null;
   remind_note: string | null;
+  // Set when the daily inbox check found an "undeliverable" notice for contact_email
+  email_bounced_at: string | null;
   address: string | null;
   gig_time: string | null;
   gig_end_time: string | null;
@@ -389,6 +391,7 @@ export type NotificationType =
   | "connect_email_reminder"
   | "venue_reminder"
   | "reply_received"
+  | "email_bounced"
   | "announcement";
 
 export interface NotificationView {

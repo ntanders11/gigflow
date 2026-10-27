@@ -17,6 +17,8 @@ interface Props {
   interactions: Interaction[];
   initialGigs: Gig[];
   venueOriginatedGigIds: string[];
+  // Date (YYYY-MM-DD) suggested by a reply notification; opens the reminder window pre-filled
+  suggestedRemind?: string;
 }
 
 const INTERACTION_LABELS: Record<InteractionType, string> = {
@@ -28,7 +30,7 @@ const INTERACTION_LABELS: Record<InteractionType, string> = {
   follow_up: "Follow-up",
 };
 
-export default function VenueDetail({ venue: initialVenue, interactions: initialInteractions, initialGigs, venueOriginatedGigIds }: Props) {
+export default function VenueDetail({ venue: initialVenue, interactions: initialInteractions, initialGigs, venueOriginatedGigIds, suggestedRemind }: Props) {
   const [venue, setVenue] = useState(initialVenue);
   const [interactions, setInteractions] = useState(initialInteractions);
   const [notes, setNotes] = useState(initialVenue.notes ?? "");
@@ -146,7 +148,16 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
     setLoggingInteraction(false);
   }
 
-  const [showRemindModal, setShowRemindModal] = useState(false);
+  const [showRemindModal, setShowRemindModal] = useState(!!suggestedRemind);
+
+  async function clearBounce() {
+    await fetch(`/api/venues/${venue.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email_bounced_at: null }),
+    });
+    setVenue((v) => ({ ...v, email_bounced_at: null }));
+  }
 
   async function clearReminder() {
     await fetch(`/api/venues/${venue.id}`, {
@@ -181,6 +192,7 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
     <>
     {showRemindModal && (
       <RemindLaterModal
+        suggestedDate={suggestedRemind}
         venue={venue}
         onClose={() => setShowRemindModal(false)}
         onSaved={(u) => { setVenue((v) => ({ ...v, ...u })); setShowRemindModal(false); }}
@@ -245,6 +257,12 @@ export default function VenueDetail({ venue: initialVenue, interactions: initial
           <p className="text-sm mt-1" style={{ color: "#9a9591" }}>
             {[venue.type, venue.city].filter(Boolean).join(" · ")}
           </p>
+          {venue.email_bounced_at && (
+            <p className="text-xs mt-2" style={{ color: "#e25c5c" }}>
+              ⚠ Email bounced — follow-ups are paused. Change the contact email to fix it.{" "}
+              <button onClick={clearBounce} className="underline" style={{ color: "#9a9591" }}>It&apos;s fine, clear this</button>
+            </p>
+          )}
           {venue.remind_on && (
             <p className="text-xs mt-2" style={{ color: "#D4A64F" }}>
               ⏰ Reminder {new Date(venue.remind_on + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}

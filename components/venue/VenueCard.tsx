@@ -20,7 +20,7 @@ interface Props {
   batchActive?: boolean;
   batchSelected?: boolean;
   batchDisabled?: boolean;
-  disabledReason?: "no_email" | "already_followed_up" | null;
+  disabledReason?: "no_email" | "bounced" | "already_followed_up" | null;
   onBatchToggle?: () => void;
 }
 
@@ -76,7 +76,7 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
                   className="text-xs px-1.5 py-0.5 rounded"
                   style={{ backgroundColor: "#1e2128", color: "#5e5c58", fontSize: "10px", border: "1px solid rgba(255,255,255,0.07)" }}
                 >
-                  {disabledReason === "already_followed_up" ? "Already followed up" : "No email"}
+                  {disabledReason === "already_followed_up" ? "Already followed up" : disabledReason === "bounced" ? "Email bounced" : "No email"}
                 </span>
               ) : (
                 <div
@@ -103,6 +103,12 @@ export default function VenueCard({ venue, index, onReply, onEmail, outreach, ba
           <p className="text-xs mt-0.5" style={{ color: "#9a9591" }}>
             {[venue.type, venue.city].filter(Boolean).join(" · ")}
           </p>
+
+          {venue.email_bounced_at && (
+            <p className="text-xs mt-1" style={{ color: "#e25c5c" }} title="Follow-ups are paused until you change the contact email">
+              ⚠ Email bounced
+            </p>
+          )}
 
           {venue.live_music_details && (
             <p className="text-xs mt-1 line-clamp-1" style={{ color: "#5e5c58" }}>
