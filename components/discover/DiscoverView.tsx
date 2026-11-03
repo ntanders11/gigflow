@@ -461,6 +461,10 @@ export default function DiscoverView() {
           <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer" className="hover:brightness-125 transition-all" style={{ color: "#5e5c58", textDecoration: "underline" }}>
             Geoapify
           </a>{" "}
+          and{" "}
+          <a href="https://foursquare.com/" target="_blank" rel="noopener noreferrer" className="hover:brightness-125 transition-all" style={{ color: "#5e5c58", textDecoration: "underline" }}>
+            Foursquare
+          </a>{" "}
           · Map data ©{" "}
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="hover:brightness-125 transition-all" style={{ color: "#5e5c58", textDecoration: "underline" }}>
             OpenStreetMap

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { normalizeMatchKey } from "@/lib/venues/matching";
 import { geocodeCity } from "@/lib/geocoding";
+import { searchWithFoursquare, looseNameKey } from "@/lib/venues/foursquare";
 
 // Map Google's primaryType → our simplified type labels. Filtering on
 // primaryType (what a place actually IS) rather than the full `types`
@@ -149,6 +150,7 @@ export async function GET(req: NextRequest) {
 
   const googleKey   = process.env.GOOGLE_PLACES_API_KEY?.trim();
   const geoapifyKey = process.env.GEOAPIFY_API_KEY?.trim();
+  const foursquareKey = process.env.FOURSQUARE_API_KEY?.trim();
 
   // Support legacy lat/lon params so old clients don't break,
   // but prefer the new city-based approach (geocoding server-side).
@@ -209,23 +211,42 @@ export async function GET(req: NextRequest) {
   // fills in that gap. Run both concurrently rather than treating Geoapify as
   // "only if Google totally fails" — dedupe by name, preferring Google's
   // richer data (ratings, live-music tag) when both find the same venue.
-  const [googleSettled, geoapifySettled] = await Promise.allSettled([
+  // Foursquare is a third, optional source (small-town bars, wineries and
+  // tasting rooms Google files differently). Its project is on the free plan
+  // with no card, so running out of credit just makes this call fail — which
+  // is swallowed below, leaving Google/Geoapify results untouched.
+  const [googleSettled, geoapifySettled, foursquareSettled] = await Promise.allSettled([
     googleKey ? searchWithGoogle(lat, lon, radiusMeters, googleKey, existingNames) : Promise.resolve([]),
     geoapifyKey ? searchWithGeoapify(lat, lon, radiusMeters, geoapifyKey, existingNames) : Promise.resolve([]),
+    foursquareKey ? searchWithFoursquare(lat, lon, radiusMeters, foursquareKey, existingNames) : Promise.resolve([]),
   ]);
 
   if (googleSettled.status === "rejected") console.error("Google Places search failed:", googleSettled.reason);
   if (geoapifySettled.status === "rejected") console.error("Geoapify search failed:", geoapifySettled.reason);
+  if (foursquareSettled.status === "rejected") console.error("Foursquare search failed:", foursquareSettled.reason);
 
   const googleResults   = googleSettled.status === "fulfilled" ? googleSettled.value : [];
   const geoapifyResults = geoapifySettled.status === "fulfilled" ? geoapifySettled.value : [];
+  const foursquareResults = foursquareSettled.status === "fulfilled" ? foursquareSettled.value : [];
 
   const seen = new Set<string>();
+  const seenLoose = new Set<string>();
   const merged: DiscoverResult[] = [];
   for (const r of [...googleResults, ...geoapifyResults]) {
     const key = r.name.toLowerCase().trim();
     if (seen.has(key)) continue;
     seen.add(key);
+    seenLoose.add(looseNameKey(r.name));
+    merged.push(r);
+  }
+  // Foursquare goes last so Google's richer data wins, and uses a looser name
+  // match since its spellings often differ slightly from Google's.
+  for (const r of foursquareResults) {
+    const key = r.name.toLowerCase().trim();
+    const loose = looseNameKey(r.name);
+    if (seen.has(key) || (loose && seenLoose.has(loose))) continue;
+    seen.add(key);
+    seenLoose.add(loose);
     merged.push(r);
   }
 

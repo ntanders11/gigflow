@@ -49,7 +49,7 @@ export default function PrivacyPage() {
           <li style={li}><strong style={{ color: "#F4E8D2" }}>Stripe</strong> — processes payments and invoices.</li>
           <li style={li}><strong style={{ color: "#F4E8D2" }}>Resend</strong> — sends emails when you haven&apos;t connected your own Gmail/Outlook.</li>
           <li style={li}><strong style={{ color: "#F4E8D2" }}>Google and Microsoft</strong> — only if you connect a Gmail or Outlook account, to send email on your behalf.</li>
-          <li style={li}><strong style={{ color: "#F4E8D2" }}>Google, Geoapify, and OpenStreetMap</strong> — power venue and artist search by location.</li>
+          <li style={li}><strong style={{ color: "#F4E8D2" }}>Google, Geoapify, Foursquare, and OpenStreetMap</strong> — power venue and artist search by location.</li>
           <li style={li}><strong style={{ color: "#F4E8D2" }}>Vercel</strong> — hosts the app itself.</li>
         </ul>
         <p style={p}>
