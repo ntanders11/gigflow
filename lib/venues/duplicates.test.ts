@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildPipelineIndex, isInPipeline, phoneKey } from "./duplicates";
+import { buildPipelineIndex, isInPipeline, phoneKey, findPipelineMatch, blanksToFill } from "./duplicates";
 
 const index = buildPipelineIndex([
   { name: "Dillon's", contact_phone: null },
@@ -26,5 +26,30 @@ describe("phoneKey", () => {
   it("ignores numbers that are too short", () => {
     expect(phoneKey("555-1212")).toBeNull();
     expect(phoneKey(null)).toBeNull();
+  });
+});
+
+describe("blanksToFill", () => {
+  const found = { website: "https://x.com", phone: "503-555-1212", address: "1 Main St", city: "Newberg", type: "bar" };
+  it("fills only the blanks", () => {
+    expect(blanksToFill({ name: "A", website: null, contact_phone: "111", address: "", city: "Newberg", type: null }, found)).toEqual({
+      website: "https://x.com",
+      address: "1 Main St",
+      type: "bar",
+    });
+  });
+  it("never overwrites what the artist entered", () => {
+    expect(blanksToFill({ name: "A", website: "mine.com", contact_phone: "1", address: "a", city: "c", type: "t" }, found)).toEqual({});
+  });
+  it("adds nothing when Discover has nothing new", () => {
+    expect(blanksToFill({ name: "A" }, { website: null, phone: null, address: null, city: null, type: null })).toEqual({});
+  });
+});
+
+describe("findPipelineMatch", () => {
+  it("returns the saved venue it matched", () => {
+    const idx = buildPipelineIndex([{ id: "v1", name: "Dillon's" }]);
+    expect(findPipelineMatch(idx, "Dillons Bar & Grill", null)?.id).toBe("v1");
+    expect(findPipelineMatch(idx, "Scrooges", null)).toBeNull();
   });
 });

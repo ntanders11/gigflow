@@ -3,7 +3,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { normalizeMatchKey } from "@/lib/venues/matching";
 import { geocodeCity } from "@/lib/geocoding";
 import { searchWithFoursquare, looseNameKey } from "@/lib/venues/foursquare";
-import { buildPipelineIndex, isInPipeline, phoneKey } from "@/lib/venues/duplicates";
+import { buildPipelineIndex, findPipelineMatch, blanksToFill, phoneKey } from "@/lib/venues/duplicates";
 
 // Map Google's primaryType → our simplified type labels. Filtering on
 // primaryType (what a place actually IS) rather than the full `types`
@@ -178,7 +178,7 @@ export async function GET(req: NextRequest) {
   // Load existing venue names for de-dupe
   const { data: existingVenues } = await supabase
     .from("venues")
-    .select("name, contact_phone")
+    .select("id, name, contact_phone, website, address, city, type")
     .eq("user_id", user.id);
   const existingNames = new Set((existingVenues ?? []).map((v: { name: string }) => v.name.toLowerCase().trim()));
   // Looser than the exact-name set above: also catches spelling differences
@@ -256,8 +256,22 @@ export async function GET(req: NextRequest) {
     if (phone) seenPhones.add(phone);
     merged.push(r);
   }
+  // A result that is really a venue the artist already has is hidden by the
+  // screen; but if it knows a detail the saved venue lacks (website, phone,
+  // address…), fill in just the blanks — never overwrite anything.
+  const fills: PromiseLike<unknown>[] = [];
   for (const r of merged) {
-    if (!r.already_in_pipeline && isInPipeline(pipelineIndex, r.name, r.phone)) r.already_in_pipeline = true;
+    const saved = findPipelineMatch(pipelineIndex, r.name, r.phone);
+    if (!saved) continue;
+    r.already_in_pipeline = true;
+    const patch = blanksToFill(saved, r);
+    if (saved.id && Object.keys(patch).length > 0) {
+      fills.push(supabase.from("venues").update(patch).eq("id", saved.id).eq("user_id", user.id));
+    }
+  }
+  if (fills.length > 0) {
+    const settled = await Promise.allSettled(fills);
+    for (const f of settled) if (f.status === "rejected") console.error("discover: filling saved venue details failed", f.reason);
   }
 
   if (merged.length > 0) {
