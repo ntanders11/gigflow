@@ -159,7 +159,9 @@ export default function DiscoverView() {
             await fetch(`/api/venues/${created.id}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(patch),
+              // Automatic lookups aren't "edited by hand" — an empty list tells
+              // the server not to protect these fields from later Discover fill-ins.
+              body: JSON.stringify({ ...patch, manual_edit_fields: [] }),
             });
           }
         }
