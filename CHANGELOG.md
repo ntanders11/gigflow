@@ -1,6 +1,7 @@
 # StageReach Changelog
 
 ## 2026-11-03
+- [Change] Saved Gmail/Outlook connection details are now scrambled in the database, so a copy of the database alone can't be used to send email as an artist. Nobody is disconnected.
 - [Change] The default follow-up message now says "my earlier email" instead of "my email from last week", so it reads right for older leads.
 - [Feature] Automatic follow-ups now add "Hear it for yourself: <video link>" above the signature, using each artist's own YouTube/video link from their own profile. Artists with no video set get nothing extra.
 

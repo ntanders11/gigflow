@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { TokenRefreshError } from "@/lib/email/errors";
+import { encryptToken, decryptToken } from "@/lib/security/token-crypto";
 
 export const GMAIL_SCOPES = "openid email https://www.googleapis.com/auth/gmail.send";
 
@@ -73,7 +74,7 @@ export async function refreshToken(connectionId: string, refreshTokenValue: stri
     body: new URLSearchParams({
       client_id: process.env.GOOGLE_OAUTH_CLIENT_ID!,
       client_secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET!,
-      refresh_token: refreshTokenValue,
+      refresh_token: decryptToken(refreshTokenValue),
       grant_type: "refresh_token",
     }),
   });
@@ -96,11 +97,11 @@ export async function refreshToken(connectionId: string, refreshTokenValue: stri
   await supabase
     .from("email_connections")
     .update({
-      access_token: tokens.access_token,
+      access_token: encryptToken(tokens.access_token),
       expires_at: expiresAt,
       // Google usually keeps the same refresh token across refreshes, but
       // persist a new one on the rare occasion it issues one.
-      ...(tokens.refresh_token ? { refresh_token: tokens.refresh_token } : {}),
+      ...(tokens.refresh_token ? { refresh_token: encryptToken(tokens.refresh_token) } : {}),
     })
     .eq("id", connectionId);
 

@@ -4,6 +4,7 @@ import { createNotification } from "@/lib/notifications/create";
 import { isAutoReply, nextStageForReply, normalizeEmail, cleanPreview, InboxMessage } from "./match";
 import { isBounceNotice, findBouncedAddresses } from "./bounce";
 import { suggestRemindDate, formatSuggestedDate } from "./suggest-date";
+import { decryptToken } from "@/lib/security/token-crypto";
 
 const REFRESH_BUFFER_MS = 5 * 60 * 1000;
 const MAX_PAGES = 5; // 5 x 100 messages per scan — plenty for a day or two of inbox
@@ -30,7 +31,7 @@ export interface ScanResult {
 // requested — never the full message — and the preview is read only to spot a
 // bounce notice or a "not until spring"-style reply, and is never stored.
 export async function scanOutlookReplies(service: SupabaseClient, conn: Connection): Promise<ScanResult> {
-  let token = conn.access_token;
+  let token = decryptToken(conn.access_token);
   if (new Date(conn.expires_at).getTime() - Date.now() < REFRESH_BUFFER_MS) {
     try {
       token = await refreshToken(conn.id, conn.refresh_token);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { exchangeCode, fetchConnectedEmail, OUTLOOK_SCOPE, OUTLOOK_READ_SCOPE, hasReadScope } from "@/lib/email/outlook";
+import { encryptToken } from "@/lib/security/token-crypto";
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
@@ -51,8 +52,8 @@ export async function GET(req: NextRequest) {
         user_id: user.id,
         provider: "outlook",
         connected_email: connectedEmail,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
+        access_token: encryptToken(tokens.access_token),
+        refresh_token: encryptToken(tokens.refresh_token),
         expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
         scope: tokens.scope ?? (wantsReadMail ? OUTLOOK_READ_SCOPE : OUTLOOK_SCOPE),
         status: "active",

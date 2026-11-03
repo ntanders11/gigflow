@@ -3,6 +3,7 @@ import * as gmail from "@/lib/email/gmail";
 import * as outlook from "@/lib/email/outlook";
 import { TokenRefreshError } from "@/lib/email/errors";
 import { BLOCKED_MESSAGES, decideSend, pickConnection, type BlockedCode, type ConnectionStatusInfo } from "@/lib/email/send-rules";
+import { decryptToken } from "@/lib/security/token-crypto";
 
 // Re-exported so existing imports (e.g. the diagnostics route) keep working.
 export { pickConnection };
@@ -46,7 +47,7 @@ async function sendViaConnection(
   connection: EmailConnectionRow,
   params: SendArtistEmailParams
 ): Promise<{ success: boolean; providerMessageId: string | null; authFailure: boolean; error?: string }> {
-  let accessToken = connection.access_token;
+  let accessToken = decryptToken(connection.access_token);
   const expiresAt = new Date(connection.expires_at).getTime();
 
   if (expiresAt - Date.now() < REFRESH_BUFFER_MS) {

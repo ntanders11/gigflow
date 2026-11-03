@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { TokenRefreshError } from "@/lib/email/errors";
+import { encryptToken, decryptToken } from "@/lib/security/token-crypto";
 
 export const OUTLOOK_SCOPE = "Calendars.ReadWrite Mail.Send User.Read offline_access";
 // Only for artists who opt in to reply detection. Never added to OUTLOOK_SCOPE:
@@ -70,7 +71,7 @@ export async function refreshToken(connectionId: string, refreshTokenValue: stri
     body: new URLSearchParams({
       client_id: process.env.AZURE_CLIENT_ID!,
       client_secret: process.env.AZURE_CLIENT_SECRET!,
-      refresh_token: refreshTokenValue,
+      refresh_token: decryptToken(refreshTokenValue),
       grant_type: "refresh_token",
       scope,
     }),
@@ -94,11 +95,11 @@ export async function refreshToken(connectionId: string, refreshTokenValue: stri
   await supabase
     .from("email_connections")
     .update({
-      access_token: tokens.access_token,
+      access_token: encryptToken(tokens.access_token),
       expires_at: expiresAt,
       // Azure AD rotates the refresh token on nearly every use — always
       // persist the new one, or the next refresh will fail with invalid_grant.
-      ...(tokens.refresh_token ? { refresh_token: tokens.refresh_token } : {}),
+      ...(tokens.refresh_token ? { refresh_token: encryptToken(tokens.refresh_token) } : {}),
     })
     .eq("id", connectionId);
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { revokeGmailToken } from "@/lib/email/gmail";
+import { decryptToken } from "@/lib/security/token-crypto";
 
 export async function GET() {
   const supabase = await createClient();
@@ -44,7 +45,7 @@ export async function DELETE(req: NextRequest) {
     if (connection?.refresh_token) {
       // Best-effort — the row gets deleted below regardless of whether this
       // succeeds, and that's what actually stops StageReach from sending.
-      await revokeGmailToken(connection.refresh_token).catch((err) =>
+      await revokeGmailToken(decryptToken(connection.refresh_token)).catch((err) =>
         console.error("email-connections DELETE: gmail revoke failed", err)
       );
     }

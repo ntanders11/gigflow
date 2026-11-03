@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { refreshToken } from "@/lib/email/outlook";
 import { DEFAULT_TIME_ZONE, isValidTimeZone } from "@/lib/time-zones";
+import { decryptToken } from "@/lib/security/token-crypto";
 
 const REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not connected to Outlook" }, { status: 401 });
   }
 
-  let accessToken = connection.access_token;
+  let accessToken = decryptToken(connection.access_token);
   const expiresAt = new Date(connection.expires_at).getTime();
   if (expiresAt - Date.now() < REFRESH_BUFFER_MS) {
     try {
