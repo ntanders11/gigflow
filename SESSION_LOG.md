@@ -681,3 +681,11 @@ Also generated a new Resend API key and updated it in both `.env.local` (local d
 - Bell doesn't refresh on its own until a page load (offered a once-a-minute refresh; not decided).
 - Automated follow-up emails: add a cap, then apply the same cron fix.
 - Stale remote branch `wip/artist-top-bar-five-tabs` on GitHub can be deleted (fully merged).
+
+## 2026-11-03
+- Reply check re-run worked (previews, date suggestions). Linoy's spam question: no app-side issue found; delivery to spam can't be seen from the app.
+- Follow-up default wording fixed; automatic follow-ups now add each artist's own video link.
+- Saved Gmail/Outlook tokens are now encrypted at rest (key `TOKEN_ENCRYPTION_KEY` in Vercel Production + local `.env.local`; 6 existing connections converted). If the key is lost, artists must reconnect email.
+- Yelp priced (~$229+/mo) and rejected. Foursquare tested side by side with Google (Newberg/McMinnville/Sheridan/Portland) and added as a third Discover source on the free plan, no card. Wineries/tasting rooms deliberately included.
+- Discover now hides near-duplicate/same-phone venues already in the pipeline, fills blank details on matched venues, and never touches fields the artist edited by hand (migration 044).
+- Left open: Taylor to confirm the Newberg duplicates are gone after deploy; delete the old Foursquare keys (the one pasted in chat and the April one); put the Foursquare key in a password manager. Parked: calendar "reset my link", iCloud email, Gmail reply detection, legal review.
