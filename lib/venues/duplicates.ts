@@ -26,6 +26,16 @@ export function addressKey(address: string | null | undefined): string | null {
     .join(" ");
 }
 
+// Two places that both have a street address and the addresses clearly differ
+// are different locations — even with the same name, phone or website (a
+// winery's tasting room and its wine bar, a chain's two shops). Missing or
+// unreadable addresses never count as a conflict.
+export function addressesConflict(a: string | null | undefined, b: string | null | undefined): boolean {
+  const ka = addressKey(a);
+  const kb = addressKey(b);
+  return !!ka && !!kb && ka !== kb;
+}
+
 // Words that say what kind of place it is, not which place — ignored when
 // asking whether two names share a distinctive word.
 const GENERIC_NAME_WORDS = new Set([
@@ -101,11 +111,11 @@ export function findPipelineMatch<T extends PipelineRow>(
   const n = looseNameKey(name);
   if (n.length >= 4) {
     const hit = index.names.get(n);
-    if (hit) return hit;
+    if (hit && !addressesConflict(hit.address, address)) return hit;
   }
   const p = phoneKey(phone);
   const byPhone = p ? index.phones.get(p) : undefined;
-  if (byPhone) return byPhone;
+  if (byPhone && !addressesConflict(byPhone.address, address)) return byPhone;
   const a = addressKey(address);
   if (a) return (index.addresses.get(a) ?? []).find((row) => sharesNameWord(row.name, name)) ?? null;
   return null;

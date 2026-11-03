@@ -3,7 +3,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { normalizeMatchKey } from "@/lib/venues/matching";
 import { geocodeCity } from "@/lib/geocoding";
 import { searchWithFoursquare, looseNameKey } from "@/lib/venues/foursquare";
-import { buildPipelineIndex, findPipelineMatch, blanksToFill, phoneKey } from "@/lib/venues/duplicates";
+import { buildPipelineIndex, findPipelineMatch, blanksToFill, phoneKey, isSameBusinessByAddress, addressesConflict } from "@/lib/venues/duplicates";
 
 // Map Google's primaryType → our simplified type labels. Filtering on
 // primaryType (what a place actually IS) rather than the full `types`
@@ -234,34 +234,37 @@ export async function GET(req: NextRequest) {
   const foursquareResults = foursquareSettled.status === "fulfilled" ? foursquareSettled.value : [];
 
   const seen = new Set<string>();
-  const seenLoose = new Set<string>();
   const merged: DiscoverResult[] = [];
   for (const r of [...googleResults, ...geoapifyResults]) {
     const key = r.name.toLowerCase().trim();
     if (seen.has(key)) continue;
     seen.add(key);
-    seenLoose.add(looseNameKey(r.name));
     merged.push(r);
   }
   // Foursquare goes last so Google's richer data wins, and uses a looser name
-  // match since its spellings often differ slightly from Google's.
-  const seenPhones = new Set(merged.map((m) => phoneKey(m.phone)).filter((p): p is string => !!p));
+  // match since its spellings often differ slightly from Google's. A same
+  // name or phone only counts as a duplicate when the two places don't have
+  // clearly different street addresses (a second location is kept), and the
+  // same address plus a shared distinctive name word also counts.
   for (const r of foursquareResults) {
-    const key = r.name.toLowerCase().trim();
     const loose = looseNameKey(r.name);
     const phone = phoneKey(r.phone);
-    if (seen.has(key) || (loose && seenLoose.has(loose)) || (phone && seenPhones.has(phone))) continue;
-    seen.add(key);
-    seenLoose.add(loose);
-    if (phone) seenPhones.add(phone);
-    merged.push(r);
+    const duplicate = merged.some(
+      (m) =>
+        isSameBusinessByAddress(m, r) ||
+        (!addressesConflict(m.address, r.address) &&
+          (m.name.toLowerCase().trim() === r.name.toLowerCase().trim() ||
+            (loose && looseNameKey(m.name) === loose) ||
+            (phone && phoneKey(m.phone) === phone)))
+    );
+    if (!duplicate) merged.push(r);
   }
   // A result that is really a venue the artist already has is hidden by the
   // screen; but if it knows a detail the saved venue lacks (website, phone,
   // address…), fill in just the blanks — never overwrite anything.
   const fills: PromiseLike<unknown>[] = [];
   for (const r of merged) {
-    const saved = findPipelineMatch(pipelineIndex, r.name, r.phone);
+    const saved = findPipelineMatch(pipelineIndex, r.name, r.phone, r.address);
     if (!saved) continue;
     r.already_in_pipeline = true;
     const patch = blanksToFill(saved, r);

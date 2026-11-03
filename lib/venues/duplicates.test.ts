@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildPipelineIndex, isInPipeline, phoneKey, findPipelineMatch, blanksToFill, addressKey, isSameBusinessByAddress } from "./duplicates";
+import { buildPipelineIndex, isInPipeline, phoneKey, findPipelineMatch, blanksToFill, addressKey, isSameBusinessByAddress, addressesConflict } from "./duplicates";
 
 const index = buildPipelineIndex([
   { name: "Dillon's", contact_phone: null },
@@ -98,5 +98,19 @@ describe("findPipelineMatch by address", () => {
     const idx = buildPipelineIndex([{ id: "v9", name: "Fox Farm Vineyards", address: "1 Fox Rd, Newberg" }]);
     expect(findPipelineMatch(idx, "Fox Farm Wine Bar", null, "1 Fox Road, Newberg")?.id).toBe("v9");
     expect(findPipelineMatch(idx, "Another Place", null, "1 Fox Road, Newberg")).toBeNull();
+  });
+});
+
+describe("different locations stay separate", () => {
+  it("addressesConflict only when both addresses are readable and differ", () => {
+    expect(addressesConflict("602 E 1st St, Dundee", "575 Highway 99W, Dundee")).toBe(true);
+    expect(addressesConflict("602 E 1st St, Dundee", "602 East 1st Street, Dundee")).toBe(false);
+    expect(addressesConflict(null, "602 E 1st St")).toBe(false);
+    expect(addressesConflict("Newberg, OR", "602 E 1st St")).toBe(false);
+  });
+  it("a saved venue at one address does not hide the same business's other location", () => {
+    const idx = buildPipelineIndex([{ id: "v1", name: "Fox Farm Wine Bar", contact_phone: "503-538-8466", address: "602 E 1st St, Dundee" }]);
+    expect(findPipelineMatch(idx, "Fox Farm Vineyards Tasting Room", "(503) 538-8466", "575 Highway 99W, Dundee")).toBeNull();
+    expect(findPipelineMatch(idx, "Fox Farm Wine Bar", "(503) 538-8466", "602 East 1st Street, Dundee")?.id).toBe("v1");
   });
 });
