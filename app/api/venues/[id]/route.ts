@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { DISCOVER_FILLABLE_FIELDS } from "@/lib/venues/duplicates";
 
 export async function PATCH(
   request: NextRequest,
@@ -27,6 +28,19 @@ export async function PATCH(
       .maybeSingle();
     const norm = (e: string | null | undefined) => (e ?? "").trim().toLowerCase();
     if (current && norm(current.contact_email) !== norm(body.contact_email)) body.email_bounced_at = null;
+  }
+
+  // Remember which details the artist has edited by hand, so Discover Venues
+  // never fills in or changes them later (even if they were cleared on purpose).
+  const touched = DISCOVER_FILLABLE_FIELDS.filter((f) => body[f] !== undefined);
+  if (touched.length > 0 && body.manual_edit_fields === undefined) {
+    const { data: current } = await supabase
+      .from("venues")
+      .select("manual_edit_fields")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    body.manual_edit_fields = [...new Set([...(current?.manual_edit_fields ?? []), ...touched])];
   }
 
   const { data, error } = await supabase

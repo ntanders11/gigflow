@@ -64,6 +64,8 @@ export interface Venue {
   gig_time: string | null;
   gig_end_time: string | null;
   venue_profile_id: string | null;
+  // Details the artist has edited by hand; Discover Venues never fills these in
+  manual_edit_fields: string[];
   created_at: string;
   updated_at: string;
 }

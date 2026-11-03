@@ -41,6 +41,11 @@ describe("blanksToFill", () => {
   it("never overwrites what the artist entered", () => {
     expect(blanksToFill({ name: "A", website: "mine.com", contact_phone: "1", address: "a", city: "c", type: "t" }, found)).toEqual({});
   });
+  it("leaves alone a field the artist edited by hand, even if it is blank now", () => {
+    expect(
+      blanksToFill({ name: "A", website: "", address: null, manual_edit_fields: ["website"] }, found)
+    ).toEqual({ contact_phone: "503-555-1212", address: "1 Main St", city: "Newberg", type: "bar" });
+  });
   it("adds nothing when Discover has nothing new", () => {
     expect(blanksToFill({ name: "A" }, { website: null, phone: null, address: null, city: null, type: null })).toEqual({});
   });

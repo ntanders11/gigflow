@@ -1,7 +1,7 @@
 # StageReach Changelog
 
 ## 2026-11-03
-- [Feature] When Discover Venues finds a place you already have saved and it knows a detail yours is missing (website, phone, address, city, type), it fills in just the blank. It never overwrites anything you typed.
+- [Feature] When Discover Venues finds a place you already have saved and it knows a detail yours is missing (website, phone, address, city, type), it fills in just the blank. It never overwrites anything you typed, and it leaves alone any detail you've ever edited yourself, even if you cleared it on purpose.
 - [Fix] Discover Venues now recognizes venues you already have even when the spelling differs slightly (or the phone number matches), so they land in "already in your pipeline" instead of showing up again as new.
 - [Feature] Discover Venues now also searches Foursquare, which finds extra small-town bars, wineries and tasting rooms Google misses. Only drinking spots with a phone or website are shown; there's no live-music badge for these.
 - [Change] Saved Gmail/Outlook connection details are now scrambled in the database, so a copy of the database alone can't be used to send email as an artist. Nobody is disconnected.

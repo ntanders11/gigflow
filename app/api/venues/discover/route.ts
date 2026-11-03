@@ -178,7 +178,7 @@ export async function GET(req: NextRequest) {
   // Load existing venue names for de-dupe
   const { data: existingVenues } = await supabase
     .from("venues")
-    .select("id, name, contact_phone, website, address, city, type")
+    .select("id, name, contact_phone, website, address, city, type, manual_edit_fields")
     .eq("user_id", user.id);
   const existingNames = new Set((existingVenues ?? []).map((v: { name: string }) => v.name.toLowerCase().trim()));
   // Looser than the exact-name set above: also catches spelling differences
