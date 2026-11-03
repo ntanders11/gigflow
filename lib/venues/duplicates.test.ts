@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildPipelineIndex, isInPipeline, phoneKey, findPipelineMatch, blanksToFill } from "./duplicates";
+import { buildPipelineIndex, isInPipeline, phoneKey, findPipelineMatch, blanksToFill, addressKey, isSameBusinessByAddress } from "./duplicates";
 
 const index = buildPipelineIndex([
   { name: "Dillon's", contact_phone: null },
@@ -56,5 +56,47 @@ describe("findPipelineMatch", () => {
     const idx = buildPipelineIndex([{ id: "v1", name: "Dillon's" }]);
     expect(findPipelineMatch(idx, "Dillons Bar & Grill", null)?.id).toBe("v1");
     expect(findPipelineMatch(idx, "Scrooges", null)).toBeNull();
+  });
+});
+
+describe("addressKey", () => {
+  it("normalizes street words and ignores the city", () => {
+    expect(addressKey("123 North Main Street, Newberg, OR 97132")).toBe("123 n main st");
+    expect(addressKey("123 N. Main St., Newberg")).toBe("123 n main st");
+  });
+  it("needs a house number", () => {
+    expect(addressKey("Newberg, OR")).toBeNull();
+    expect(addressKey("Highway 99W, Newberg")).toBeNull();
+    expect(addressKey(null)).toBeNull();
+  });
+});
+
+describe("isSameBusinessByAddress", () => {
+  it("catches one business listed under two names", () => {
+    expect(
+      isSameBusinessByAddress(
+        { name: "Fox Farm Wine Bar", address: "1 Fox Rd, Newberg, OR" },
+        { name: "Fox Farm Vineyards Tasting Room", address: "1 Fox Road, Newberg" }
+      )
+    ).toBe(true);
+  });
+  it("keeps different businesses in one building apart", () => {
+    expect(
+      isSameBusinessByAddress(
+        { name: "Dark Horse Wine Bar", address: "5 Plaza Way, Newberg" },
+        { name: "Medici Vineyards", address: "5 Plaza Way, Newberg" }
+      )
+    ).toBe(false);
+  });
+  it("needs a real address on both", () => {
+    expect(isSameBusinessByAddress({ name: "Fox Farm A", address: null }, { name: "Fox Farm B", address: null })).toBe(false);
+  });
+});
+
+describe("findPipelineMatch by address", () => {
+  it("matches a saved venue at the same address with a shared name word", () => {
+    const idx = buildPipelineIndex([{ id: "v9", name: "Fox Farm Vineyards", address: "1 Fox Rd, Newberg" }]);
+    expect(findPipelineMatch(idx, "Fox Farm Wine Bar", null, "1 Fox Road, Newberg")?.id).toBe("v9");
+    expect(findPipelineMatch(idx, "Another Place", null, "1 Fox Road, Newberg")).toBeNull();
   });
 });
