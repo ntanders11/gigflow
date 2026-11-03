@@ -153,3 +153,11 @@ export function blanksToFill(
   if (!edited.has("type") && blank(saved.type) && found.type) patch.type = found.type;
   return patch;
 }
+
+// A Discover result is only worth showing if the artist has some way to reach
+// it: a website or a phone number (an email can't be known at search time —
+// it's looked up from the website after the venue is added), or it's a real
+// StageReach account they can message.
+export function hasContactInfo(r: { website?: string | null; phone?: string | null; venue_profile_id?: string | null }): boolean {
+  return !!(r.website?.trim() || r.phone?.trim() || r.venue_profile_id);
+}

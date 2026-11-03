@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildPipelineIndex, isInPipeline, phoneKey, findPipelineMatch, blanksToFill, addressKey, isSameBusinessByAddress, addressesConflict } from "./duplicates";
+import { buildPipelineIndex, isInPipeline, phoneKey, findPipelineMatch, blanksToFill, addressKey, isSameBusinessByAddress, addressesConflict, hasContactInfo } from "./duplicates";
 
 const index = buildPipelineIndex([
   { name: "Dillon's", contact_phone: null },
@@ -112,5 +112,15 @@ describe("different locations stay separate", () => {
     const idx = buildPipelineIndex([{ id: "v1", name: "Fox Farm Wine Bar", contact_phone: "503-538-8466", address: "602 E 1st St, Dundee" }]);
     expect(findPipelineMatch(idx, "Fox Farm Vineyards Tasting Room", "(503) 538-8466", "575 Highway 99W, Dundee")).toBeNull();
     expect(findPipelineMatch(idx, "Fox Farm Wine Bar", "(503) 538-8466", "602 East 1st Street, Dundee")?.id).toBe("v1");
+  });
+});
+
+describe("hasContactInfo", () => {
+  it("needs a website or a phone, or a StageReach account", () => {
+    expect(hasContactInfo({ website: "https://x.com", phone: null })).toBe(true);
+    expect(hasContactInfo({ website: null, phone: "503-555-1212" })).toBe(true);
+    expect(hasContactInfo({ website: " ", phone: "", venue_profile_id: "p1" })).toBe(true);
+    expect(hasContactInfo({ website: null, phone: null })).toBe(false);
+    expect(hasContactInfo({ website: "  ", phone: "" })).toBe(false);
   });
 });

@@ -3,7 +3,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { normalizeMatchKey } from "@/lib/venues/matching";
 import { geocodeCity } from "@/lib/geocoding";
 import { searchWithFoursquare, looseNameKey } from "@/lib/venues/foursquare";
-import { buildPipelineIndex, findPipelineMatch, blanksToFill, phoneKey, isSameBusinessByAddress, addressesConflict } from "@/lib/venues/duplicates";
+import { buildPipelineIndex, findPipelineMatch, blanksToFill, phoneKey, isSameBusinessByAddress, addressesConflict, hasContactInfo } from "@/lib/venues/duplicates";
 
 // Map Google's primaryType → our simplified type labels. Filtering on
 // primaryType (what a place actually IS) rather than the full `types`
@@ -277,14 +277,18 @@ export async function GET(req: NextRequest) {
     for (const f of settled) if (f.status === "rejected") console.error("discover: filling saved venue details failed", f.reason);
   }
 
+  // Only places with a website or phone (or a StageReach account) are shown —
+  // an artist can't pitch a venue they have no way to reach.
   if (merged.length > 0) {
-    return NextResponse.json({ results: applyStageReachMatches(merged, await profileMapPromise, await ratingsMapPromise) });
+    const matched = applyStageReachMatches(merged, await profileMapPromise, await ratingsMapPromise);
+    return NextResponse.json({ results: matched.filter(hasContactInfo) });
   }
 
   // ── 3. Overpass fallback — only if both of the above came up empty ─────────
   try {
     const results = await searchWithOverpass(lat, lon, radiusMeters, existingNames);
-    return NextResponse.json({ results: applyStageReachMatches(results, await profileMapPromise, await ratingsMapPromise) });
+    const matched = applyStageReachMatches(results, await profileMapPromise, await ratingsMapPromise);
+    return NextResponse.json({ results: matched.filter(hasContactInfo) });
   } catch {
     return NextResponse.json({ error: "Search unavailable — please try again." }, { status: 502 });
   }
