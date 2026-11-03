@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { normalizeMatchKey } from "@/lib/venues/matching";
 import { geocodeCity } from "@/lib/geocoding";
 import { searchWithFoursquare, looseNameKey } from "@/lib/venues/foursquare";
+import { buildPipelineIndex, isInPipeline, phoneKey } from "@/lib/venues/duplicates";
 
 // Map Google's primaryType → our simplified type labels. Filtering on
 // primaryType (what a place actually IS) rather than the full `types`
@@ -177,9 +178,12 @@ export async function GET(req: NextRequest) {
   // Load existing venue names for de-dupe
   const { data: existingVenues } = await supabase
     .from("venues")
-    .select("name")
+    .select("name, contact_phone")
     .eq("user_id", user.id);
   const existingNames = new Set((existingVenues ?? []).map((v: { name: string }) => v.name.toLowerCase().trim()));
+  // Looser than the exact-name set above: also catches spelling differences
+  // and same-phone matches against the artist's own pipeline.
+  const pipelineIndex = buildPipelineIndex(existingVenues ?? []);
 
   // A venue name was typed — look it up directly by name instead of filtering
   // a location search's results, since a nearby search only returns ~20
@@ -241,13 +245,19 @@ export async function GET(req: NextRequest) {
   }
   // Foursquare goes last so Google's richer data wins, and uses a looser name
   // match since its spellings often differ slightly from Google's.
+  const seenPhones = new Set(merged.map((m) => phoneKey(m.phone)).filter((p): p is string => !!p));
   for (const r of foursquareResults) {
     const key = r.name.toLowerCase().trim();
     const loose = looseNameKey(r.name);
-    if (seen.has(key) || (loose && seenLoose.has(loose))) continue;
+    const phone = phoneKey(r.phone);
+    if (seen.has(key) || (loose && seenLoose.has(loose)) || (phone && seenPhones.has(phone))) continue;
     seen.add(key);
     seenLoose.add(loose);
+    if (phone) seenPhones.add(phone);
     merged.push(r);
+  }
+  for (const r of merged) {
+    if (!r.already_in_pipeline && isInPipeline(pipelineIndex, r.name, r.phone)) r.already_in_pipeline = true;
   }
 
   if (merged.length > 0) {

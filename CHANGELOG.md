@@ -1,6 +1,7 @@
 # StageReach Changelog
 
 ## 2026-11-03
+- [Fix] Discover Venues now recognizes venues you already have even when the spelling differs slightly (or the phone number matches), so they land in "already in your pipeline" instead of showing up again as new.
 - [Feature] Discover Venues now also searches Foursquare, which finds extra small-town bars, wineries and tasting rooms Google misses. Only drinking spots with a phone or website are shown; there's no live-music badge for these.
 - [Change] Saved Gmail/Outlook connection details are now scrambled in the database, so a copy of the database alone can't be used to send email as an artist. Nobody is disconnected.
 - [Change] The default follow-up message now says "my earlier email" instead of "my email from last week", so it reads right for older leads.
