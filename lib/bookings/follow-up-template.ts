@@ -4,7 +4,7 @@
 
 export const DEFAULT_FOLLOW_UP_TEMPLATE = `Hi there,
 
-I wanted to follow up on my email from last week about playing at {venue}.
+I wanted to follow up on my earlier email about playing at {venue}.
 
 I know inboxes get busy — just wanted to make sure my note didn't get buried. I'd love to find a time to connect and see if there's a fit.
 
@@ -12,9 +12,15 @@ Happy to work around your schedule. Thanks for your time!`;
 
 export const MAX_TEMPLATE_LENGTH = 2000;
 
-export function renderFollowUpBody(template: string | null | undefined, venueName: string, signature: string): string {
-  const text = (template && template.trim() ? template : DEFAULT_FOLLOW_UP_TEMPLATE)
+export function renderFollowUpBody(
+  template: string | null | undefined,
+  venueName: string,
+  signature: string,
+  videoUrl?: string | null
+): string {
+  const message = (template && template.trim() ? template : DEFAULT_FOLLOW_UP_TEMPLATE)
     .replace(/\{venue\}/gi, venueName)
     .trim();
+  const text = videoUrl ? `${message}\n\nHear it for yourself: ${videoUrl}` : message;
   return signature ? `${text}\n\n${signature}` : text;
 }

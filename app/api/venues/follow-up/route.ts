@@ -13,6 +13,7 @@ interface ArtistInfo {
   phone: string | null;
   website: string | null;
   template: string | null;
+  video: string | null;
 }
 
 // Vercel starts scheduled jobs with GET (this used to accept only POST, so
@@ -92,7 +93,7 @@ async function handleFollowUps(request: NextRequest) {
 
   const { data: artistProfiles } = await supabase
     .from("artist_profiles")
-    .select("user_id, display_name, phone, social_links, auto_follow_up_enabled, auto_follow_up_template")
+    .select("user_id, display_name, phone, social_links, video_samples, auto_follow_up_enabled, auto_follow_up_template")
     .in("user_id", uniqueUserIds);
 
   const { data: profileEmails } = await supabase
@@ -110,6 +111,7 @@ async function handleFollowUps(request: NextRequest) {
       phone: ap?.phone ?? null,
       website: ap?.social_links?.website ?? null,
       template: ap?.auto_follow_up_template ?? null,
+      video: ap?.social_links?.youtube ?? ap?.video_samples?.[0]?.url ?? null,
     });
   }
 
@@ -126,7 +128,7 @@ async function handleFollowUps(request: NextRequest) {
       const artist = artistMap.get(venue.user_id)!;
       const subject = `Following up — live music inquiry for ${venue.name}`;
       const signature = [artist.name, artist.phone, artist.website].filter(Boolean).join("\n");
-      const body = renderFollowUpBody(artist.template, venue.name, signature);
+      const body = renderFollowUpBody(artist.template, venue.name, signature, artist.video);
       const htmlBody = body
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")

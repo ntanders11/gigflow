@@ -1,5 +1,9 @@
 # StageReach Changelog
 
+## 2026-11-03
+- [Change] The default follow-up message now says "my earlier email" instead of "my email from last week", so it reads right for older leads.
+- [Feature] Automatic follow-ups now add "Hear it for yourself: <video link>" above the signature, using each artist's own YouTube/video link from their own profile. Artists with no video set get nothing extra.
+
 ## 2026-10-27
 - [Change] A venue's reply now shows the first couple of lines of what they wrote, in the "replied" notification and the venue's history, so you can tell where things stand without opening your email.
 - [Feature] Outlook inbox check now spots bounced emails: the venue gets a red "Email bounced" tag and automatic/batch follow-ups skip it until you change its contact email (or clear the tag). Part of the opt-in reply detection, which is still switched off until its setup is done.

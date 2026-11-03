@@ -53,7 +53,7 @@ export function buildFollowUpBodyTemplate(profile: ArtistProfile | null): string
 
   return `Hi {{contact}},
 
-I wanted to follow up on my email from last week about playing at {{venue}}.
+I wanted to follow up on my earlier email about playing at {{venue}}.
 
 I know inboxes get busy — just wanted to make sure my note didn't get buried. I'd love to find a time to connect and see if there's a fit.
 ${youtubeSection}
