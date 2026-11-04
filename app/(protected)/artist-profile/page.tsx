@@ -1033,6 +1033,11 @@ export default function ArtistProfilePage() {
                 className="rounded-lg p-3 flex flex-col gap-2"
                 style={{ backgroundColor: "#1e2128", border: "1px solid rgba(255,255,255,0.07)" }}
               >
+                <p className="text-xs" style={{ color: "#D4A64F", lineHeight: 1.5 }}>
+                  {videos.length === 0
+                    ? "This will be your promo video — it's linked automatically in your automatic follow-up emails."
+                    : "New videos go to the bottom of the list. Drag one to the top to make it your promo."}
+                </p>
                 <input
                   value={newVideoUrl}
                   onChange={(e) => setNewVideoUrl(e.target.value)}
