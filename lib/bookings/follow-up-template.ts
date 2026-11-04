@@ -24,3 +24,17 @@ export function renderFollowUpBody(
   const text = videoUrl ? `${message}\n\nHear it for yourself: ${videoUrl}` : message;
   return signature ? `${text}\n\n${signature}` : text;
 }
+
+// A video link without the tracking bits YouTube adds when you copy it from
+// the Share button (?si=...), so the email shows a clean link.
+export function cleanVideoUrl(url: string | null | undefined): string | null {
+  const raw = url?.trim();
+  if (!raw) return null;
+  try {
+    const u = new URL(raw);
+    u.searchParams.delete("si");
+    return u.toString();
+  } catch {
+    return raw;
+  }
+}

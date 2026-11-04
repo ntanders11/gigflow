@@ -5,7 +5,7 @@ import { sendArtistEmail } from "@/lib/email/send-artist-email";
 import { createNotification } from "@/lib/notifications/create";
 import { isWithinFollowUpCooldown } from "@/lib/bookings/follow-up";
 import { pickDailyBatch } from "@/lib/bookings/follow-up-cap";
-import { renderFollowUpBody } from "@/lib/bookings/follow-up-template";
+import { renderFollowUpBody, cleanVideoUrl } from "@/lib/bookings/follow-up-template";
 
 interface ArtistInfo {
   name: string;
@@ -111,7 +111,9 @@ async function handleFollowUps(request: NextRequest) {
       phone: ap?.phone ?? null,
       website: ap?.social_links?.website ?? null,
       template: ap?.auto_follow_up_template ?? null,
-      video: ap?.social_links?.youtube ?? ap?.video_samples?.[0]?.url ?? null,
+      // The artist's chosen video sample (e.g. a promo) comes first; their
+      // social-links YouTube is the fallback.
+      video: cleanVideoUrl(ap?.video_samples?.[0]?.url ?? ap?.social_links?.youtube),
     });
   }
 

@@ -1,6 +1,7 @@
 # StageReach Changelog
 
 ## 2026-11-03
+- [Fix] Automatic follow-ups now use the video you added under "video samples" (your promo) before the YouTube link in your social links, and the link no longer carries YouTube's tracking tail.
 - [Change] Discover Venues now hides places that have no website and no phone number (unless they're a real StageReach account), since there'd be no way to reach them. Roughly a third of OpenStreetMap-based results were affected in a test.
 - [Fix] Discover Venues also treats a result as a duplicate when it has the same street address and a similar name as a venue you already have (or one already in the results), as a backup for places with no phone number. Two places with clearly different street addresses are always kept separate, so a business's second location is never hidden.
 - [Feature] When Discover Venues finds a place you already have saved and it knows a detail yours is missing (website, phone, address, city, type), it fills in just the blank. It never overwrites anything you typed, and it leaves alone any detail you've ever edited yourself, even if you cleared it on purpose.

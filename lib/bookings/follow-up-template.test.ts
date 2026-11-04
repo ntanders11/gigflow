@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderFollowUpBody, DEFAULT_FOLLOW_UP_TEMPLATE } from "./follow-up-template";
+import { renderFollowUpBody, DEFAULT_FOLLOW_UP_TEMPLATE, cleanVideoUrl } from "./follow-up-template";
 
 describe("renderFollowUpBody", () => {
   it("fills in the venue name and adds the signature", () => {
@@ -18,5 +18,17 @@ describe("renderFollowUpBody", () => {
   });
   it("works without a signature", () => {
     expect(renderFollowUpBody("Hello {venue}", "X", "")).toBe("Hello X");
+  });
+});
+
+describe("cleanVideoUrl", () => {
+  it("drops YouTube's tracking parameter and keeps the video", () => {
+    expect(cleanVideoUrl("https://youtu.be/JaPOuz1R0HI?si=YlsC-mmT5WKA_DOw")).toBe("https://youtu.be/JaPOuz1R0HI");
+    expect(cleanVideoUrl("https://www.youtube.com/watch?v=abc&si=zzz")).toBe("https://www.youtube.com/watch?v=abc");
+  });
+  it("handles blanks and non-links", () => {
+    expect(cleanVideoUrl(null)).toBeNull();
+    expect(cleanVideoUrl("  ")).toBeNull();
+    expect(cleanVideoUrl("not a link")).toBe("not a link");
   });
 });
