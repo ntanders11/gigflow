@@ -937,10 +937,15 @@ export default function ArtistProfilePage() {
               )}
             </div>
 
+            <p className="text-xs mb-3" style={{ color: "#9a9591", lineHeight: 1.5 }}>
+              The first video in this list is your promo video. It&apos;s linked automatically in your automatic
+              follow-up emails.
+            </p>
+
             {/* Existing samples */}
             {videos.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
-                {videos.map((v) => {
+                {videos.map((v, index) => {
                   const isYT = v.platform === "youtube";
                   const isSP = v.platform === "spotify";
                   const platformColor = isYT ? "#ff0000" : isSP ? "#1db954" : "#9a9591";
@@ -961,6 +966,9 @@ export default function ArtistProfilePage() {
                         <div className="text-xs font-medium truncate" style={{ color: "#F4E8D2" }}>
                           {v.title || "Untitled"}
                         </div>
+                        {index === 0 && (
+                          <div style={{ color: "#D4A64F", fontSize: "10px" }}>Promo · sent in follow-ups</div>
+                        )}
                         <a
                           href={v.url}
                           target="_blank"

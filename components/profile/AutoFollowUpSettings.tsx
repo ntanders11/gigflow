@@ -79,7 +79,7 @@ export default function AutoFollowUpSettings() {
       </div>
 
       <label className="block text-xs mt-4 mb-1.5" style={{ color: "#9a9591" }}>
-        Message — <code>{"{venue}"}</code> becomes the venue&apos;s name. Your name, phone and website are added underneath.
+        Message — <code>{"{venue}"}</code> becomes the venue&apos;s name. Your name, phone and website are added underneath, along with a link to the first video in your Video &amp; Music Samples (your promo), if you have one.
       </label>
       <textarea
         value={template}

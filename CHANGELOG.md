@@ -1,6 +1,7 @@
 # StageReach Changelog
 
 ## 2026-11-03
+- [Change] The profile page now says plainly that the first video under Video & Music Samples is your promo and is linked automatically in automatic follow-ups (a note above the list, a "Promo · sent in follow-ups" tag on the first video, and a line in the follow-ups box).
 - [Fix] Automatic follow-ups now use the video you added under "video samples" (your promo) before the YouTube link in your social links, and the link no longer carries YouTube's tracking tail.
 - [Change] Discover Venues now hides places that have no website and no phone number (unless they're a real StageReach account), since there'd be no way to reach them. Roughly a third of OpenStreetMap-based results were affected in a test.
 - [Fix] Discover Venues also treats a result as a duplicate when it has the same street address and a similar name as a venue you already have (or one already in the results), as a backup for places with no phone number. Two places with clearly different street addresses are always kept separate, so a business's second location is never hidden.
