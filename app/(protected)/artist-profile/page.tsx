@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { createClient } from "@/lib/supabase/client";
 import { ArtistProfile, Package, VideoSample, SocialLinks, EmailConnection, Zone } from "@/types";
 import PhotoCropModal from "@/components/profile/PhotoCropModal";
@@ -225,6 +226,17 @@ export default function ArtistProfilePage() {
       window.dispatchEvent(new Event("stagereach:profile-updated"));
     }
     setSaving(false);
+  }
+
+  // Dragging a video sample to the top makes it the promo that automatic
+  // follow-ups link. Shown in the new order straight away, then saved.
+  function reorderVideos(result: DropResult) {
+    if (!result.destination || result.destination.index === result.source.index) return;
+    const next = [...(profile?.video_samples || [])];
+    const [moved] = next.splice(result.source.index, 1);
+    next.splice(result.destination.index, 0, moved);
+    setProfile((prev) => (prev ? { ...prev, video_samples: next } : prev));
+    save({ video_samples: next });
   }
 
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -939,56 +951,80 @@ export default function ArtistProfilePage() {
 
             <p className="text-xs mb-3" style={{ color: "#9a9591", lineHeight: 1.5 }}>
               The first video in this list is your promo video. It&apos;s linked automatically in your automatic
-              follow-up emails.
+              follow-up emails. Drag a video by the ⋮⋮ grip to change which one is first.
             </p>
 
-            {/* Existing samples */}
+            {/* Existing samples — drag the grip to reorder; the first is the promo */}
             {videos.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {videos.map((v, index) => {
-                  const isYT = v.platform === "youtube";
-                  const isSP = v.platform === "spotify";
-                  const platformColor = isYT ? "#ff0000" : isSP ? "#1db954" : "#9a9591";
-                  const platformIcon = isYT ? "▶" : isSP ? "♪" : "♫";
-                  return (
-                    <div
-                      key={v.id}
-                      className="flex items-center gap-2 rounded-lg px-3 py-2"
-                      style={{ backgroundColor: "#1e2128", maxWidth: "240px" }}
-                    >
-                      <div
-                        className="w-8 h-8 rounded flex items-center justify-center shrink-0 text-sm font-bold"
-                        style={{ backgroundColor: platformColor, color: "#fff" }}
-                      >
-                        {platformIcon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium truncate" style={{ color: "#F4E8D2" }}>
-                          {v.title || "Untitled"}
-                        </div>
-                        {index === 0 && (
-                          <div style={{ color: "#D4A64F", fontSize: "10px" }}>Promo · sent in follow-ups</div>
-                        )}
-                        <a
-                          href={v.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs hover:underline"
-                          style={{ color: "#5e5c58" }}
-                        >
-                          Open ↗
-                        </a>
-                      </div>
-                      <button
-                        onClick={() => save({ video_samples: videos.filter((x) => x.id !== v.id) })}
-                        style={{ color: "#5e5c58", fontSize: "16px", lineHeight: 1, cursor: "pointer" }}
-                      >
-                        ×
-                      </button>
+              <DragDropContext onDragEnd={reorderVideos}>
+                <Droppable droppableId="video-samples">
+                  {(drop) => (
+                    <div ref={drop.innerRef} {...drop.droppableProps} className="flex flex-col gap-2 mb-3">
+                      {videos.map((v, index) => {
+                        const isYT = v.platform === "youtube";
+                        const isSP = v.platform === "spotify";
+                        const platformColor = isYT ? "#ff0000" : isSP ? "#1db954" : "#9a9591";
+                        const platformIcon = isYT ? "▶" : isSP ? "♪" : "♫";
+                        return (
+                          <Draggable key={v.id} draggableId={v.id} index={index}>
+                            {(drag, snapshot) => (
+                              <div
+                                ref={drag.innerRef}
+                                {...drag.draggableProps}
+                                className="flex items-center gap-2 rounded-lg px-3 py-2"
+                                style={{
+                                  backgroundColor: "#1e2128",
+                                  border: snapshot.isDragging ? "1px solid #D4A64F" : "1px solid transparent",
+                                  ...drag.draggableProps.style,
+                                }}
+                              >
+                                <span
+                                  {...drag.dragHandleProps}
+                                  aria-label="Drag to reorder"
+                                  title="Drag to reorder"
+                                  style={{ color: "#5e5c58", fontSize: "16px", lineHeight: 1, cursor: "grab", padding: "4px 2px", touchAction: "none" }}
+                                >
+                                  ⋮⋮
+                                </span>
+                                <div
+                                  className="w-8 h-8 rounded flex items-center justify-center shrink-0 text-sm font-bold"
+                                  style={{ backgroundColor: platformColor, color: "#fff" }}
+                                >
+                                  {platformIcon}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs font-medium truncate" style={{ color: "#F4E8D2" }}>
+                                    {v.title || "Untitled"}
+                                  </div>
+                                  {index === 0 && (
+                                    <div style={{ color: "#D4A64F", fontSize: "10px" }}>Promo · sent in follow-ups</div>
+                                  )}
+                                  <a
+                                    href={v.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs hover:underline"
+                                    style={{ color: "#5e5c58" }}
+                                  >
+                                    Open ↗
+                                  </a>
+                                </div>
+                                <button
+                                  onClick={() => save({ video_samples: videos.filter((x) => x.id !== v.id) })}
+                                  style={{ color: "#5e5c58", fontSize: "16px", lineHeight: 1, cursor: "pointer" }}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {drop.placeholder}
                     </div>
-                  );
-                })}
-              </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
             )}
 
             {/* Add video form */}
